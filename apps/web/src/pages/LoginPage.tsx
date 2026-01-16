@@ -1,13 +1,19 @@
 // apps/web/src/pages/LoginPage.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth/useAuth';
 import { LoginButton } from '@/components/auth/LoginButton';
+import { GuestModeButton } from '@/components/auth/GuestModeButton';
+import { useGuestStore } from '@/stores/guestStore';
+import { useAuthStore } from '@/stores/authStore';
 
 /**
  * Login page component
  */
 export const LoginPage = () => {
   const { login, isLoading, error, isAuthenticated } = useAuth();
+  const { enterGuestMode, isGuest } = useGuestStore();
+  const { setAuthMode } = useAuthStore();
+  const [guestLoading, setGuestLoading] = useState(false);
 
   // Get error from URL query params (set by OAuth callback)
   useEffect(() => {
@@ -19,15 +25,27 @@ export const LoginPage = () => {
     }
   }, []);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (but not guests - they can sign in)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isGuest) {
       window.location.href = '/';
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isGuest]);
 
   const handleGoogleLogin = () => {
     login('google');
+  };
+
+  const handleGuestMode = async () => {
+    setGuestLoading(true);
+    try {
+      await enterGuestMode();
+      setAuthMode('guest');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Failed to enter guest mode:', err);
+      setGuestLoading(false);
+    }
   };
 
   return (
@@ -50,6 +68,19 @@ export const LoginPage = () => {
           <div className="space-y-4">
             <LoginButton provider="google" onClick={handleGoogleLogin} loading={isLoading} />
           </div>
+
+          {/* Divider */}
+          <div className="relative py-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-4 text-sm text-gray-500">or</span>
+            </div>
+          </div>
+
+          {/* Guest Mode */}
+          <GuestModeButton onClick={handleGuestMode} loading={guestLoading} />
 
           <p className="mt-6 text-center text-sm text-gray-500">
             By signing in, you agree to our Terms of Service and Privacy Policy

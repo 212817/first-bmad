@@ -244,6 +244,35 @@ For now, run the API locally while the frontend is deployed:
 pnpm dev:api  # Run API at localhost:3001
 ```
 
+## Authentication
+
+The app supports multiple authentication options:
+
+### Google OAuth
+
+Sign in with your Google account to sync your parking spots across devices.
+
+### Guest Mode
+
+Use the app without creating an account:
+
+- **No sign-up required**: Click "Continue as Guest" on the login page
+- **Local storage only**: All data is stored in your browser using IndexedDB
+- **Persistent**: Guest session persists across browser refreshes and restarts
+- **Upgrade anytime**: Sign in later to sync your spots to the cloud
+
+When in guest mode:
+
+- A yellow banner displays "Guest Mode - Data stored locally only"
+- After 3 visits, a prompt encourages signing in to enable sync
+- Data remains on your device until you clear browser storage
+
+**Technical Details:**
+
+- Guest sessions use IndexedDB with database name `wdip-local`
+- A unique session ID (UUID) is generated for potential future migration
+- Guest mode state is hydrated on app load before rendering
+
 ## License
 
 MIT

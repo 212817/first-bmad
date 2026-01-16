@@ -9,7 +9,7 @@ export interface UseAuthReturn {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (provider: 'google' | 'apple') => void;
+  login: (provider: 'google' | 'apple') => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
