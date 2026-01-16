@@ -2,19 +2,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
+import { db } from '../../src/config/db.js';
 
 // Mock the database module
 vi.mock('../../src/config/db.js', () => ({
   db: {
-    execute: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
+    execute: vi.fn(),
   },
 }));
+
+// Cast to access mock methods
+const mockExecute = db.execute as ReturnType<typeof vi.fn>;
 
 describe('Health API', () => {
   const app = createApp();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to healthy database
+    mockExecute.mockResolvedValue([{ '?column?': 1 }]);
   });
 
   describe('GET /health', () => {
@@ -24,6 +30,18 @@ describe('Health API', () => {
       expect(response.status).toBe(200);
       expect(response.body.api).toBe('ok');
       expect(response.body.database).toBe('ok');
+      expect(response.body.timestamp).toBeDefined();
+    });
+
+    it('should return 503 with database error when database is unhealthy', async () => {
+      // Simulate database connection failure
+      mockExecute.mockRejectedValue(new Error('Connection refused'));
+
+      const response = await request(app).get('/health');
+
+      expect(response.status).toBe(503);
+      expect(response.body.api).toBe('ok');
+      expect(response.body.database).toBe('error');
       expect(response.body.timestamp).toBeDefined();
     });
   });
