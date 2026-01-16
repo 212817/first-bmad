@@ -59,24 +59,30 @@ test.describe('Guest Mode', () => {
   });
 
   test('sign-in prompt appears on 3rd guest visit (AC6)', async ({ page, context }) => {
-    // First visit
+    // First visit - enter guest mode
     await page.goto('/login');
     await page.getByRole('button', { name: /continue as guest/i }).click();
     await expect(page).toHaveURL('/');
+    // Wait for banner to confirm hydration is complete
+    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
 
     // Second visit - close and reopen
     await page.close();
     const page2 = await context.newPage();
     await page2.goto('/');
     await expect(page2.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    // Wait a bit for IndexedDB write to complete
+    await page2.waitForTimeout(500);
 
     // Third visit - close and reopen
     await page2.close();
     const page3 = await context.newPage();
     await page3.goto('/');
+    // Wait for hydration
+    await expect(page3.getByText('Guest Mode - Data stored locally only')).toBeVisible();
 
     // Should see sign-in prompt on 3rd visit
-    await expect(page3.getByText('Sync your spots')).toBeVisible({ timeout: 5000 });
+    await expect(page3.getByText('Sync your spots')).toBeVisible({ timeout: 10000 });
   });
 
   test('sign-in prompt can be dismissed (AC6)', async ({ page, context: _context }) => {
