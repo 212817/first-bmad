@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /**
  * Axios API client instance
+ * Uses cookies for auth (httpOnly cookies set by backend)
  */
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
@@ -12,13 +13,16 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Required for sending cookies
 });
 
 /**
- * Request interceptor for adding auth token
+ * Request interceptor for adding auth token from localStorage (fallback)
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Cookies are sent automatically with withCredentials: true
+    // This is just for backward compatibility if using localStorage tokens
     const token = localStorage.getItem('accessToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -28,17 +32,39 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
+// Flag to prevent infinite refresh loops
+let isRefreshing = false;
+
 /**
- * Response interceptor for handling errors
+ * Response interceptor for handling errors and auto-refresh
  */
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    // Handle 401 unauthorized
-    if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      // TODO: Redirect to login or dispatch logout action
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+
+    // Handle 401 unauthorized - try to refresh token once
+    if (error.response?.status === 401 && originalRequest && !isRefreshing) {
+      isRefreshing = true;
+
+      try {
+        // Try to refresh the access token
+        await apiClient.post('/v1/auth/refresh');
+        isRefreshing = false;
+
+        // Retry the original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        localStorage.removeItem('accessToken');
+        // Redirect to login if refresh also fails
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );

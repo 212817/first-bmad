@@ -8,6 +8,7 @@
 4. ✅ **Repositories return null** - not throw on not found
 5. ✅ **Validate all input** - Zod schemas for every endpoint
 6. ✅ **Verify ownership** - check userId before any operation
+7. ✅ **Arrow functions only** - use `const foo = () => {}` not `function foo() {}`
 
 ### 12.2 Naming Conventions
 
