@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { checkHealth } from '@/services/api/client';
 import { useAuth } from '@/hooks/useAuth/useAuth';
+import { useGuestStore } from '@/stores/guestStore';
+import { useAuthStore } from '@/stores/authStore';
+import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
+import { SignInPrompt } from '@/components/prompts/SignInPrompt';
+import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 
 interface HealthStatus {
   api: string;
@@ -60,15 +65,20 @@ const UserAvatar = ({
 
 export const HomePage = () => {
   const { user, isAuthenticated, isLoading: authLoading, logout, refreshUser } = useAuth();
+  const { isGuest, exitGuestMode } = useGuestStore();
+  const { setAuthMode, authMode } = useAuthStore();
+  const { showPrompt, dismiss } = useSignInPrompt();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check auth status on mount
+  // Check auth status on mount (only if not a guest)
   useEffect(() => {
-    refreshUser();
+    if (!isGuest) {
+      refreshUser();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isGuest]);
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -87,9 +97,25 @@ export const HomePage = () => {
     fetchHealth();
   }, []);
 
+  const handleGuestSignOut = async () => {
+    await exitGuestMode();
+    setAuthMode('none');
+    window.location.href = '/login';
+  };
+
+  const handleSignInFromPrompt = () => {
+    window.location.href = '/login';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
-      <main className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      {/* Guest Mode Banner */}
+      {authMode === 'guest' && <GuestModeBanner />}
+
+      {/* Sign-In Prompt for Guest Users */}
+      {showPrompt && <SignInPrompt onSignIn={handleSignInFromPrompt} onDismiss={dismiss} />}
+
+      <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-indigo-900 mb-4">Where Did I Park?</h1>
         <p className="text-lg text-gray-600 mb-8">Never forget where you parked again</p>
 
@@ -119,6 +145,30 @@ export const HomePage = () => {
                 className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
               >
                 Sign Out
+              </button>
+            </div>
+          ) : isGuest ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center text-white font-medium text-sm">
+                  G
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-gray-800">Guest</p>
+                  <p className="text-sm text-gray-500">Data stored locally</p>
+                </div>
+              </div>
+              <Link
+                to="/login"
+                className="block w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors text-center"
+              >
+                Sign In to Sync
+              </Link>
+              <button
+                onClick={handleGuestSignOut}
+                className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+              >
+                Exit Guest Mode
               </button>
             </div>
           ) : (

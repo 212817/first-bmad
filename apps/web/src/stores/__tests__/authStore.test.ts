@@ -150,4 +150,40 @@ describe('authStore', () => {
       expect(state.error).toBeNull();
     });
   });
+
+  describe('setAuthMode', () => {
+    it('should set authMode to guest and mark as authenticated', () => {
+      useAuthStore.getState().setAuthMode('guest');
+      const state = useAuthStore.getState();
+
+      expect(state.authMode).toBe('guest');
+      expect(state.isAuthenticated).toBe(true);
+    });
+
+    it('should set authMode to authenticated and mark as authenticated', () => {
+      useAuthStore.getState().setAuthMode('authenticated');
+      const state = useAuthStore.getState();
+
+      expect(state.authMode).toBe('authenticated');
+      expect(state.isAuthenticated).toBe(true);
+    });
+
+    it('should set authMode to none and mark as not authenticated', () => {
+      useAuthStore.getState().setAuthMode('guest');
+      useAuthStore.getState().setAuthMode('none');
+      const state = useAuthStore.getState();
+
+      expect(state.authMode).toBe('none');
+      expect(state.isAuthenticated).toBe(false);
+    });
+
+    it('should preserve user when changing authMode', () => {
+      useAuthStore.getState().setUser(mockUser);
+      useAuthStore.getState().setAuthMode('guest');
+      const state = useAuthStore.getState();
+
+      expect(state.user).toEqual(mockUser);
+      expect(state.authMode).toBe('guest');
+    });
+  });
 });

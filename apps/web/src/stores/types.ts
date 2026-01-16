@@ -11,6 +11,11 @@ export interface CurrentUser {
 }
 
 /**
+ * Authentication mode
+ */
+export type AuthMode = 'authenticated' | 'guest' | 'none';
+
+/**
  * Auth state interface
  */
 export interface AuthState {
@@ -18,6 +23,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  authMode: AuthMode;
 }
 
 /**
@@ -27,6 +33,7 @@ export interface AuthActions {
   setUser: (user: CurrentUser | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setAuthMode: (mode: AuthMode) => void;
   logout: () => void;
   reset: () => void;
 }

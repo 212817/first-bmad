@@ -1,12 +1,13 @@
 // apps/web/src/stores/authStore.ts
 import { create } from 'zustand';
-import type { AuthStore, CurrentUser } from './types';
+import type { AuthStore, AuthMode, CurrentUser } from './types';
 
 const initialState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  authMode: 'none' as AuthMode,
 };
 
 /**
@@ -17,16 +18,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
   ...initialState,
 
   setUser: (user: CurrentUser | null) =>
-    set({
+    set((state) => ({
       user,
-      isAuthenticated: user !== null,
+      isAuthenticated: user !== null || state.authMode === 'guest',
       isLoading: false,
       error: null,
-    }),
+      // Only change authMode if we're setting a user, otherwise keep current mode (for guest)
+      authMode: user !== null ? 'authenticated' : state.authMode === 'guest' ? 'guest' : 'none',
+    })),
 
   setLoading: (isLoading: boolean) => set({ isLoading }),
 
   setError: (error: string | null) => set({ error, isLoading: false }),
+
+  setAuthMode: (authMode: AuthMode) =>
+    set({
+      authMode,
+      isAuthenticated: authMode === 'authenticated' || authMode === 'guest',
+    }),
 
   logout: () =>
     set({
@@ -34,6 +43,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      authMode: 'none',
     }),
 
   reset: () => set(initialState),
