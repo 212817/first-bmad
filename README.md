@@ -2,6 +2,8 @@
 
 Never forget where you parked again. A PWA for saving and finding your parking spot.
 
+[![CI](https://github.com/212817/first-bmad/actions/workflows/ci.yml/badge.svg)](https://github.com/212817/first-bmad/actions/workflows/ci.yml)
+
 ## Tech Stack
 
 | Layer    | Technology   | Version           |

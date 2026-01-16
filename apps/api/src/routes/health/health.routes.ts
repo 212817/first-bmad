@@ -1,9 +1,9 @@
 // apps/api/src/routes/health/health.routes.ts
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { db } from '../../config/db.js';
 import { sql } from 'drizzle-orm';
 
-export const healthRoutes = Router();
+export const healthRoutes: RouterType = Router();
 
 interface HealthCheck {
   api: string;
