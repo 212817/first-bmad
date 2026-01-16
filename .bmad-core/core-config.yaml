@@ -1,0 +1,38 @@
+markdownExploder: true
+qa:
+  qaLocation: docs/qa
+prd:
+  prdFile: docs/prd.md
+  prdVersion: v4
+  prdSharded: true
+  prdShardedLocation: docs/prd
+  epicFilePattern: epic-{n}*.md
+architecture:
+  architectureFile: docs/architecture.md
+  architectureVersion: v4
+  architectureSharded: true
+  architectureShardedLocation: docs/architecture
+  # Frontend-specific architecture
+  frontendArchitectureFile: docs/architecture-frontend.md
+  frontendArchitectureSharded: true
+  frontendArchitectureShardedLocation: docs/architecture-frontend
+  # Backend-specific architecture
+  backendArchitectureFile: docs/architecture-backend.md
+  backendArchitectureSharded: true
+  backendArchitectureShardedLocation: docs/architecture-backend
+customTechnicalDocuments: null
+devLoadAlwaysFiles:
+  # Main architecture references
+  - docs/architecture/3-tech-stack-overview.md
+  - docs/architecture/4-data-models.md
+  - docs/architecture/5-api-specification.md
+  - docs/architecture/8-project-structure-monorepo.md
+  # Frontend references
+  - docs/architecture-frontend/2-project-structure.md
+  - docs/architecture-frontend/12-coding-standards.md
+  # Backend references
+  - docs/architecture-backend/2-project-structure.md
+  - docs/architecture-backend/12-coding-standards.md
+devDebugLog: .ai/debug-log.md
+devStoryLocation: docs/stories
+slashPrefix: BMad
