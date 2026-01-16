@@ -7,186 +7,186 @@ import { authApi } from '@/services/api/authApi';
 
 // Mock authApi
 vi.mock('@/services/api/authApi', () => ({
-    authApi: {
-        getOAuthUrl: vi.fn(),
-        logout: vi.fn(),
-        getMe: vi.fn(),
-    },
+  authApi: {
+    getOAuthUrl: vi.fn(),
+    logout: vi.fn(),
+    getMe: vi.fn(),
+  },
 }));
 
 describe('useAuth', () => {
-    const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        avatarUrl: 'https://example.com/avatar.jpg',
-    };
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    avatarUrl: 'https://example.com/avatar.jpg',
+  };
 
-    // Save original location
-    const originalLocation = window.location;
+  // Save original location
+  const originalLocation = window.location;
 
-    beforeEach(() => {
-        // Reset store
-        useAuthStore.getState().reset();
-        vi.clearAllMocks();
+  beforeEach(() => {
+    // Reset store
+    useAuthStore.getState().reset();
+    vi.clearAllMocks();
 
-        // Mock window.location
-        Object.defineProperty(window, 'location', {
-            value: { href: '', search: '' },
-            writable: true,
-        });
+    // Mock window.location
+    Object.defineProperty(window, 'location', {
+      value: { href: '', search: '' },
+      writable: true,
+    });
+  });
+
+  afterEach(() => {
+    // Restore original location
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
+  });
+
+  describe('initial state', () => {
+    it('should return unauthenticated state initially', () => {
+      const { result } = renderHook(() => useAuth());
+
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('login', () => {
+    it('should redirect to Google OAuth URL on login', () => {
+      vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://accounts.google.com/oauth');
+
+      const { result } = renderHook(() => useAuth());
+
+      act(() => {
+        result.current.login('google');
+      });
+
+      expect(authApi.getOAuthUrl).toHaveBeenCalledWith('google');
+      expect(window.location.href).toBe('https://accounts.google.com/oauth');
     });
 
-    afterEach(() => {
-        // Restore original location
-        Object.defineProperty(window, 'location', {
-            value: originalLocation,
-            writable: true,
-        });
+    it('should set loading state when login is called', () => {
+      vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://oauth.url');
+
+      const { result } = renderHook(() => useAuth());
+
+      act(() => {
+        result.current.login('google');
+      });
+
+      // Note: Since we redirect, loading might not be observable
+      expect(authApi.getOAuthUrl).toHaveBeenCalled();
     });
 
-    describe('initial state', () => {
-        it('should return unauthenticated state initially', () => {
-            const { result } = renderHook(() => useAuth());
+    it('should support apple provider', () => {
+      vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://appleid.apple.com/oauth');
 
-            expect(result.current.isAuthenticated).toBe(false);
-            expect(result.current.user).toBeNull();
-            expect(result.current.isLoading).toBe(false);
-        });
+      const { result } = renderHook(() => useAuth());
+
+      act(() => {
+        result.current.login('apple');
+      });
+
+      expect(authApi.getOAuthUrl).toHaveBeenCalledWith('apple');
+    });
+  });
+
+  describe('logout', () => {
+    it('should call logout API and clear auth state', async () => {
+      vi.mocked(authApi.logout).mockResolvedValue(undefined);
+
+      // Set up authenticated state
+      useAuthStore.getState().setUser(mockUser);
+
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.logout();
+      });
+
+      expect(authApi.logout).toHaveBeenCalled();
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
     });
 
-    describe('login', () => {
-        it('should redirect to Google OAuth URL on login', () => {
-            vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://accounts.google.com/oauth');
+    it('should clear auth state even if logout API fails', async () => {
+      vi.mocked(authApi.logout).mockRejectedValue(new Error('Network error'));
 
-            const { result } = renderHook(() => useAuth());
+      // Set up authenticated state
+      useAuthStore.getState().setUser(mockUser);
 
-            act(() => {
-                result.current.login('google');
-            });
+      const { result } = renderHook(() => useAuth());
 
-            expect(authApi.getOAuthUrl).toHaveBeenCalledWith('google');
-            expect(window.location.href).toBe('https://accounts.google.com/oauth');
-        });
+      await act(async () => {
+        await result.current.logout();
+      });
 
-        it('should set loading state when login is called', () => {
-            vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://oauth.url');
+      // Should still clear local state
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+    });
+  });
 
-            const { result } = renderHook(() => useAuth());
+  describe('refreshUser', () => {
+    it('should fetch and set user data', async () => {
+      vi.mocked(authApi.getMe).mockResolvedValue(mockUser);
 
-            act(() => {
-                result.current.login('google');
-            });
+      const { result } = renderHook(() => useAuth());
 
-            // Note: Since we redirect, loading might not be observable
-            expect(authApi.getOAuthUrl).toHaveBeenCalled();
-        });
+      await act(async () => {
+        await result.current.refreshUser();
+      });
 
-        it('should support apple provider', () => {
-            vi.mocked(authApi.getOAuthUrl).mockReturnValue('https://appleid.apple.com/oauth');
-
-            const { result } = renderHook(() => useAuth());
-
-            act(() => {
-                result.current.login('apple');
-            });
-
-            expect(authApi.getOAuthUrl).toHaveBeenCalledWith('apple');
-        });
+      expect(authApi.getMe).toHaveBeenCalled();
+      expect(result.current.user).toEqual(mockUser);
+      expect(result.current.isAuthenticated).toBe(true);
     });
 
-    describe('logout', () => {
-        it('should call logout API and clear auth state', async () => {
-            vi.mocked(authApi.logout).mockResolvedValue(undefined);
+    it('should clear user if getMe fails', async () => {
+      vi.mocked(authApi.getMe).mockRejectedValue(new Error('Unauthorized'));
 
-            // Set up authenticated state
-            useAuthStore.getState().setUser(mockUser);
+      // Set up authenticated state
+      useAuthStore.getState().setUser(mockUser);
 
-            const { result } = renderHook(() => useAuth());
+      const { result } = renderHook(() => useAuth());
 
-            await act(async () => {
-                await result.current.logout();
-            });
+      await act(async () => {
+        await result.current.refreshUser();
+      });
 
-            expect(authApi.logout).toHaveBeenCalled();
-            expect(result.current.isAuthenticated).toBe(false);
-            expect(result.current.user).toBeNull();
-        });
+      expect(result.current.user).toBeNull();
+      expect(result.current.isAuthenticated).toBe(false);
+    });
+  });
 
-        it('should clear auth state even if logout API fails', async () => {
-            vi.mocked(authApi.logout).mockRejectedValue(new Error('Network error'));
+  describe('state reflection', () => {
+    it('should reflect authenticated state from store', () => {
+      useAuthStore.getState().setUser(mockUser);
 
-            // Set up authenticated state
-            useAuthStore.getState().setUser(mockUser);
+      const { result } = renderHook(() => useAuth());
 
-            const { result } = renderHook(() => useAuth());
-
-            await act(async () => {
-                await result.current.logout();
-            });
-
-            // Should still clear local state
-            expect(result.current.isAuthenticated).toBe(false);
-            expect(result.current.user).toBeNull();
-        });
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.user).toEqual(mockUser);
     });
 
-    describe('refreshUser', () => {
-        it('should fetch and set user data', async () => {
-            vi.mocked(authApi.getMe).mockResolvedValue(mockUser);
+    it('should reflect loading state from store', () => {
+      useAuthStore.getState().setLoading(true);
 
-            const { result } = renderHook(() => useAuth());
+      const { result } = renderHook(() => useAuth());
 
-            await act(async () => {
-                await result.current.refreshUser();
-            });
-
-            expect(authApi.getMe).toHaveBeenCalled();
-            expect(result.current.user).toEqual(mockUser);
-            expect(result.current.isAuthenticated).toBe(true);
-        });
-
-        it('should clear user if getMe fails', async () => {
-            vi.mocked(authApi.getMe).mockRejectedValue(new Error('Unauthorized'));
-
-            // Set up authenticated state
-            useAuthStore.getState().setUser(mockUser);
-
-            const { result } = renderHook(() => useAuth());
-
-            await act(async () => {
-                await result.current.refreshUser();
-            });
-
-            expect(result.current.user).toBeNull();
-            expect(result.current.isAuthenticated).toBe(false);
-        });
+      expect(result.current.isLoading).toBe(true);
     });
 
-    describe('state reflection', () => {
-        it('should reflect authenticated state from store', () => {
-            useAuthStore.getState().setUser(mockUser);
+    it('should reflect error state from store', () => {
+      useAuthStore.getState().setError('Auth error');
 
-            const { result } = renderHook(() => useAuth());
+      const { result } = renderHook(() => useAuth());
 
-            expect(result.current.isAuthenticated).toBe(true);
-            expect(result.current.user).toEqual(mockUser);
-        });
-
-        it('should reflect loading state from store', () => {
-            useAuthStore.getState().setLoading(true);
-
-            const { result } = renderHook(() => useAuth());
-
-            expect(result.current.isLoading).toBe(true);
-        });
-
-        it('should reflect error state from store', () => {
-            useAuthStore.getState().setError('Auth error');
-
-            const { result } = renderHook(() => useAuth());
-
-            expect(result.current.error).toBe('Auth error');
-        });
+      expect(result.current.error).toBe('Auth error');
     });
+  });
 });
