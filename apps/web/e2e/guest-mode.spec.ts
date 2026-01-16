@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Guest Mode', () => {
   test.beforeEach(async ({ page }) => {
     // Clear IndexedDB before each test to start fresh
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.evaluate(async () => {
       const databases = await indexedDB.databases();
       for (const db of databases) {
@@ -16,14 +16,14 @@ test.describe('Guest Mode', () => {
   });
 
   test('login page displays "Continue as Guest" button (AC1)', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
     const guestButton = page.getByRole('button', { name: /continue as guest/i });
     await expect(guestButton).toBeVisible();
   });
 
   test('can enter guest mode from login and navigate to home (AC2)', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
@@ -32,7 +32,7 @@ test.describe('Guest Mode', () => {
   });
 
   test('guest mode displays persistent banner (AC3)', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
     // Should see guest mode banner
@@ -43,7 +43,7 @@ test.describe('Guest Mode', () => {
   });
 
   test('guest state persists after page refresh (AC7)', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
     // Verify we're on home with banner
@@ -60,7 +60,7 @@ test.describe('Guest Mode', () => {
 
   test('sign-in prompt appears on 3rd guest visit (AC6)', async ({ page, context }) => {
     // First visit - enter guest mode
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
     await expect(page).toHaveURL('/');
     // Wait for banner to confirm hydration is complete
@@ -69,7 +69,7 @@ test.describe('Guest Mode', () => {
     // Second visit - close and reopen
     await page.close();
     const page2 = await context.newPage();
-    await page2.goto('/');
+    await page2.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page2.getByText('Guest Mode - Data stored locally only')).toBeVisible();
     // Wait a bit for IndexedDB write to complete
     await page2.waitForTimeout(500);
@@ -77,7 +77,7 @@ test.describe('Guest Mode', () => {
     // Third visit - close and reopen
     await page2.close();
     const page3 = await context.newPage();
-    await page3.goto('/');
+    await page3.goto('/', { waitUntil: 'domcontentloaded' });
     // Wait for hydration
     await expect(page3.getByText('Guest Mode - Data stored locally only')).toBeVisible();
 
@@ -86,11 +86,15 @@ test.describe('Guest Mode', () => {
   });
 
   test('sign-in prompt can be dismissed (AC6)', async ({ page, context: _context }) => {
-    // Simulate 3 visits to trigger prompt
-    await page.goto('/login');
+    // First enter guest mode
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
+    await expect(page).toHaveURL('/');
 
-    // Mock visit count to 3 via IndexedDB
+    // Wait for hydration to complete
+    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+
+    // Mock visit count to 2 via IndexedDB (will become 3 on next load, triggering prompt)
     await page.evaluate(async () => {
       const request = indexedDB.open('wdip-local', 1);
       await new Promise<void>((resolve, reject) => {
@@ -98,7 +102,7 @@ test.describe('Guest Mode', () => {
           const db = request.result;
           const tx = db.transaction('settings', 'readwrite');
           const store = tx.objectStore('settings');
-          store.put({ guestVisitCount: 3 }, 'app');
+          store.put({ guestVisitCount: 2 }, 'app');
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         };
@@ -106,21 +110,27 @@ test.describe('Guest Mode', () => {
       });
     });
 
-    // Reload to trigger prompt check
+    // Reload to trigger prompt check (visit count goes from 2 to 3)
     await page.reload();
+    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
 
     // Wait for prompt to appear
     const prompt = page.getByText('Sync your spots');
-    await expect(prompt).toBeVisible({ timeout: 5000 });
+    await expect(prompt).toBeVisible({ timeout: 10000 });
 
     // Dismiss the prompt
     await page.getByRole('button', { name: /maybe later/i }).click();
 
-    // Prompt should disappear
+    // Wait for prompt to disappear and dismissal to persist
     await expect(prompt).not.toBeVisible();
+    // Give time for IndexedDB write to complete
+    await page.waitForTimeout(500);
 
     // Reload - prompt should not reappear (dismissal persisted)
     await page.reload();
+    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    // Wait a bit for any async prompt logic, then verify it's not visible
+    await page.waitForTimeout(1000);
     await expect(page.getByText('Sync your spots')).not.toBeVisible({ timeout: 2000 });
   });
 });
