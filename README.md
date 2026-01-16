@@ -199,24 +199,47 @@ To enable branch protection on \main\:
 
 ### Frontend (Vercel)
 
-1. Create a new Vercel project linked to your repository
-2. Set root directory to \pps/web\
-3. Configure build settings:
-   - Build Command: \pnpm build\
-   - Output Directory: \dist\
+**Live URL**: https://first-bmad.vercel.app
+
+The frontend is configured to deploy from the monorepo root using `vercel.json`:
+
+```bash
+vercel --prod  # Deploy from repo root
+```
+
+Or connect to GitHub for auto-deploy:
+1. Go to [vercel.com](https://vercel.com) and import your repository
+2. Environment variables will be read from `vercel.json`
+3. Add `VITE_API_URL` pointing to your API
+
+### Backend (Recommended: Railway or Render)
+
+For Express APIs in a pnpm monorepo, Railway or Render provide better DX:
+
+#### Railway
+1. Create new project at [railway.app](https://railway.app)
+2. Connect your GitHub repository
+3. Set root directory to `/apps/api`
 4. Add environment variables:
-   - \VITE_API_URL\: Your deployed API URL
+   - `DATABASE_URL`: Neon connection string
+   - `NODE_ENV`: `production`
+   - `CORS_ORIGINS`: Your frontend URL
+   - `PORT`: `3001` (or auto-assigned)
 
-### Backend (Vercel Serverless)
+#### Render
+1. Create new Web Service at [render.com](https://render.com)
+2. Connect your GitHub repository
+3. Set root directory to `apps/api`
+4. Build command: `cd ../.. && npm i -g pnpm && pnpm install && pnpm build`
+5. Start command: `node dist/index.js`
 
-1. Create a new Vercel project linked to your repository
-2. Set root directory to \pps/api\
-3. Add environment variables:
-   - \DATABASE_URL\: Neon connection string
-   - \NODE_ENV\: \production\
-   - \CORS_ORIGINS\: Your frontend URL
+### Local Development Only
 
-Both will auto-deploy on push to \main\.
+For now, run the API locally while the frontend is deployed:
+
+```bash
+pnpm dev:api  # Run API at localhost:3001
+```
 
 ## License
 
