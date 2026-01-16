@@ -4,13 +4,29 @@
   "type": "module",
   "private": true,
   "exports": {
-    "./types": "./src/types/index.ts",
-    "./constants": "./src/constants/index.ts",
-    "./errors": "./src/errors/index.ts",
-    "./validation": "./src/validation/index.ts",
-    "./db": "./src/db/index.ts"
+    "./types": {
+      "types": "./src/types/index.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./constants": {
+      "types": "./src/constants/index.ts",
+      "import": "./dist/constants/index.js"
+    },
+    "./errors": {
+      "types": "./src/errors/index.ts",
+      "import": "./dist/errors/index.js"
+    },
+    "./validation": {
+      "types": "./src/validation/index.ts",
+      "import": "./dist/validation/index.js"
+    },
+    "./db": {
+      "types": "./src/db/index.ts",
+      "import": "./dist/db/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -18,6 +34,7 @@
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
+    "@types/node": "^25.0.9",
     "typescript": "^5.9.3"
   }
 }
