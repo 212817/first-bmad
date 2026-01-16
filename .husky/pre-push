@@ -1,1 +1,12 @@
-pnpm format:check
+# Auto-fix formatting issues before push
+pnpm format
+
+# Check if formatter made changes to staged files
+if ! git diff --quiet; then
+  echo ""
+  echo "⚠️  Prettier auto-fixed some files."
+  echo "   Please review and commit the changes, then push again."
+  echo ""
+  git status --short
+  exit 1
+fi
