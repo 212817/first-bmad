@@ -1,6 +1,6 @@
 // apps/web/src/hooks/useAuth/__tests__/useAuth.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '../useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/services/api/authApi';

@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { userRepository } from '../../src/repositories/user.repository.js';
 import { db } from '../../src/config/db.js';
-import { users } from '@repo/shared/db';
 
 // Mock the database
 vi.mock('../../src/config/db.js', () => ({
@@ -41,7 +40,6 @@ describe('UserRepository', () => {
 
   describe('findByProviderAndId', () => {
     it('should return user when found', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
       const mockFrom = vi.fn().mockReturnThis();
       const mockWhere = vi.fn().mockReturnThis();
       const mockLimit = vi.fn().mockResolvedValue([mockDbRow]);
