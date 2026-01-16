@@ -8,6 +8,26 @@
 4. ✅ **Tailwind for all styling** - no CSS modules
 5. ✅ **ErrorBoundaries** at app/page/component levels
 6. ✅ **Adapters for browser APIs** - testable wrappers
+7. ✅ **Arrow functions only** - use `const Foo = () => {}` not `function Foo() {}`
+
+### 12.1.1 Arrow Function Syntax
+
+```typescript
+// ✅ DO: Arrow functions for components
+export const HomePage = () => {
+  return <div>...</div>;
+};
+
+// ✅ DO: Arrow functions for helpers
+const getInitials = (name: string): string => {
+  return name.slice(0, 2).toUpperCase();
+};
+
+// ❌ DON'T: Function declarations
+export function HomePage() {
+  return <div>...</div>;
+}
+```
 
 ### 12.2 Naming Conventions
 

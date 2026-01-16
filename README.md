@@ -208,6 +208,7 @@ vercel --prod  # Deploy from repo root
 ```
 
 Or connect to GitHub for auto-deploy:
+
 1. Go to [vercel.com](https://vercel.com) and import your repository
 2. Environment variables will be read from `vercel.json`
 3. Add `VITE_API_URL` pointing to your API
@@ -217,6 +218,7 @@ Or connect to GitHub for auto-deploy:
 For Express APIs in a pnpm monorepo, Railway or Render provide better DX:
 
 #### Railway
+
 1. Create new project at [railway.app](https://railway.app)
 2. Connect your GitHub repository
 3. Set root directory to `/apps/api`
@@ -227,6 +229,7 @@ For Express APIs in a pnpm monorepo, Railway or Render provide better DX:
    - `PORT`: `3001` (or auto-assigned)
 
 #### Render
+
 1. Create new Web Service at [render.com](https://render.com)
 2. Connect your GitHub repository
 3. Set root directory to `apps/api`
