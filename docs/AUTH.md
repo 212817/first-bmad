@@ -39,6 +39,7 @@ GET /v1/auth/google
 Redirects user to Google consent screen.
 
 **Example (curl):**
+
 ```bash
 # Opens browser for OAuth flow
 curl -v http://localhost:3001/v1/auth/google
@@ -61,16 +62,19 @@ GET /v1/auth/me
 Returns authenticated user info.
 
 **Headers:**
+
 - `Cookie: accessToken={jwt}` (set automatically)
 - OR `Authorization: Bearer {jwt}`
 
 **Example (curl):**
+
 ```bash
 curl -v http://localhost:3001/v1/auth/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -84,6 +88,7 @@ curl -v http://localhost:3001/v1/auth/me \
 ```
 
 **Error Response (401):**
+
 ```json
 {
   "success": false,
@@ -103,12 +108,14 @@ POST /v1/auth/refresh
 Refreshes access token using refresh token cookie.
 
 **Example (curl):**
+
 ```bash
 curl -X POST http://localhost:3001/v1/auth/refresh \
   -H "Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -130,12 +137,14 @@ POST /v1/auth/logout
 Invalidates refresh token and clears cookies.
 
 **Example (curl):**
+
 ```bash
 curl -X POST http://localhost:3001/v1/auth/logout \
   -H "Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -145,10 +154,10 @@ curl -X POST http://localhost:3001/v1/auth/logout \
 
 ## Token Details
 
-| Token | Location | Expiry | Purpose |
-|-------|----------|--------|---------|
-| Access Token | httpOnly cookie `accessToken` | 15 minutes | API authentication |
-| Refresh Token | httpOnly cookie `refreshToken` | 7 days | Obtain new access tokens |
+| Token         | Location                       | Expiry     | Purpose                  |
+| ------------- | ------------------------------ | ---------- | ------------------------ |
+| Access Token  | httpOnly cookie `accessToken`  | 15 minutes | API authentication       |
+| Refresh Token | httpOnly cookie `refreshToken` | 7 days     | Obtain new access tokens |
 
 ## Cookie Settings
 
@@ -163,10 +172,10 @@ curl -X POST http://localhost:3001/v1/auth/logout \
 
 ## Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `AUTHENTICATION_ERROR` | 401 | Missing/invalid/expired token |
-| `AUTHORIZATION_ERROR` | 403 | Valid token but not authorized for resource |
+| Code                   | HTTP Status | Description                                 |
+| ---------------------- | ----------- | ------------------------------------------- |
+| `AUTHENTICATION_ERROR` | 401         | Missing/invalid/expired token               |
+| `AUTHORIZATION_ERROR`  | 403         | Valid token but not authorized for resource |
 
 ## Flow Diagram
 

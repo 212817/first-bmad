@@ -20,11 +20,23 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
   API_BASE_URL: z.string().url().optional(),
   // Google OAuth - use test defaults in test environment
-  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required').default(isTest ? TEST_GOOGLE_ID : ''),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required').default(isTest ? TEST_GOOGLE_SECRET : ''),
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .min(1, 'GOOGLE_CLIENT_ID is required')
+    .default(isTest ? TEST_GOOGLE_ID : ''),
+  GOOGLE_CLIENT_SECRET: z
+    .string()
+    .min(1, 'GOOGLE_CLIENT_SECRET is required')
+    .default(isTest ? TEST_GOOGLE_SECRET : ''),
   // JWT Secrets - use test defaults in test environment
-  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters').default(isTest ? TEST_SECRET : ''),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters').default(isTest ? TEST_SECRET : ''),
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(32, 'JWT_ACCESS_SECRET must be at least 32 characters')
+    .default(isTest ? TEST_SECRET : ''),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters')
+    .default(isTest ? TEST_SECRET : ''),
 });
 
 const parsed = envSchema.safeParse(process.env);

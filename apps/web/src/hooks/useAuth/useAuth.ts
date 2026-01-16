@@ -7,7 +7,15 @@ import type { UseAuthReturn } from './types';
  * Auth hook - provides authentication functionality
  */
 export const useAuth = (): UseAuthReturn => {
-  const { user, isAuthenticated, isLoading, error, setUser, setLoading, logout: clearAuth } = useAuthStore();
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    setUser,
+    setLoading,
+    logout: clearAuth,
+  } = useAuthStore();
 
   /**
    * Initiate OAuth login flow

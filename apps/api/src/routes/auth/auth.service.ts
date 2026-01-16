@@ -35,10 +35,7 @@ export const authService = {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForTokens(
-    code: string,
-    redirectUri: string
-  ): Promise<GoogleTokenResponse> {
+  async exchangeCodeForTokens(code: string, redirectUri: string): Promise<GoogleTokenResponse> {
     const response = await fetch(GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -90,7 +87,7 @@ export const authService = {
 
     if (user) {
       // Update last login
-      user = await userRepository.updateLastLogin(user.id) ?? user;
+      user = (await userRepository.updateLastLogin(user.id)) ?? user;
     } else {
       // Create new user
       user = await userRepository.create({
