@@ -74,3 +74,4 @@ drizzle/meta/
 
 # BMAD core (if not tracked)
 # .bmad-core/
+.vercel
