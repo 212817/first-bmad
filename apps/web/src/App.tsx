@@ -6,26 +6,24 @@ import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 
 const App = () => {
-  const { hydrate, isGuest, isHydrated, exitGuestMode } = useGuestStore();
+  const { hydrate, isGuest, exitGuestMode } = useGuestStore();
   const { setAuthMode, authMode } = useAuthStore();
   const [appReady, setAppReady] = useState(false);
 
-  // Hydrate guest session on app load
+  // Hydrate guest session and sync to auth store on app load
   useEffect(() => {
     const initApp = async () => {
       await hydrate();
+      // Sync guest state to auth store immediately after hydration
+      const guestState = useGuestStore.getState();
+      if (guestState.isGuest) {
+        setAuthMode('guest');
+      }
       setAppReady(true);
     };
     initApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Sync guest state to auth store
-  useEffect(() => {
-    if (isHydrated && isGuest) {
-      setAuthMode('guest');
-    }
-  }, [isHydrated, isGuest, setAuthMode]);
 
   // Clear guest data when user becomes authenticated
   useEffect(() => {

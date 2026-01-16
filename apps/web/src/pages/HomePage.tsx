@@ -72,13 +72,15 @@ export const HomePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check auth status on mount (only if not a guest)
+  // Check auth status on mount (only if not in guest mode)
+  // When OAuth completes, authMode won't be 'guest' yet (it's set after hydration)
+  // so refreshUser will be called and authenticate the user
   useEffect(() => {
-    if (!isGuest) {
+    if (authMode !== 'guest') {
       refreshUser();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuest]);
+  }, []);
 
   useEffect(() => {
     const fetchHealth = async () => {
