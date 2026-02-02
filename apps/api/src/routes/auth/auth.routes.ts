@@ -39,30 +39,34 @@ authRoutes.get('/google', (req, res) => {
 authRoutes.get('/google/callback', async (req, res) => {
   const code = req.query.code as string | undefined;
   const error = req.query.error as string | undefined;
+  const frontendUrl = env.CORS_ORIGINS.split(',')[0];
 
   // Handle OAuth errors
   if (error) {
-    const frontendUrl = env.CORS_ORIGINS.split(',')[0];
     return res.redirect(frontendUrl + '/login?error=' + encodeURIComponent(error));
   }
 
   if (!code) {
-    const frontendUrl = env.CORS_ORIGINS.split(',')[0];
     return res.redirect(frontendUrl + '/login?error=no_code');
   }
 
-  const baseUrl = env.API_BASE_URL || 'http://localhost:3001';
-  const redirectUri = baseUrl + '/v1/auth/google/callback';
+  try {
+    const baseUrl = env.API_BASE_URL || 'http://localhost:3001';
+    const redirectUri = baseUrl + '/v1/auth/google/callback';
 
-  const result = await authService.handleGoogleCallback(code, redirectUri);
+    const result = await authService.handleGoogleCallback(code, redirectUri);
 
-  // Set cookies
-  res.cookie('accessToken', result.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
-  res.cookie('refreshToken', result.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
+    // Set cookies
+    res.cookie('accessToken', result.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
+    res.cookie('refreshToken', result.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
 
-  // Redirect to frontend
-  const frontendUrl = env.CORS_ORIGINS.split(',')[0];
-  res.redirect(frontendUrl + '/');
+    // Redirect to frontend
+    res.redirect(frontendUrl + '/');
+  } catch (err) {
+    console.error('OAuth callback error:', err);
+    const errorMessage = err instanceof Error ? err.message : 'unknown_error';
+    res.redirect(frontendUrl + '/login?error=' + encodeURIComponent(errorMessage));
+  }
 });
 
 /**
