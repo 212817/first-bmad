@@ -9,6 +9,7 @@ import { indexedDbService } from '@/services/storage/indexedDb.service';
 vi.mock('@/services/api/client', () => ({
   apiClient: {
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -227,6 +228,126 @@ describe('spotStore', () => {
       useSpotStore.getState().setError(null);
 
       expect(useSpotStore.getState().error).toBeNull();
+    });
+  });
+
+  describe('updateSpot - authenticated user', () => {
+    const existingSpot = {
+      id: 'spot-123',
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 15,
+      address: null,
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2024-01-15T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+      useSpotStore.setState({ currentSpot: existingSpot });
+    });
+
+    it('should set isSaving to true while updating', async () => {
+      const updatedSpot = { ...existingSpot, photoUrl: 'https://example.com/photo.jpg' };
+      vi.mocked(apiClient.patch).mockResolvedValue({
+        data: { success: true, data: updatedSpot },
+      });
+
+      const updatePromise = useSpotStore
+        .getState()
+        .updateSpot('spot-123', { photoUrl: 'https://example.com/photo.jpg' });
+      expect(useSpotStore.getState().isSaving).toBe(true);
+
+      await updatePromise;
+      expect(useSpotStore.getState().isSaving).toBe(false);
+    });
+
+    it('should call API and update currentSpot on success', async () => {
+      const updatedSpot = { ...existingSpot, photoUrl: 'https://example.com/photo.jpg' };
+      vi.mocked(apiClient.patch).mockResolvedValue({
+        data: { success: true, data: updatedSpot },
+      });
+
+      const result = await useSpotStore
+        .getState()
+        .updateSpot('spot-123', { photoUrl: 'https://example.com/photo.jpg' });
+
+      expect(apiClient.patch).toHaveBeenCalledWith('/v1/spots/spot-123', {
+        photoUrl: 'https://example.com/photo.jpg',
+      });
+      expect(result).toEqual(updatedSpot);
+      expect(useSpotStore.getState().currentSpot).toEqual(updatedSpot);
+    });
+
+    it('should set error on API failure', async () => {
+      vi.mocked(apiClient.patch).mockRejectedValue(new Error('Network error'));
+
+      await expect(
+        useSpotStore.getState().updateSpot('spot-123', { photoUrl: 'test' })
+      ).rejects.toThrow('Network error');
+
+      expect(useSpotStore.getState().error).toBe('Network error');
+      expect(useSpotStore.getState().isSaving).toBe(false);
+    });
+  });
+
+  describe('updateSpot - guest user', () => {
+    const existingSpot = {
+      id: 'spot-123',
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 15,
+      address: null,
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2024-01-15T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: true } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+      useSpotStore.setState({ currentSpot: existingSpot });
+    });
+
+    it('should update in IndexedDB for guest users', async () => {
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(existingSpot);
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const result = await useSpotStore
+        .getState()
+        .updateSpot('spot-123', { photoUrl: 'https://example.com/photo.jpg' });
+
+      expect(indexedDbService.getItem).toHaveBeenCalledWith('spots', 'spot-123');
+      expect(indexedDbService.setItem).toHaveBeenCalledWith(
+        'spots',
+        'spot-123',
+        expect.objectContaining({
+          ...existingSpot,
+          photoUrl: 'https://example.com/photo.jpg',
+        })
+      );
+      expect(apiClient.patch).not.toHaveBeenCalled();
+      expect(result.photoUrl).toBe('https://example.com/photo.jpg');
+    });
+
+    it('should throw error if spot not found in IndexedDB', async () => {
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(null);
+
+      await expect(
+        useSpotStore.getState().updateSpot('spot-123', { photoUrl: 'test' })
+      ).rejects.toThrow('Spot not found');
+
+      expect(useSpotStore.getState().error).toBe('Spot not found');
     });
   });
 });

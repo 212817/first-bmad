@@ -4,7 +4,7 @@ import { apiClient } from '@/services/api/client';
 import { indexedDbService } from '@/services/storage/indexedDb.service';
 import { STORES } from '@/services/storage/types';
 import { useGuestStore } from './guestStore';
-import type { SpotState, SpotActions, Spot, SaveSpotInput } from './spot.types';
+import type { SpotState, SpotActions, Spot, SaveSpotInput, UpdateSpotInput } from './spot.types';
 
 /**
  * Spot store for managing parking spot state
@@ -70,6 +70,50 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
    */
   clearSpot: () => {
     set({ currentSpot: null, error: null });
+  },
+
+  /**
+   * Update an existing spot
+   * Uses API for authenticated users, IndexedDB for guests
+   */
+  updateSpot: async (id: string, data: UpdateSpotInput): Promise<Spot> => {
+    set({ isSaving: true, error: null });
+
+    const isGuest = useGuestStore.getState().isGuest;
+
+    try {
+      let updatedSpot: Spot;
+
+      if (isGuest) {
+        // Update in IndexedDB for guest users
+        const existingSpot = await indexedDbService.getItem<Spot>(STORES.spots, id);
+        if (!existingSpot) {
+          throw new Error('Spot not found');
+        }
+
+        updatedSpot = {
+          ...existingSpot,
+          ...data,
+        };
+
+        await indexedDbService.setItem(STORES.spots, id, updatedSpot);
+      } else {
+        // Update via API for authenticated users
+        const response = await apiClient.patch<{ success: boolean; data: Spot }>(
+          `/v1/spots/${id}`,
+          data
+        );
+
+        updatedSpot = response.data.data;
+      }
+
+      set({ currentSpot: updatedSpot, isSaving: false });
+      return updatedSpot;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update spot';
+      set({ error: message, isSaving: false });
+      throw error;
+    }
   },
 
   /**
