@@ -1,0 +1,60 @@
+# Quality Gate Decision for Story 2.3: Optional Photo Capture
+schema: 1
+story: '2.3'
+story_title: 'Optional Photo Capture'
+gate: CONCERNS
+status_reason: 'Implementation is complete with comprehensive test coverage. Minor test/spec mismatch on download URL expiry (spec says 15min, code uses 1hr) requires alignment.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-02-02T19:19:00Z'
+
+waiver: { active: false }
+
+top_issues:
+  - id: 'TEST-001'
+    severity: low
+    finding: 'Download URL expiry mismatch: AC/DevNotes specify 15min, r2.service uses 3600s (1 hour), test expects 900s (15min)'
+    suggested_action: 'Align DOWNLOAD_URL_EXPIRY constant with spec (900) or update spec/test to reflect 3600 design decision'
+  - id: 'DOC-001'
+    severity: low
+    finding: 'Task 4 states "signed GET URL (15min expiry)" but implementation uses 1 hour'
+    suggested_action: 'Update Dev Notes to reflect actual expiry if 1 hour is intentional design'
+
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 0, low: 2 }
+  recommendations:
+    must_fix: []
+    monitor:
+      - 'URL expiry alignment before production'
+
+evidence:
+  tests_reviewed: 43
+  tests_passing: 42
+  tests_failing: 1
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    ac_gaps: []
+
+# Acceptance Criteria Verification:
+# AC1: Confirmation screen shows "Add Photo" option ✓ (SpotActions component, E2E test)
+# AC2: Opens camera using getUserMedia API (not native) ✓ (useCamera hook)
+# AC3: Photo captured in browser, not saved to gallery ✓ (Canvas capture)
+# AC4: Client-side compression ≤200KB ✓ (imageProcessor.service.ts)
+# AC5: EXIF stripped before processing ✓ (Canvas re-encoding strips metadata)
+# AC6: R2 upload with signed URL ✓ (r2.service.ts, photos.routes.ts)
+# AC7: Photo URL saved with spot record ✓ (usePhotoUpload → updateSpot)
+# AC8: Upload ≤3s on 4G with progress indicator ✓ (XHR progress tracking)
+# AC9: Camera denied → "Upload from Gallery" fallback ✓ (CameraCapture permissionState handling)
+
+# Test Coverage Summary:
+# - useCamera: 18 tests
+# - imageProcessor: 10 tests
+# - r2Service: 8 tests (1 failing - expiry mismatch)
+# - Photos API integration: 8 tests
+# - CameraCapture: (component tests)
+# - E2E: 3 photo-specific tests + full confirmation flow
+
+# Guest Mode Handling:
+# - Photos compressed to ≤100KB for IndexedDB storage
+# - Local keys prefixed with 'local-photo-' for identification
+# - No R2 upload required for guests

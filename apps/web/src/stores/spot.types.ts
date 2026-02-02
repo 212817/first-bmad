@@ -27,6 +27,17 @@ export interface SaveSpotInput {
 }
 
 /**
+ * Input for updating a spot
+ */
+export interface UpdateSpotInput {
+  address?: string | null;
+  photoUrl?: string | null;
+  note?: string | null;
+  floor?: string | null;
+  spotIdentifier?: string | null;
+}
+
+/**
  * Spot store state
  */
 export interface SpotState {
@@ -41,6 +52,7 @@ export interface SpotState {
  */
 export interface SpotActions {
   saveSpot: (position: SaveSpotInput) => Promise<Spot>;
+  updateSpot: (id: string, data: UpdateSpotInput) => Promise<Spot>;
   clearSpot: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

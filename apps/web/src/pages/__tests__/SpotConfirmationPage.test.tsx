@@ -6,6 +6,40 @@ import { SpotConfirmationPage } from '../SpotConfirmationPage';
 import { useSpotStore } from '@/stores/spotStore';
 import type { Spot } from '@/stores/spot.types';
 
+// Mock CameraCapture component
+vi.mock('@/components/camera/CameraCapture', () => ({
+  CameraCapture: ({
+    onCapture,
+    onClose,
+  }: {
+    onCapture: (blob: Blob) => void;
+    onClose: () => void;
+  }) => (
+    <div data-testid="camera-capture">
+      <button data-testid="capture-button" onClick={() => onCapture(new Blob(['test']))}>
+        Capture
+      </button>
+      <button data-testid="close-camera-button" onClick={onClose}>
+        Close
+      </button>
+    </div>
+  ),
+}));
+
+// Mock usePhotoUpload hook
+const mockUploadPhoto = vi.fn();
+const mockResetUpload = vi.fn();
+vi.mock('@/hooks/usePhotoUpload/usePhotoUpload', () => ({
+  usePhotoUpload: () => ({
+    uploadPhoto: mockUploadPhoto,
+    status: 'idle',
+    progress: 0,
+    reset: mockResetUpload,
+    error: null,
+    result: null,
+  }),
+}));
+
 const mockSpot: Spot = {
   id: 'test-spot-123',
   lat: 40.7128,
@@ -133,15 +167,34 @@ describe('SpotConfirmationPage', () => {
   });
 
   describe('action button handlers', () => {
-    it('should log message when Photo action is clicked', () => {
-      const consoleSpy = vi.spyOn(console, 'log');
+    it('should open camera when Photo action is clicked', () => {
       renderWithRouter();
 
+      // Camera should not be visible initially
+      expect(screen.queryByTestId('camera-capture')).not.toBeInTheDocument();
+
+      // Click photo button
       const photoButton = screen.getByTestId('action-button-photo');
       fireEvent.click(photoButton);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Add Photo - Coming in Story 2.3');
-      consoleSpy.mockRestore();
+      // Camera should now be visible
+      expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
+    });
+
+    it('should close camera when close button is clicked', () => {
+      renderWithRouter();
+
+      // Open camera
+      const photoButton = screen.getByTestId('action-button-photo');
+      fireEvent.click(photoButton);
+      expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
+
+      // Close camera
+      const closeButton = screen.getByTestId('close-camera-button');
+      fireEvent.click(closeButton);
+
+      // Camera should be hidden
+      expect(screen.queryByTestId('camera-capture')).not.toBeInTheDocument();
     });
 
     it('should log message when Note action is clicked', () => {

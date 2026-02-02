@@ -14,6 +14,8 @@ const isTest = process.env.NODE_ENV === 'test';
 const TEST_SECRET = 'test-secret-at-least-32-characters-long';
 const TEST_GOOGLE_ID = 'test-client-id';
 const TEST_GOOGLE_SECRET = 'test-client-secret';
+const TEST_R2_ENDPOINT = 'https://test.r2.cloudflarestorage.com';
+const TEST_R2_KEY = 'test-access-key';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -39,6 +41,25 @@ const envSchema = z.object({
     .string()
     .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters')
     .default(isTest ? TEST_SECRET : ''),
+  // Cloudflare R2 - optional in dev/test, required in production
+  R2_ENDPOINT: z
+    .string()
+    .url()
+    .optional()
+    .default(isTest ? TEST_R2_ENDPOINT : ''),
+  R2_ACCESS_KEY_ID: z
+    .string()
+    .optional()
+    .default(isTest ? TEST_R2_KEY : ''),
+  R2_SECRET_ACCESS_KEY: z
+    .string()
+    .optional()
+    .default(isTest ? TEST_R2_KEY : ''),
+  R2_BUCKET_NAME: z
+    .string()
+    .optional()
+    .default(isTest ? 'test-bucket' : 'wdip-photos'),
+  R2_PUBLIC_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

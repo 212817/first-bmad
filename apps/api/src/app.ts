@@ -7,6 +7,7 @@ import { corsOptions } from './config/cors.js';
 import { healthRoutes } from './routes/health/health.routes.js';
 import { authRoutes } from './routes/auth/auth.routes.js';
 import { spotsRoutes } from './routes/spots/spots.routes.js';
+import { photosRoutes } from './routes/photos/photos.routes.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
 
 export function createApp(): Express {
@@ -25,6 +26,7 @@ export function createApp(): Express {
   app.use('/health', healthRoutes);
   app.use('/v1/auth', authRoutes);
   app.use('/v1/spots', spotsRoutes);
+  app.use('/v1/photos', photosRoutes);
 
   // Error handling
   app.use(notFoundMiddleware);
