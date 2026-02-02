@@ -435,8 +435,7 @@ describe('usePhotoUpload', () => {
       expect(imageProcessor.processImage).toHaveBeenNthCalledWith(2, mockProcessedBlob, {
         maxSizeKB: 100,
         maxDimension: 800,
-        quality: 0.7,
-        format: 'jpeg',
+        initialQuality: 0.7,
       });
     });
 
