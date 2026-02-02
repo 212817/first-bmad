@@ -7,6 +7,26 @@ import { SpotConfirmationPage } from '@/pages/SpotConfirmationPage';
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 
+/**
+ * Extract tokens from URL hash (Safari/iOS workaround for cross-origin cookies)
+ * Returns tokens and cleans up the URL
+ */
+const extractTokensFromHash = (): { accessToken?: string; refreshToken?: string } | null => {
+  const hash = window.location.hash;
+  if (!hash || !hash.includes('access_token')) return null;
+
+  const params = new URLSearchParams(hash.slice(1)); // Remove leading #
+  const accessToken = params.get('access_token') || undefined;
+  const refreshToken = params.get('refresh_token') || undefined;
+
+  // Clean up URL (remove hash)
+  if (accessToken) {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+
+  return accessToken ? { accessToken, refreshToken } : null;
+};
+
 const App = () => {
   const { hydrate, isGuest, exitGuestMode } = useGuestStore();
   const { setAuthMode, authMode } = useAuthStore();
@@ -15,6 +35,16 @@ const App = () => {
   // Hydrate guest session and sync to auth store on app load
   useEffect(() => {
     const initApp = async () => {
+      // Check for tokens in URL hash (Safari/iOS workaround)
+      const hashTokens = extractTokensFromHash();
+      if (hashTokens?.accessToken) {
+        // Store tokens in localStorage for Safari/iOS where cookies don't work
+        localStorage.setItem('accessToken', hashTokens.accessToken);
+        if (hashTokens.refreshToken) {
+          localStorage.setItem('refreshToken', hashTokens.refreshToken);
+        }
+      }
+
       await hydrate();
       // Sync guest state to auth store immediately after hydration
       const guestState = useGuestStore.getState();
