@@ -7,6 +7,8 @@ import {
   timestamp,
   boolean,
   doublePrecision,
+  integer,
+  index,
 } from 'drizzle-orm/pg-core';
 
 // Users table
@@ -23,22 +25,28 @@ export const users = pgTable('users', {
 });
 
 // Parking spots table
-export const parkingSpots = pgTable('parking_spots', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  latitude: doublePrecision('latitude').notNull(),
-  longitude: doublePrecision('longitude').notNull(),
-  address: text('address'),
-  photoUrl: text('photo_url'),
-  note: text('note'),
-  floor: varchar('floor', { length: 50 }),
-  spotIdentifier: varchar('spot_identifier', { length: 100 }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const parkingSpots = pgTable(
+  'parking_spots',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    latitude: doublePrecision('latitude').notNull(),
+    longitude: doublePrecision('longitude').notNull(),
+    accuracyMeters: integer('accuracy_meters'),
+    address: text('address'),
+    photoUrl: text('photo_url'),
+    note: text('note'),
+    floor: varchar('floor', { length: 50 }),
+    spotIdentifier: varchar('spot_identifier', { length: 100 }),
+    isActive: boolean('is_active').notNull().default(true),
+    savedAt: timestamp('saved_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_spots_user_saved').on(table.userId, table.savedAt)]
+);
 
 // Car tags table
 export const carTags = pgTable('car_tags', {

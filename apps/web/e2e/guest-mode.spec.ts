@@ -38,8 +38,8 @@ test.describe('Guest Mode', () => {
     // Should see guest mode banner
     await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
 
-    // Should see "Sign in to sync" link
-    await expect(page.getByRole('link', { name: /sign in to sync/i })).toBeVisible();
+    // Should see "Sign in to sync" button
+    await expect(page.getByRole('button', { name: /sign in to sync/i })).toBeVisible();
   });
 
   test('guest state persists after page refresh (AC7)', async ({ page }) => {

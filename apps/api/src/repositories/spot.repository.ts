@@ -1,0 +1,123 @@
+// apps/api/src/repositories/spot.repository.ts
+import { eq, desc } from 'drizzle-orm';
+import { db } from '../config/db.js';
+import { parkingSpots } from '@repo/shared/db';
+import type { ParkingSpot } from '@repo/shared/types';
+import type { CreateSpotInput, UpdateSpotInput, SpotRepositoryInterface } from './spot.types.js';
+
+/**
+ * Safely converts a value to a Date object
+ */
+const toDate = (value: Date | string | null | undefined): Date => {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' && value) return new Date(value);
+  return new Date(); // fallback to current time if null/undefined
+};
+
+/**
+ * Maps database row to ParkingSpot entity
+ */
+const mapToSpot = (row: typeof parkingSpots.$inferSelect): ParkingSpot => ({
+  id: row.id,
+  userId: row.userId,
+  latitude: row.latitude,
+  longitude: row.longitude,
+  accuracyMeters: row.accuracyMeters,
+  address: row.address,
+  photoUrl: row.photoUrl,
+  note: row.note,
+  floor: row.floor,
+  spotIdentifier: row.spotIdentifier,
+  isActive: row.isActive,
+  savedAt: toDate(row.savedAt),
+  createdAt: toDate(row.createdAt),
+  updatedAt: toDate(row.updatedAt),
+});
+
+/**
+ * Spot repository - data access layer for parking_spots table
+ */
+export const spotRepository: SpotRepositoryInterface = {
+  /**
+   * Create a new parking spot
+   */
+  async create(input: CreateSpotInput): Promise<ParkingSpot> {
+    const rows = await db
+      .insert(parkingSpots)
+      .values({
+        userId: input.userId,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        accuracyMeters: input.accuracyMeters ?? null,
+        address: input.address ?? null,
+        photoUrl: input.photoUrl ?? null,
+        note: input.note ?? null,
+        floor: input.floor ?? null,
+        spotIdentifier: input.spotIdentifier ?? null,
+      })
+      .returning();
+
+    return mapToSpot(rows[0]!);
+  },
+
+  /**
+   * Find spot by ID
+   */
+  async findById(id: string): Promise<ParkingSpot | null> {
+    const rows = await db.select().from(parkingSpots).where(eq(parkingSpots.id, id)).limit(1);
+    return rows[0] ? mapToSpot(rows[0]) : null;
+  },
+
+  /**
+   * Find spots by user ID, ordered by savedAt descending
+   */
+  async findByUserId(userId: string, limit = 50): Promise<ParkingSpot[]> {
+    const rows = await db
+      .select()
+      .from(parkingSpots)
+      .where(eq(parkingSpots.userId, userId))
+      .orderBy(desc(parkingSpots.savedAt))
+      .limit(limit);
+
+    return rows.map(mapToSpot);
+  },
+
+  /**
+   * Find the active spot for a user (most recent with isActive = true)
+   */
+  async findActiveByUserId(userId: string): Promise<ParkingSpot | null> {
+    const rows = await db
+      .select()
+      .from(parkingSpots)
+      .where(eq(parkingSpots.userId, userId))
+      .orderBy(desc(parkingSpots.savedAt))
+      .limit(1);
+
+    const spot = rows[0];
+    return spot && spot.isActive ? mapToSpot(spot) : null;
+  },
+
+  /**
+   * Update a spot
+   */
+  async update(id: string, input: UpdateSpotInput): Promise<ParkingSpot | null> {
+    const rows = await db
+      .update(parkingSpots)
+      .set({
+        ...input,
+        updatedAt: new Date(),
+      })
+      .where(eq(parkingSpots.id, id))
+      .returning();
+
+    return rows[0] ? mapToSpot(rows[0]) : null;
+  },
+
+  /**
+   * Delete a spot (hard delete)
+   */
+  async delete(id: string): Promise<boolean> {
+    const result = await db.delete(parkingSpots).where(eq(parkingSpots.id, id)).returning();
+    return result.length > 0;
+  },
+};

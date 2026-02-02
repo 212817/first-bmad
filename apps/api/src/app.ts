@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { corsOptions } from './config/cors.js';
 import { healthRoutes } from './routes/health/health.routes.js';
 import { authRoutes } from './routes/auth/auth.routes.js';
+import { spotsRoutes } from './routes/spots/spots.routes.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
 
 export function createApp(): Express {
@@ -23,6 +24,7 @@ export function createApp(): Express {
   // Routes
   app.use('/health', healthRoutes);
   app.use('/v1/auth', authRoutes);
+  app.use('/v1/spots', spotsRoutes);
 
   // Error handling
   app.use(notFoundMiddleware);
