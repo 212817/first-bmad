@@ -197,15 +197,12 @@ describe('SpotConfirmationPage', () => {
       expect(screen.queryByTestId('camera-capture')).not.toBeInTheDocument();
     });
 
-    it('should log message when Note action is clicked', () => {
-      const consoleSpy = vi.spyOn(console, 'log');
+    it('should show note input immediately on confirmation page', () => {
       renderWithRouter();
 
-      const noteButton = screen.getByTestId('action-button-note');
-      fireEvent.click(noteButton);
-
-      expect(consoleSpy).toHaveBeenCalledWith('Add Note - Coming in Story 2.5');
-      consoleSpy.mockRestore();
+      // Note section should be visible immediately (no button click needed)
+      expect(screen.getByTestId('note-section')).toBeInTheDocument();
+      expect(screen.getByTestId('note-input-textarea')).toBeInTheDocument();
     });
 
     it('should log message when Tag action is clicked', () => {

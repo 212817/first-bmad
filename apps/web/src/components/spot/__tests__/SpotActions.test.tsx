@@ -42,13 +42,6 @@ describe('SpotActions', () => {
       expect(screen.getByTestId('action-button-gallery')).toBeInTheDocument();
     });
 
-    it('should render Note action button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByTestId('action-button-note')).toBeInTheDocument();
-    });
-
     it('should render Tag action button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
@@ -73,14 +66,6 @@ describe('SpotActions', () => {
 
       const photoButton = screen.getByTestId('action-button-photo-✓');
       expect(photoButton).toBeInTheDocument();
-    });
-
-    it('should show Note ✓ button as active when note exists', () => {
-      const spot = createMockSpot({ note: 'Test note' });
-      render(<SpotActions spot={spot} />);
-
-      const noteButton = screen.getByTestId('action-button-note-✓');
-      expect(noteButton).toBeInTheDocument();
     });
 
     it('should show Camera button without checkmark when no photo', () => {
@@ -109,15 +94,6 @@ describe('SpotActions', () => {
 
       fireEvent.click(screen.getByTestId('action-button-gallery'));
       expect(onGalleryClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call onNoteClick when Note button is clicked', () => {
-      const onNoteClick = vi.fn();
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} onNoteClick={onNoteClick} />);
-
-      fireEvent.click(screen.getByTestId('action-button-note'));
-      expect(onNoteClick).toHaveBeenCalledTimes(1);
     });
 
     it('should call onTagClick when Tag button is clicked', () => {
@@ -155,13 +131,6 @@ describe('SpotActions', () => {
       expect(screen.getByText('Gallery')).toBeInTheDocument();
     });
 
-    it('should display "Note" label on Note button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByText('Note')).toBeInTheDocument();
-    });
-
     it('should display "Tag" label on Tag button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
@@ -190,13 +159,6 @@ describe('SpotActions', () => {
       render(<SpotActions spot={spot} />);
 
       expect(screen.getByText('🖼️')).toBeInTheDocument();
-    });
-
-    it('should display note emoji for Note button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByText('📝')).toBeInTheDocument();
     });
 
     it('should display car emoji for Tag button', () => {

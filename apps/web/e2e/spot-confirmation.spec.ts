@@ -94,7 +94,7 @@ test.describe('Spot Confirmation Page', () => {
     await expect(relativeTime).toContainText('Just now');
   });
 
-  test('displays action buttons for photo, note, tag, timer (AC4)', async ({ page }) => {
+  test('displays action buttons for photo, gallery, tag, timer (AC4)', async ({ page }) => {
     // Enter guest mode
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
@@ -112,10 +112,9 @@ test.describe('Spot Confirmation Page', () => {
     // Wait for confirmation page
     await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
 
-    // Should display all action buttons
+    // Should display action buttons (Note is now inline, not a button)
     await expect(page.getByTestId('action-button-camera')).toBeVisible();
     await expect(page.getByTestId('action-button-gallery')).toBeVisible();
-    await expect(page.getByTestId('action-button-note')).toBeVisible();
     await expect(page.getByTestId('action-button-tag')).toBeVisible();
     await expect(page.getByTestId('action-button-timer')).toBeVisible();
 
@@ -308,6 +307,119 @@ test.describe('Spot Confirmation Page', () => {
       await expect(galleryButton).toBeVisible();
       await expect(galleryButton).toContainText('🖼️');
       await expect(galleryButton).toContainText('Gallery');
+    });
+  });
+
+  test.describe('Note Input', () => {
+    test('note input is immediately visible on confirmation page (AC1)', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Note section should be visible immediately (no button click needed)
+      await expect(page.getByTestId('note-section')).toBeVisible();
+      await expect(page.getByTestId('note-input-textarea')).toBeVisible();
+    });
+
+    test('note input has placeholder with examples (AC6)', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Textarea should be visible with placeholder
+      const textarea = page.getByTestId('note-input-textarea');
+      await expect(textarea).toBeVisible();
+      await expect(textarea).toHaveAttribute(
+        'placeholder',
+        'Add Note: P2, near elevator • Blue pillar • Row G'
+      );
+    });
+
+    test('note input shows character counter (AC2)', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Character counter should show 0/500
+      await expect(page.getByTestId('note-input-counter')).toContainText('0/500');
+
+      // Type some text
+      const textarea = page.getByTestId('note-input-textarea');
+      await textarea.fill('Near the elevator');
+
+      // Counter should update
+      await expect(page.getByTestId('note-input-counter')).toContainText('17/500');
+    });
+
+    test('note is saved on blur (AC3)', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Type note
+      const textarea = page.getByTestId('note-input-textarea');
+      await textarea.fill('Level P2, Row B');
+
+      // Click elsewhere to trigger blur and save
+      await page.getByTestId('spot-detail-card').click();
+
+      // Wait a moment for save to complete
+      await page.waitForTimeout(500);
+
+      // Verify note value persists in textarea
+      await expect(textarea).toHaveValue('Level P2, Row B');
     });
   });
 });

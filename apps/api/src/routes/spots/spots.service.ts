@@ -108,6 +108,13 @@ export const spotsService = {
     spotId: string,
     input: UpdateSpotRequest
   ): Promise<SpotResponse> {
+    // Validate note length (max 500 characters)
+    if (input.note !== undefined && input.note !== null && input.note.length > 500) {
+      throw new ValidationError('Note must be 500 characters or less', {
+        note: 'Note must be 500 characters or less',
+      });
+    }
+
     const spot = await spotRepository.findById(spotId);
 
     if (!spot) {

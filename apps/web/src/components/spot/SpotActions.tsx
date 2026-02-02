@@ -47,7 +47,6 @@ export const SpotActions = ({
   spot,
   onPhotoClick,
   onGalleryClick,
-  onNoteClick,
   onTagClick,
   onTimerClick,
 }: SpotActionsProps) => {
@@ -63,14 +62,6 @@ export const SpotActions = ({
 
       {/* Gallery Upload Button */}
       <ActionButton icon="🖼️" label="Gallery" onClick={onGalleryClick} />
-
-      {/* Note Button */}
-      <ActionButton
-        icon="📝"
-        label={spot.note ? 'Note ✓' : 'Note'}
-        onClick={onNoteClick}
-        active={!!spot.note}
-      />
 
       {/* Car Tag Button */}
       <ActionButton icon="🚗" label="Tag" onClick={onTagClick} />
