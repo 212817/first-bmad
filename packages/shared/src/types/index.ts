@@ -29,12 +29,14 @@ export interface ParkingSpot {
   userId: string;
   latitude: number;
   longitude: number;
+  accuracyMeters: number | null;
   address: string | null;
   photoUrl: string | null;
   note: string | null;
   floor: string | null;
   spotIdentifier: string | null;
   isActive: boolean;
+  savedAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
