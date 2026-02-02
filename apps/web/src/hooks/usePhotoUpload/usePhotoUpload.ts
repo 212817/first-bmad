@@ -104,8 +104,7 @@ export const usePhotoUpload = (): UsePhotoUploadReturn => {
     const compressedResult = await imageProcessor.processImage(blob, {
       maxSizeKB: GUEST_MAX_SIZE_KB,
       maxDimension: 800, // Smaller dimension for guests
-      quality: 0.7,
-      format: 'jpeg',
+      initialQuality: 0.7,
     });
 
     setState((s) => ({ ...s, progress: 70 }));
