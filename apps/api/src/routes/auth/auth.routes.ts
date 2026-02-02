@@ -59,12 +59,14 @@ authRoutes.get('/google/callback', async (req, res) => {
 
     const result = await authService.handleGoogleCallback(code, redirectUri);
 
-    // Set cookies
+    // Set cookies (works on desktop browsers)
     res.cookie('accessToken', result.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
     res.cookie('refreshToken', result.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
 
-    // Redirect to frontend
-    res.redirect(frontendUrl + '/');
+    // Also pass tokens in URL fragment for Safari/iOS which blocks cross-origin cookies
+    // The hash fragment is not sent to server, only available to client JS
+    const tokenFragment = `#access_token=${result.accessToken}&refresh_token=${result.refreshToken}`;
+    res.redirect(frontendUrl + '/' + tokenFragment);
   } catch (err) {
     console.error('OAuth callback error:', err);
     const errorMessage = err instanceof Error ? err.message : 'unknown_error';
@@ -91,10 +93,13 @@ authRoutes.get('/me', authMiddleware, async (req, res) => {
 
 /**
  * POST /auth/refresh
- * Refreshes access token using refresh token cookie
+ * Refreshes access token using refresh token cookie or body
  */
 authRoutes.post('/refresh', async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken as string | undefined;
+  // Try cookie first, then body (Safari/iOS fallback)
+  const refreshToken =
+    (req.cookies?.refreshToken as string | undefined) ||
+    (req.body?.refreshToken as string | undefined);
 
   if (!refreshToken) {
     res.status(401).json({
@@ -109,9 +114,11 @@ authRoutes.post('/refresh', async (req, res) => {
   // Set new access token cookie
   res.cookie('accessToken', result.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
 
+  // Return token in body for Safari/iOS where cookies don't work
   res.json({
     success: true,
     data: {
+      accessToken: result.accessToken,
       id: result.user.id,
       email: result.user.email,
       displayName: result.user.displayName,
@@ -125,7 +132,10 @@ authRoutes.post('/refresh', async (req, res) => {
  * Invalidates refresh token and clears cookies
  */
 authRoutes.post('/logout', async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken as string | undefined;
+  // Try cookie first, then body (Safari/iOS fallback)
+  const refreshToken =
+    (req.cookies?.refreshToken as string | undefined) ||
+    (req.body?.refreshToken as string | undefined);
 
   if (refreshToken) {
     await authService.logout(refreshToken);

@@ -26,8 +26,19 @@ export const authApi = {
   /**
    * Refresh access token
    */
-  async refresh(): Promise<CurrentUser> {
-    const response = await apiClient.post<{ success: true; data: CurrentUser }>('/v1/auth/refresh');
+  async refresh(): Promise<CurrentUser & { accessToken?: string }> {
+    // Send refresh token in body for Safari/iOS where cookies don't work
+    const refreshToken = localStorage.getItem('refreshToken');
+    const response = await apiClient.post<{
+      success: true;
+      data: CurrentUser & { accessToken?: string };
+    }>('/v1/auth/refresh', refreshToken ? { refreshToken } : {});
+
+    // Store new access token
+    if (response.data.data.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+    }
+
     return response.data.data;
   },
 
@@ -35,6 +46,11 @@ export const authApi = {
    * Logout - invalidate session
    */
   async logout(): Promise<void> {
-    await apiClient.post('/v1/auth/logout');
+    // Send refresh token in body for Safari/iOS where cookies don't work
+    const refreshToken = localStorage.getItem('refreshToken');
+    await apiClient.post('/v1/auth/logout', refreshToken ? { refreshToken } : {});
+    // Clear localStorage tokens
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   },
 };

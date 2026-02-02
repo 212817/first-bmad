@@ -49,7 +49,18 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh the access token
-        await apiClient.post('/v1/auth/refresh');
+        // Send refresh token in body for Safari/iOS where cookies don't work
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await apiClient.post<{ success: true; data: { accessToken?: string } }>(
+          '/v1/auth/refresh',
+          refreshToken ? { refreshToken } : {}
+        );
+
+        // Store new access token if returned
+        if (response.data?.data?.accessToken) {
+          localStorage.setItem('accessToken', response.data.data.accessToken);
+        }
+
         isRefreshing = false;
 
         // Retry the original request
@@ -57,6 +68,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         // Redirect to login if refresh also fails
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
