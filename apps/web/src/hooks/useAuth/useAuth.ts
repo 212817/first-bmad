@@ -15,6 +15,7 @@ export const useAuth = (): UseAuthReturn => {
     error,
     setUser,
     setLoading,
+    setLoggingOut,
     logout: clearAuth,
   } = useAuthStore();
 
@@ -39,7 +40,7 @@ export const useAuth = (): UseAuthReturn => {
    */
   const logout = async (): Promise<void> => {
     try {
-      setLoading(true);
+      setLoggingOut(true);
       await authApi.logout();
       clearAuth();
     } catch (err) {

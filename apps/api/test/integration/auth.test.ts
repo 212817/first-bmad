@@ -92,5 +92,44 @@ describe('Auth API', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeNull();
     });
+
+    it('should clear accessToken cookie', async () => {
+      const response = await request(app).post('/v1/auth/logout');
+
+      const cookies = response.headers['set-cookie'] as string[];
+      const accessTokenCookie = cookies?.find((c) => c.startsWith('accessToken='));
+
+      expect(accessTokenCookie).toBeDefined();
+      // Cookie should be cleared (empty value and expired)
+      expect(accessTokenCookie).toMatch(/accessToken=;/);
+    });
+
+    it('should clear refreshToken cookie', async () => {
+      const response = await request(app).post('/v1/auth/logout');
+
+      const cookies = response.headers['set-cookie'] as string[];
+      const refreshTokenCookie = cookies?.find((c) => c.startsWith('refreshToken='));
+
+      expect(refreshTokenCookie).toBeDefined();
+      // Cookie should be cleared (empty value and expired)
+      expect(refreshTokenCookie).toMatch(/refreshToken=;/);
+    });
+
+    it('should work even without cookies (idempotent)', async () => {
+      // Call logout without any cookies set
+      const response = await request(app).post('/v1/auth/logout');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should work with expired/invalid refresh token', async () => {
+      const response = await request(app)
+        .post('/v1/auth/logout')
+        .set('Cookie', 'refreshToken=invalid-expired-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
   });
 });
