@@ -170,16 +170,77 @@ pnpm --filter @repo/web test:watch   # Watch mode for frontend
 
 ## CI/CD
 
-GitHub Actions runs on every PR to `main`:
+### Git Branching Strategy
 
-- **Format Check**: Verifies code formatting
-- **Lint**: Runs ESLint
-- **Build**: Ensures TypeScript compiles
-- **Test**: Runs all tests
+```
+main (production)
+ ↑
+ └── release/x.x.x (PR to main triggers production deploy)
+      ↑
+      └── dev (integration branch)
+           ↑
+           └── feature/* | fix/* | chore/* (PRs to dev)
+```
+
+| Branch          | Purpose      | CI Checks             | Deployment                      |
+| --------------- | ------------ | --------------------- | ------------------------------- |
+| `main`          | Production   | Full CI + Deploy      | Auto-deploy to Vercel & Railway |
+| `dev`           | Integration  | Full CI               | None (staging if needed)        |
+| `feature/*`     | New features | Full CI on PR to dev  | None                            |
+| `fix/*`         | Bug fixes    | Full CI on PR to dev  | None                            |
+| `release/x.x.x` | Release prep | Full CI on PR to main | Production on merge             |
+
+### Development Workflow
+
+1. **Create feature branch from `dev`**:
+
+   ```bash
+   git checkout dev
+   git pull origin dev
+   git checkout -b feature/my-feature
+   ```
+
+2. **Make changes and push**:
+
+   ```bash
+   git add .
+   git commit -m "feat: add new feature"
+   git push -u origin feature/my-feature
+   ```
+
+3. **Create PR to `dev`** - CI runs automatically:
+   - Format Check
+   - Lint
+   - TypeScript Check
+   - Build
+   - Unit Tests
+   - E2E Tests (on PRs)
+
+4. **After code review, merge to `dev`**
+
+### Release Workflow
+
+1. **Create release branch from `dev`**:
+
+   ```bash
+   git checkout dev
+   git pull origin dev
+   git checkout -b release/1.0.0
+   git push -u origin release/1.0.0
+   ```
+
+2. **Create PR from `release/1.0.0` to `main`**
+
+3. **On merge to `main`**:
+   - Full CI checks run
+   - Auto-deploy to production (Vercel + Railway)
+   - GitHub Release created automatically
 
 ### Branch Protection Setup
 
-To enable branch protection on `main`:
+Configure branch protection for both `main` and `dev`:
+
+#### For `main` branch (production):
 
 1. Go to **Settings > Branches** in your GitHub repository
 2. Click **Add branch protection rule**
@@ -188,12 +249,27 @@ To enable branch protection on `main`:
    - ✅ Require a pull request before merging
    - ✅ Require status checks to pass before merging
    - ✅ Require branches to be up to date before merging
+   - ✅ Require conversation resolution before merging
 5. Select required status checks:
+   - `CI Checks` (from deploy.yml)
+6. Click **Create**
+
+#### For `dev` branch (integration):
+
+1. Add another branch protection rule
+2. Set **Branch name pattern** to `dev`
+3. Enable:
+   - ✅ Require a pull request before merging
+   - ✅ Require status checks to pass before merging
+   - ✅ Require branches to be up to date before merging
+4. Select required status checks:
    - `Format Check`
    - `Lint`
+   - `TypeScript Check`
    - `Build`
    - `Test`
-6. Click **Create**
+   - `E2E Tests`
+5. Click **Create**
 
 ## Deployment
 
