@@ -5,5 +5,10 @@
   "installCommand": "npm i -g pnpm && pnpm install",
   "buildCommand": "pnpm --filter web build",
   "outputDirectory": "apps/web/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
