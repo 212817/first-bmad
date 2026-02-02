@@ -2,8 +2,10 @@
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-// Load .env from monorepo root
-config({ path: '../../.env' });
+// Load .env from monorepo root (only in development, production uses injected env vars)
+if (process.env.NODE_ENV !== 'production') {
+  config({ path: '../../.env' });
+}
 
 // Check if we're in test mode
 const isTest = process.env.NODE_ENV === 'test';
