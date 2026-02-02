@@ -30,7 +30,7 @@ test.describe('Save Spot', () => {
     await expect(saveButton).toContainText('Save my spot');
   });
 
-  test('saves spot to IndexedDB in guest mode with success message (AC4, AC6)', async ({
+  test('saves spot to IndexedDB in guest mode and navigates to confirmation (AC4, AC6)', async ({
     page,
     context,
   }) => {
@@ -57,9 +57,9 @@ test.describe('Save Spot', () => {
       await enableButton.click();
     }
 
-    // Wait for success message (AC6 - shows feedback after save)
-    await expect(page.getByTestId('success-message')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Spot saved successfully!')).toBeVisible();
+    // Should navigate to confirmation page (AC6 - shows feedback after save)
+    await expect(page).toHaveURL(/\/spot\/.*\/confirm/, { timeout: 15000 });
+    await expect(page.getByText('Spot Saved!')).toBeVisible();
   });
 
   test('saved spot data includes required fields (AC7)', async ({ page, context }) => {
@@ -86,8 +86,8 @@ test.describe('Save Spot', () => {
       await enableButton.click();
     }
 
-    // Wait for success message
-    await expect(page.getByTestId('success-message')).toBeVisible({ timeout: 15000 });
+    // Wait for confirmation page
+    await expect(page).toHaveURL(/\/spot\/.*\/confirm/, { timeout: 15000 });
 
     // Verify spot data structure in IndexedDB
     const spotData = await page.evaluate(async (dbName) => {
@@ -146,7 +146,7 @@ test.describe('Save Spot', () => {
     await expect(page.getByRole('button', { name: /enter address manually/i })).toBeVisible();
   });
 
-  test('dismiss button closes success message', async ({ page, context }) => {
+  test('Done button on confirmation page returns to home', async ({ page, context }) => {
     // Grant geolocation permission
     await context.grantPermissions(['geolocation']);
     await context.setGeolocation({
@@ -170,13 +170,14 @@ test.describe('Save Spot', () => {
       await enableButton.click();
     }
 
-    // Wait for success message
-    await expect(page.getByTestId('success-message')).toBeVisible({ timeout: 15000 });
+    // Wait for confirmation page
+    await expect(page).toHaveURL(/\/spot\/.*\/confirm/, { timeout: 15000 });
 
-    // Click dismiss
-    await page.getByRole('button', { name: /dismiss/i }).click();
+    // Click Done button
+    await page.getByTestId('done-button').click();
 
-    // Success message should be hidden
-    await expect(page.getByTestId('success-message')).not.toBeVisible();
+    // Should be back on home page
+    await expect(page).toHaveURL('/');
+    await expect(page.getByTestId('save-spot-button')).toBeVisible();
   });
 });
