@@ -36,6 +36,9 @@ export const authService = {
    * Exchange authorization code for tokens
    */
   async exchangeCodeForTokens(code: string, redirectUri: string): Promise<GoogleTokenResponse> {
+    console.log('Token exchange - redirectUri:', redirectUri);
+    console.log('Token exchange - client_id:', env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+
     const response = await fetch(GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -49,9 +52,13 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Google token exchange failed:', error);
-      throw new AuthenticationError('Failed to exchange authorization code');
+      const errorText = await response.text();
+      console.error('Google token exchange failed:', {
+        status: response.status,
+        redirectUri,
+        error: errorText,
+      });
+      throw new AuthenticationError(`Failed to exchange authorization code: ${errorText}`);
     }
 
     return response.json() as Promise<GoogleTokenResponse>;
