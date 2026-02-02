@@ -19,7 +19,11 @@ export const errorMiddleware: ErrorRequestHandler = (
   res: Response<ErrorResponse>,
   _next: NextFunction
 ): void => {
-  console.error('Error:', err);
+  // Only log unexpected errors, not operational ones (like 401 auth failures)
+  const isOperational = err instanceof AppError && err.isOperational;
+  if (!isOperational) {
+    console.error('Error:', err);
+  }
 
   // Handle AppError (our custom errors)
   if (err instanceof AppError) {

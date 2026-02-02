@@ -199,7 +199,7 @@ To enable branch protection on `main`:
 
 ### Frontend (Vercel)
 
-**Live URL**: https://first-bmad.vercel.app
+**Live URL**: <https://first-bmad.vercel.app>
 
 The frontend is configured to deploy from the monorepo root using `vercel.json`:
 
