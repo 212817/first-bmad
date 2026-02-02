@@ -29,7 +29,7 @@ const ActionButton = ({
               : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
         }
       `}
-      data-testid={`action-button-${label.toLowerCase()}`}
+      data-testid={`action-button-${label.toLowerCase().replace(/\s+/g, '-')}`}
     >
       <span className="text-2xl mb-1" aria-hidden="true">
         {icon}
@@ -41,24 +41,28 @@ const ActionButton = ({
 
 /**
  * Action buttons section for spot confirmation page
- * Provides quick access to add photo, note, tag, and timer
+ * Provides quick access to add photo, gallery, note, tag, and timer
  */
 export const SpotActions = ({
   spot,
   onPhotoClick,
+  onGalleryClick,
   onNoteClick,
   onTagClick,
   onTimerClick,
 }: SpotActionsProps) => {
   return (
     <div className="flex gap-3 py-2 overflow-x-auto scrollbar-hide" data-testid="spot-actions">
-      {/* Photo Button */}
+      {/* Camera Photo Button */}
       <ActionButton
         icon="📷"
-        label={spot.photoUrl ? 'Photo ✓' : 'Photo'}
+        label={spot.photoUrl ? 'Photo ✓' : 'Camera'}
         onClick={onPhotoClick}
         active={!!spot.photoUrl}
       />
+
+      {/* Gallery Upload Button */}
+      <ActionButton icon="🖼️" label="Gallery" onClick={onGalleryClick} />
 
       {/* Note Button */}
       <ActionButton

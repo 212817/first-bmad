@@ -1,0 +1,43 @@
+# Quality Gate Decision for Story 2.4: Photo Upload from Gallery
+schema: 1
+story: '2.4'
+story_title: 'Photo Upload from Gallery'
+gate: PASS
+status_reason: 'Implementation complete with comprehensive test coverage. All 6 acceptance criteria verified. Clean reuse of Story 2.3 infrastructure with proper HEIC/large file handling.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-02-02T20:00:00Z'
+
+waiver: { active: false }
+
+top_issues: []
+
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 0, low: 0 }
+  recommendations:
+    must_fix: []
+    monitor: []
+
+evidence:
+  tests_reviewed: 24
+  tests_passing: 24
+  tests_failing: 0
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6]
+    ac_gaps: []
+
+# Acceptance Criteria Verification:
+# AC1: "Upload from Gallery" option on confirmation screen ✓ (SpotActions, E2E test)
+# AC2: Opens device file picker for images ✓ (useFilePicker hook)
+# AC3: Photo compressed and EXIF-stripped same as camera ✓ (imageProcessor.processImage)
+# AC4: Photo uploaded to Cloudflare R2 ✓ (usePhotoUpload hook reuse)
+# AC5: Cross-browser support (iOS Safari, Android Chrome, desktop) ✓ (HEIC detection)
+# AC6: Large file handling (resize before compression) ✓ (>5MB → 2000px maxDimension)
+
+# Key Implementation Details:
+# - useFilePicker hook: Clean async API with cancel handling and HEIC detection
+# - GalleryUploadButton: Reuses imageProcessor and usePhotoUpload from Story 2.3
+# - SpotActions: Gallery button added alongside Camera button
+# - SpotConfirmationPage: handleGalleryClick integrates full upload flow
+# - Large files (>5MB) resized to 2000px before compression
+# - Final output constrained to ≤200KB via iterative quality reduction

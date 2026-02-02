@@ -28,11 +28,18 @@ describe('SpotActions', () => {
       expect(screen.getByTestId('spot-actions')).toBeInTheDocument();
     });
 
-    it('should render Photo action button', () => {
+    it('should render Camera action button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
 
-      expect(screen.getByTestId('action-button-photo')).toBeInTheDocument();
+      expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
+    });
+
+    it('should render Gallery action button', () => {
+      const spot = createMockSpot();
+      render(<SpotActions spot={spot} />);
+
+      expect(screen.getByTestId('action-button-gallery')).toBeInTheDocument();
     });
 
     it('should render Note action button', () => {
@@ -60,39 +67,48 @@ describe('SpotActions', () => {
   });
 
   describe('active states', () => {
-    it('should show Photo button as active when photoUrl exists', () => {
+    it('should show Photo ✓ button as active when photoUrl exists', () => {
       const spot = createMockSpot({ photoUrl: 'https://example.com/photo.jpg' });
       render(<SpotActions spot={spot} />);
 
-      const photoButton = screen.getByTestId('action-button-photo ✓');
+      const photoButton = screen.getByTestId('action-button-photo-✓');
       expect(photoButton).toBeInTheDocument();
     });
 
-    it('should show Note button as active when note exists', () => {
+    it('should show Note ✓ button as active when note exists', () => {
       const spot = createMockSpot({ note: 'Test note' });
       render(<SpotActions spot={spot} />);
 
-      const noteButton = screen.getByTestId('action-button-note ✓');
+      const noteButton = screen.getByTestId('action-button-note-✓');
       expect(noteButton).toBeInTheDocument();
     });
 
-    it('should show Photo button without checkmark when no photo', () => {
+    it('should show Camera button without checkmark when no photo', () => {
       const spot = createMockSpot({ photoUrl: null });
       render(<SpotActions spot={spot} />);
 
-      expect(screen.getByTestId('action-button-photo')).toBeInTheDocument();
-      expect(screen.queryByTestId('action-button-photo ✓')).not.toBeInTheDocument();
+      expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
+      expect(screen.queryByTestId('action-button-photo-✓')).not.toBeInTheDocument();
     });
   });
 
   describe('click handlers', () => {
-    it('should call onPhotoClick when Photo button is clicked', () => {
+    it('should call onPhotoClick when Camera button is clicked', () => {
       const onPhotoClick = vi.fn();
       const spot = createMockSpot();
       render(<SpotActions spot={spot} onPhotoClick={onPhotoClick} />);
 
-      fireEvent.click(screen.getByTestId('action-button-photo'));
+      fireEvent.click(screen.getByTestId('action-button-camera'));
       expect(onPhotoClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onGalleryClick when Gallery button is clicked', () => {
+      const onGalleryClick = vi.fn();
+      const spot = createMockSpot();
+      render(<SpotActions spot={spot} onGalleryClick={onGalleryClick} />);
+
+      fireEvent.click(screen.getByTestId('action-button-gallery'));
+      expect(onGalleryClick).toHaveBeenCalledTimes(1);
     });
 
     it('should call onNoteClick when Note button is clicked', () => {
@@ -125,11 +141,18 @@ describe('SpotActions', () => {
   });
 
   describe('button labels', () => {
-    it('should display "Photo" label on Photo button', () => {
+    it('should display "Camera" label on Camera button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
 
-      expect(screen.getByText('Photo')).toBeInTheDocument();
+      expect(screen.getByText('Camera')).toBeInTheDocument();
+    });
+
+    it('should display "Gallery" label on Gallery button', () => {
+      const spot = createMockSpot();
+      render(<SpotActions spot={spot} />);
+
+      expect(screen.getByText('Gallery')).toBeInTheDocument();
     });
 
     it('should display "Note" label on Note button', () => {
@@ -155,11 +178,18 @@ describe('SpotActions', () => {
   });
 
   describe('icons', () => {
-    it('should display camera emoji for Photo button', () => {
+    it('should display camera emoji for Camera button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
 
       expect(screen.getByText('📷')).toBeInTheDocument();
+    });
+
+    it('should display gallery emoji for Gallery button', () => {
+      const spot = createMockSpot();
+      render(<SpotActions spot={spot} />);
+
+      expect(screen.getByText('🖼️')).toBeInTheDocument();
     });
 
     it('should display note emoji for Note button', () => {
