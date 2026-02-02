@@ -11,11 +11,14 @@ export const authRoutes: RouterType = Router();
 const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000; // 15 minutes
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Cross-origin cookies (frontend on Vercel, backend on Railway)
+// require sameSite: 'none' and secure: true
 function getCookieOptions(maxAge: number) {
+  const isProduction = env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    secure: isProduction, // Required for sameSite: 'none'
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
     maxAge,
     path: '/',
   };
