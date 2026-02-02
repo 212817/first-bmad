@@ -32,7 +32,10 @@ describe('App', () => {
 
     // Wait for the app to finish loading
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Where Did I Park?');
+      // There are now two h1 elements (one in header, one in main) - check that at least one exists
+      const headings = screen.getAllByRole('heading', { level: 1 });
+      expect(headings.length).toBeGreaterThanOrEqual(1);
+      expect(headings.some((h) => h.textContent === 'Where Did I Park?')).toBe(true);
     });
   });
 });

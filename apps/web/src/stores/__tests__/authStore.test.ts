@@ -32,6 +32,11 @@ describe('authStore', () => {
       expect(state.isLoading).toBe(false);
     });
 
+    it('should not be logging out initially', () => {
+      const state = useAuthStore.getState();
+      expect(state.isLoggingOut).toBe(false);
+    });
+
     it('should have no error initially', () => {
       const state = useAuthStore.getState();
       expect(state.error).toBeNull();
@@ -133,6 +138,35 @@ describe('authStore', () => {
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
+    });
+
+    it('should clear isLoggingOut on logout', () => {
+      useAuthStore.getState().setLoggingOut(true);
+      useAuthStore.getState().logout();
+      const state = useAuthStore.getState();
+
+      expect(state.isLoggingOut).toBe(false);
+    });
+
+    it('should reset authMode to none on logout', () => {
+      useAuthStore.getState().setAuthMode('authenticated');
+      useAuthStore.getState().logout();
+      const state = useAuthStore.getState();
+
+      expect(state.authMode).toBe('none');
+    });
+  });
+
+  describe('setLoggingOut', () => {
+    it('should set isLoggingOut to true', () => {
+      useAuthStore.getState().setLoggingOut(true);
+      expect(useAuthStore.getState().isLoggingOut).toBe(true);
+    });
+
+    it('should set isLoggingOut to false', () => {
+      useAuthStore.getState().setLoggingOut(true);
+      useAuthStore.getState().setLoggingOut(false);
+      expect(useAuthStore.getState().isLoggingOut).toBe(false);
     });
   });
 

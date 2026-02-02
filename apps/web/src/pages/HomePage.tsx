@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
+import { Header } from '@/components/layout/Header';
 
 interface HealthStatus {
   api: string;
@@ -111,6 +112,9 @@ export const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      {/* Header with ProfileMenu */}
+      <Header />
+
       {/* Guest Mode Banner */}
       {authMode === 'guest' && <GuestModeBanner />}
 

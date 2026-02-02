@@ -6,6 +6,7 @@ const initialState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isLoggingOut: false,
   error: null,
   authMode: 'none' as AuthMode,
 };
@@ -29,6 +30,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   setLoading: (isLoading: boolean) => set({ isLoading }),
 
+  setLoggingOut: (isLoggingOut: boolean) => set({ isLoggingOut }),
+
   setError: (error: string | null) => set({ error, isLoading: false }),
 
   setAuthMode: (authMode: AuthMode) =>
@@ -42,6 +45,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      isLoggingOut: false,
       error: null,
       authMode: 'none',
     }),
