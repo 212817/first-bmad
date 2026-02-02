@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSpotStore } from '@/stores/spotStore';
 import { SpotDetailCard } from '@/components/spot/SpotDetailCard';
 import { SpotActions } from '@/components/spot/SpotActions';
+import { NoteInput } from '@/components/spot/NoteInput';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
@@ -26,6 +27,7 @@ export const SpotConfirmationPage = () => {
   const { currentSpot, updateSpot, isSaving } = useSpotStore();
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
+  const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
   const [pendingRetryBlob, setPendingRetryBlob] = useState<Blob | null>(null);
   const [isProcessingGallery, setIsProcessingGallery] = useState(false);
   const { pickImage } = useFilePicker();
@@ -178,12 +180,26 @@ export const SpotConfirmationPage = () => {
   };
 
   /**
-   * Handle Note action button click
+   * Handle note text change
    */
-  const handleNoteClick = () => {
-    // TODO: Story 2.5 - Add note
-    console.log('Add Note - Coming in Story 2.5');
+  const handleNoteChange = (note: string) => {
+    setNoteValue(note);
   };
+
+  /**
+   * Save note to spot
+   */
+  const handleNoteSave = useCallback(async () => {
+    if (!currentSpot) return;
+
+    try {
+      await updateSpot(currentSpot.id, { note: noteValue.trim() || null });
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      // Revert to original value on error
+      setNoteValue(currentSpot.note || '');
+    }
+  }, [currentSpot, noteValue, updateSpot]);
 
   /**
    * Handle Tag action button click
@@ -239,7 +255,7 @@ export const SpotConfirmationPage = () => {
       {/* Main Content */}
       <main className="flex-1 px-4 pb-4 flex flex-col">
         {/* Spot Details Card */}
-        <SpotDetailCard spot={currentSpot} />
+        <SpotDetailCard spot={currentSpot} hideNote />
 
         {/* Upload Progress Indicator */}
         {showUploadProgress && (
@@ -290,13 +306,22 @@ export const SpotConfirmationPage = () => {
           </div>
         )}
 
+        {/* Note Input Section */}
+        <div className="mt-4" data-testid="note-section">
+          <NoteInput
+            value={noteValue}
+            onChange={handleNoteChange}
+            onSave={handleNoteSave}
+            disabled={isSaving}
+          />
+        </div>
+
         {/* Action Buttons */}
         <div className="mt-6">
           <SpotActions
             spot={currentSpot}
             onPhotoClick={handlePhotoClick}
             onGalleryClick={handleGalleryClick}
-            onNoteClick={handleNoteClick}
             onTagClick={handleTagClick}
             onTimerClick={handleTimerClick}
           />

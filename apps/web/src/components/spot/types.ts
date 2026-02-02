@@ -7,6 +7,7 @@ import type { Spot } from '@/stores/spot.types';
 export interface SpotDetailCardProps {
   spot: Spot;
   showMap?: boolean;
+  hideNote?: boolean;
 }
 
 /**
@@ -16,7 +17,6 @@ export interface SpotActionsProps {
   spot: Spot;
   onPhotoClick?: () => void;
   onGalleryClick?: () => void;
-  onNoteClick?: () => void;
   onTagClick?: () => void;
   onTimerClick?: () => void;
 }
@@ -31,4 +31,14 @@ export interface ActionButtonProps {
   active?: boolean;
   disabled?: boolean;
   tooltip?: string;
+}
+
+/**
+ * Props for NoteInput component
+ */
+export interface NoteInputProps {
+  value: string;
+  onChange: (note: string) => void;
+  onSave: () => void;
+  disabled?: boolean;
 }

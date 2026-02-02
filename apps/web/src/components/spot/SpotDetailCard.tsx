@@ -48,7 +48,7 @@ const formatTimestamp = (isoString: string): string => {
 /**
  * Card component displaying parking spot details
  */
-export const SpotDetailCard = ({ spot }: SpotDetailCardProps) => {
+export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="spot-detail-card">
       {/* Map Preview Placeholder */}
@@ -117,8 +117,8 @@ export const SpotDetailCard = ({ spot }: SpotDetailCardProps) => {
           </div>
         )}
 
-        {/* Note preview (when available) */}
-        {spot.note && (
+        {/* Note preview (when available and not hidden) */}
+        {spot.note && !hideNote && (
           <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
             <span className="text-gray-400" aria-hidden="true">
               📝

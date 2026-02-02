@@ -219,6 +219,39 @@ describe('spotsService', () => {
         AuthorizationError
       );
     });
+
+    it('should throw ValidationError when note exceeds 500 characters', async () => {
+      const longNote = 'a'.repeat(501);
+
+      await expect(spotsService.updateSpot(userId, spotId, { note: longNote })).rejects.toThrow(
+        ValidationError
+      );
+    });
+
+    it('should allow note with exactly 500 characters', async () => {
+      const exactNote = 'a'.repeat(500);
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(spotRepository.update).mockResolvedValue({
+        ...mockSpot,
+        note: exactNote,
+      });
+
+      const result = await spotsService.updateSpot(userId, spotId, { note: exactNote });
+
+      expect(result.note).toBe(exactNote);
+    });
+
+    it('should allow null note', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(spotRepository.update).mockResolvedValue({
+        ...mockSpot,
+        note: null,
+      });
+
+      const result = await spotsService.updateSpot(userId, spotId, { note: null });
+
+      expect(result.note).toBeNull();
+    });
   });
 
   describe('clearSpot', () => {
