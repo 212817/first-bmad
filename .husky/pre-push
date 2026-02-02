@@ -1,8 +1,23 @@
-# Auto-fix formatting issues before push
-pnpm format
+# Get list of changed files (staged + unstaged)
+CHANGED_FILES=$(git diff --name-only HEAD @{upstream} 2>/dev/null || git diff --name-only HEAD~1)
 
-# Auto-fix lint issues before push
-pnpm lint:fix
+if [ -z "$CHANGED_FILES" ]; then
+  echo "No changed files to check"
+  exit 0
+fi
+
+# Filter to only include formattable files
+FORMAT_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx|js|jsx|json|md|yml|yaml|css|html)$' | tr '\n' ' ')
+
+if [ -n "$FORMAT_FILES" ]; then
+  # Auto-fix formatting issues for changed files only
+  echo "Formatting changed files..."
+  pnpm prettier --write $FORMAT_FILES
+
+  # Auto-fix lint issues
+  echo "Linting..."
+  pnpm lint:fix
+fi
 
 # Check if any fixes made changes to files
 if ! git diff --quiet; then
