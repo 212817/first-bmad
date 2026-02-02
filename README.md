@@ -182,17 +182,18 @@ main (production)
            └── feature/* | fix/* | chore/* (PRs to dev)
 ```
 
-| Branch | Purpose | CI Checks | Deployment |
-|--------|---------|-----------|------------|
-| `main` | Production | Full CI + Deploy | Auto-deploy to Vercel & Railway |
-| `dev` | Integration | Full CI | None (staging if needed) |
-| `feature/*` | New features | Full CI on PR to dev | None |
-| `fix/*` | Bug fixes | Full CI on PR to dev | None |
-| `release/x.x.x` | Release prep | Full CI on PR to main | Production on merge |
+| Branch          | Purpose      | CI Checks             | Deployment                      |
+| --------------- | ------------ | --------------------- | ------------------------------- |
+| `main`          | Production   | Full CI + Deploy      | Auto-deploy to Vercel & Railway |
+| `dev`           | Integration  | Full CI               | None (staging if needed)        |
+| `feature/*`     | New features | Full CI on PR to dev  | None                            |
+| `fix/*`         | Bug fixes    | Full CI on PR to dev  | None                            |
+| `release/x.x.x` | Release prep | Full CI on PR to main | Production on merge             |
 
 ### Development Workflow
 
 1. **Create feature branch from `dev`**:
+
    ```bash
    git checkout dev
    git pull origin dev
@@ -200,6 +201,7 @@ main (production)
    ```
 
 2. **Make changes and push**:
+
    ```bash
    git add .
    git commit -m "feat: add new feature"
@@ -219,6 +221,7 @@ main (production)
 ### Release Workflow
 
 1. **Create release branch from `dev`**:
+
    ```bash
    git checkout dev
    git pull origin dev
