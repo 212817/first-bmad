@@ -27,7 +27,6 @@ export const HomePage = () => {
 
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Check auth status on mount (only if not in guest mode)
   // When OAuth completes, authMode won't be 'guest' yet (it's set after hydration)
@@ -73,7 +72,6 @@ export const HomePage = () => {
     setIsCapturing(true);
     setShowLocationPrompt(false);
     setSpotError(null);
-    setSuccessMessage(null);
 
     try {
       const position = await getCurrentPosition();
@@ -83,15 +81,8 @@ export const HomePage = () => {
         accuracy: position.accuracy,
       });
 
-      // Show success message
-      setSuccessMessage('Spot saved successfully! 🎉');
-      console.log('Spot saved:', spot);
-
-      // Auto-dismiss success message after 5 seconds
-      setTimeout(() => setSuccessMessage(null), 5000);
-
-      // TODO: Story 2.2 will add the confirmation page
-      // navigate(`/spots/${spot.id}/confirm`);
+      // Navigate to confirmation page
+      navigate(`/spot/${spot.id}/confirm`);
     } catch (err) {
       console.error('Failed to save spot:', err);
       // Error is already set in the store or geolocation hook
@@ -176,22 +167,6 @@ export const HomePage = () => {
             </>
           )}
         </button>
-
-        {/* Success Message */}
-        {successMessage && (
-          <div
-            className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg max-w-md"
-            data-testid="success-message"
-          >
-            <p className="text-green-700 font-medium">{successMessage}</p>
-            <button
-              onClick={() => setSuccessMessage(null)}
-              className="mt-2 text-sm text-green-600 hover:text-green-800 underline"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
 
         {/* Error Display */}
         {(spotError || locationError) && (
