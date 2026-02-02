@@ -7,6 +7,14 @@ import { SpotActions } from '@/components/spot/SpotActions';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
+import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
+import { imageProcessor } from '@/services/image/imageProcessor.service';
+
+/** Large file threshold (5MB) for gallery uploads */
+const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
+
+/** Max dimension for large images before compression */
+const LARGE_IMAGE_MAX_DIMENSION = 2000;
 
 /**
  * Confirmation page displayed after successfully saving a parking spot.
@@ -19,6 +27,8 @@ export const SpotConfirmationPage = () => {
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
   const [pendingRetryBlob, setPendingRetryBlob] = useState<Blob | null>(null);
+  const [isProcessingGallery, setIsProcessingGallery] = useState(false);
+  const { pickImage } = useFilePicker();
   const {
     uploadPhoto,
     status: uploadStatus,
@@ -61,6 +71,44 @@ export const SpotConfirmationPage = () => {
   const handlePhotoClick = () => {
     setShowCamera(true);
   };
+
+  /**
+   * Handle Gallery action button click - pick from gallery
+   */
+  const handleGalleryClick = useCallback(async () => {
+    if (!currentSpot) return;
+
+    try {
+      // Pick image from gallery
+      const file = await pickImage();
+      if (!file) return; // User cancelled
+
+      setIsProcessingGallery(true);
+
+      // Process image: strip EXIF and compress
+      // For large images, use a larger max dimension to maintain quality
+      const processResult = await imageProcessor.processImage(file, {
+        maxDimension: file.size > LARGE_FILE_THRESHOLD ? LARGE_IMAGE_MAX_DIMENSION : 1280,
+      });
+
+      setIsProcessingGallery(false);
+      setPendingRetryBlob(processResult.blob);
+
+      // Upload the photo
+      const result = await uploadPhoto(processResult.blob);
+
+      // Update the spot with the photo URL
+      await updateSpot(currentSpot.id, { photoUrl: result.photoUrl });
+
+      // Clear pending blob and reset upload state after success
+      setPendingRetryBlob(null);
+      resetUpload();
+    } catch (error) {
+      setIsProcessingGallery(false);
+      console.error('Failed to upload gallery photo:', error);
+      // Error state is handled by the upload hook
+    }
+  }, [currentSpot, pickImage, uploadPhoto, updateSpot, resetUpload]);
 
   /**
    * Handle photo capture from camera
@@ -163,8 +211,10 @@ export const SpotConfirmationPage = () => {
   }
 
   // Determine if we're in an upload state
-  const isUploading = uploadStatus === 'processing' || uploadStatus === 'uploading';
-  const showUploadProgress = uploadStatus !== 'idle' && uploadStatus !== 'success';
+  const isUploading =
+    isProcessingGallery || uploadStatus === 'processing' || uploadStatus === 'uploading';
+  const showUploadProgress =
+    isProcessingGallery || (uploadStatus !== 'idle' && uploadStatus !== 'success');
   const hasPhoto = !!currentSpot.photoUrl;
 
   return (
@@ -245,6 +295,7 @@ export const SpotConfirmationPage = () => {
           <SpotActions
             spot={currentSpot}
             onPhotoClick={handlePhotoClick}
+            onGalleryClick={handleGalleryClick}
             onNoteClick={handleNoteClick}
             onTagClick={handleTagClick}
             onTimerClick={handleTimerClick}

@@ -15,6 +15,7 @@ export interface SpotDetailCardProps {
 export interface SpotActionsProps {
   spot: Spot;
   onPhotoClick?: () => void;
+  onGalleryClick?: () => void;
   onNoteClick?: () => void;
   onTagClick?: () => void;
   onTimerClick?: () => void;

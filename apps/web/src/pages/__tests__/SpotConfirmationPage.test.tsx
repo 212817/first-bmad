@@ -167,15 +167,15 @@ describe('SpotConfirmationPage', () => {
   });
 
   describe('action button handlers', () => {
-    it('should open camera when Photo action is clicked', () => {
+    it('should open camera when Camera action is clicked', () => {
       renderWithRouter();
 
       // Camera should not be visible initially
       expect(screen.queryByTestId('camera-capture')).not.toBeInTheDocument();
 
-      // Click photo button
-      const photoButton = screen.getByTestId('action-button-photo');
-      fireEvent.click(photoButton);
+      // Click camera button
+      const cameraButton = screen.getByTestId('action-button-camera');
+      fireEvent.click(cameraButton);
 
       // Camera should now be visible
       expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
@@ -185,8 +185,8 @@ describe('SpotConfirmationPage', () => {
       renderWithRouter();
 
       // Open camera
-      const photoButton = screen.getByTestId('action-button-photo');
-      fireEvent.click(photoButton);
+      const cameraButton = screen.getByTestId('action-button-camera');
+      fireEvent.click(cameraButton);
       expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
 
       // Close camera

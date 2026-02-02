@@ -37,3 +37,24 @@ export interface PhotoPreviewProps {
   /** Called to cancel and close */
   onCancel: () => void;
 }
+
+/**
+ * Gallery upload button variant
+ */
+export type GalleryUploadButtonVariant = 'primary' | 'secondary';
+
+/**
+ * Gallery upload button props
+ */
+export interface GalleryUploadButtonProps {
+  /** Called when photo is successfully uploaded */
+  onPhotoUploaded: (url: string) => void;
+  /** Called when an error occurs */
+  onError?: (message: string) => void;
+  /** Visual variant of the button */
+  variant?: GalleryUploadButtonVariant;
+  /** Additional CSS classes */
+  className?: string;
+  /** Whether the button is disabled */
+  disabled?: boolean;
+}
