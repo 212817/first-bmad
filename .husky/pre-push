@@ -34,21 +34,41 @@ if ! git diff --quiet; then
   exit 1
 fi
 
-# TypeScript check for changed .ts/.tsx files only
-TS_FILES=""
-for file in $(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$'); do
-  if [ -f "$file" ]; then
-    TS_FILES="$TS_FILES $file"
-  fi
-done
+# TypeScript check for changed .ts/.tsx files
+TS_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$' || true)
 
 if [ -n "$TS_FILES" ]; then
-  echo "TypeScript checking changed files..."
-  pnpm tsc --noEmit
-  if [ $? -ne 0 ]; then
-    echo ""
-    echo "❌ TypeScript errors found. Please fix them before pushing."
-    exit 1
+  echo "TypeScript checking..."
+  
+  # Check if any web files changed
+  if echo "$TS_FILES" | grep -q "^apps/web/"; then
+    echo "  Checking apps/web..."
+    pnpm --filter @repo/web exec tsc --noEmit
+    if [ $? -ne 0 ]; then
+      echo "❌ TypeScript errors in apps/web. Please fix them before pushing."
+      exit 1
+    fi
   fi
+  
+  # Check if any api files changed
+  if echo "$TS_FILES" | grep -q "^apps/api/"; then
+    echo "  Checking apps/api..."
+    pnpm --filter @repo/api exec tsc --noEmit
+    if [ $? -ne 0 ]; then
+      echo "❌ TypeScript errors in apps/api. Please fix them before pushing."
+      exit 1
+    fi
+  fi
+  
+  # Check if any shared files changed
+  if echo "$TS_FILES" | grep -q "^packages/shared/"; then
+    echo "  Checking packages/shared..."
+    pnpm --filter @repo/shared exec tsc --noEmit
+    if [ $? -ne 0 ]; then
+      echo "❌ TypeScript errors in packages/shared. Please fix them before pushing."
+      exit 1
+    fi
+  fi
+  
   echo "✓ TypeScript check passed"
 fi
