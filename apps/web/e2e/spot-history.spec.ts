@@ -111,7 +111,7 @@ test.describe('Spot History', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Change location and save second spot
-    await context.setGeolocation({ latitude: 40.7500, longitude: -73.9800 });
+    await context.setGeolocation({ latitude: 40.75, longitude: -73.98 });
     await page.getByTestId('save-spot-button').click();
     await expect(page).toHaveURL(/\/spot\/.*\/confirm/);
 
