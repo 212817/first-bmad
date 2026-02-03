@@ -184,6 +184,21 @@ export const spotsService = {
   },
 
   /**
+   * Get user's spots with cursor-based pagination
+   */
+  async getUserSpotsPaginated(
+    userId: string,
+    limit = 20,
+    cursor?: string
+  ): Promise<{ spots: SpotResponse[]; nextCursor: string | null }> {
+    const result = await spotRepository.findByUserIdPaginated(userId, limit, cursor);
+    return {
+      spots: result.spots.map(mapToResponse),
+      nextCursor: result.nextCursor,
+    };
+  },
+
+  /**
    * Update a spot
    */
   async updateSpot(

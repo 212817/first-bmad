@@ -66,6 +66,17 @@ export interface UpdateSpotInput {
 }
 
 /**
+ * Paginated spots response from API
+ */
+export interface PaginatedSpotsResponse {
+  data: Spot[];
+  meta: {
+    limit: number;
+    nextCursor: string | null;
+  };
+}
+
+/**
  * Spot store state
  */
 export interface SpotState {
@@ -75,6 +86,12 @@ export interface SpotState {
   isLoadingLatest: boolean;
   isSaving: boolean;
   error: string | null;
+  // History state
+  spots: Spot[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  isLoadingSpots: boolean;
+  isLoadingMore: boolean;
 }
 
 /**
@@ -87,4 +104,8 @@ export interface SpotActions {
   clearSpot: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // History actions
+  fetchSpots: (cursor?: string) => Promise<void>;
+  loadMore: () => Promise<void>;
+  clearHistory: () => void;
 }

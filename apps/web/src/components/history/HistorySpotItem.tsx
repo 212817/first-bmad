@@ -1,33 +1,13 @@
 // apps/web/src/components/history/HistorySpotItem.tsx
 import { useCarTagStore } from '@/stores/carTagStore';
 import { TagBadge } from '@/components/spot/TagBadge';
+import { SpotThumbnail } from '@/components/spot/SpotThumbnail';
+import { formatRelativeTime } from '@/utils/formatters';
 import type { HistorySpotItemProps } from './types';
 
 /**
- * Format timestamp to relative time
- */
-const formatRelativeTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) {
-    return 'Just now';
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  } else {
-    return `${diffDays}d ago`;
-  }
-};
-
-/**
  * List item component for displaying a spot in history view
- * Shows address/coordinates, timestamp, and car tag badge
+ * Shows address/coordinates, timestamp, car tag badge, photo thumbnail, and note preview
  */
 export const HistorySpotItem = ({ spot, onClick }: HistorySpotItemProps) => {
   const { getTagById } = useCarTagStore();
@@ -43,15 +23,23 @@ export const HistorySpotItem = ({ spot, onClick }: HistorySpotItemProps) => {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors text-left"
       data-testid="history-spot-item"
     >
-      {/* Location icon */}
-      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-        <span className="text-lg" aria-hidden="true">
-          📍
-        </span>
-      </div>
+      {/* Photo thumbnail or location icon */}
+      {spot.photoUrl ? (
+        <SpotThumbnail
+          url={spot.photoUrl}
+          alt="Parking spot"
+          className="w-12 h-12 rounded-lg shrink-0 object-cover"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+          <span className="text-xl text-gray-400" aria-hidden="true">
+            📍
+          </span>
+        </div>
+      )}
 
       {/* Spot details */}
       <div className="flex-1 min-w-0">
@@ -61,8 +49,14 @@ export const HistorySpotItem = ({ spot, onClick }: HistorySpotItemProps) => {
         >
           {displayText}
         </p>
+        {/* Note preview */}
+        {spot.note && (
+          <p className="text-xs text-gray-500 truncate mt-0.5" data-testid="history-spot-note">
+            {spot.note}
+          </p>
+        )}
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-gray-500" data-testid="history-spot-time">
+          <span className="text-xs text-gray-400" data-testid="history-spot-time">
             {formatRelativeTime(spot.savedAt)}
           </span>
           {/* Car tag badge */}
@@ -70,14 +64,19 @@ export const HistorySpotItem = ({ spot, onClick }: HistorySpotItemProps) => {
         </div>
       </div>
 
-      {/* Status indicator */}
-      {spot.isActive && (
-        <span
-          className="w-2 h-2 rounded-full bg-green-500 shrink-0"
-          title="Active spot"
-          aria-label="Active"
-        />
-      )}
+      {/* Active indicator and chevron */}
+      <div className="flex items-center gap-2 shrink-0">
+        {spot.isActive && (
+          <span
+            className="w-2 h-2 rounded-full bg-green-500"
+            title="Active spot"
+            aria-label="Active"
+          />
+        )}
+        <span className="text-gray-400" aria-hidden="true">
+          ›
+        </span>
+      </div>
     </button>
   );
 };

@@ -22,16 +22,22 @@ spotsRoutes.post('/', async (req, res) => {
 
 /**
  * GET /spots
- * Get user's parking spots (paginated)
+ * Get user's parking spots (paginated with cursor)
  */
 spotsRoutes.get('/', async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-  const spots = await spotsService.getUserSpots(req.user!.id, limit);
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const cursor = req.query.cursor as string | undefined;
+
+  const result = await spotsService.getUserSpotsPaginated(req.user!.id, limit, cursor);
 
   res.json({
     success: true,
-    data: spots,
-    meta: { limit, total: spots.length },
+    data: result.spots,
+    meta: {
+      limit,
+      count: result.spots.length,
+      nextCursor: result.nextCursor,
+    },
   });
 });
 

@@ -1,9 +1,14 @@
 // apps/api/src/repositories/spot.repository.ts
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, lt, and } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import { parkingSpots } from '@repo/shared/db';
 import type { ParkingSpot } from '@repo/shared/types';
-import type { CreateSpotInput, UpdateSpotInput, SpotRepositoryInterface } from './spot.types.js';
+import type {
+  CreateSpotInput,
+  UpdateSpotInput,
+  SpotRepositoryInterface,
+  PaginatedSpotsResult,
+} from './spot.types.js';
 
 /**
  * Safely converts a value to a Date object
@@ -82,6 +87,49 @@ export const spotRepository: SpotRepositoryInterface = {
       .limit(limit);
 
     return rows.map(mapToSpot);
+  },
+
+  /**
+   * Find spots by user ID with cursor-based pagination
+   * Returns spots ordered by savedAt descending
+   * Uses cursor (ISO timestamp string) to fetch next page
+   */
+  async findByUserIdPaginated(
+    userId: string,
+    limit = 20,
+    cursor?: string
+  ): Promise<PaginatedSpotsResult> {
+    // Fetch one extra to determine if there are more results
+    const fetchLimit = limit + 1;
+
+    let rows;
+    if (cursor) {
+      // Parse cursor as ISO date string
+      const cursorDate = new Date(cursor);
+      rows = await db
+        .select()
+        .from(parkingSpots)
+        .where(and(eq(parkingSpots.userId, userId), lt(parkingSpots.savedAt, cursorDate)))
+        .orderBy(desc(parkingSpots.savedAt))
+        .limit(fetchLimit);
+    } else {
+      rows = await db
+        .select()
+        .from(parkingSpots)
+        .where(eq(parkingSpots.userId, userId))
+        .orderBy(desc(parkingSpots.savedAt))
+        .limit(fetchLimit);
+    }
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const spots = items.map(mapToSpot);
+
+    // Next cursor is the savedAt of the last item
+    const nextCursor =
+      hasMore && spots.length > 0 ? spots[spots.length - 1]!.savedAt.toISOString() : null;
+
+    return { spots, nextCursor };
   },
 
   /**

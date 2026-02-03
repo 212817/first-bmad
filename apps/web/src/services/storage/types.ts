@@ -30,6 +30,14 @@ export interface SettingsData {
 }
 
 /**
+ * Paginated spots result from IndexedDB
+ */
+export interface PaginatedSpotsResult<T> {
+  spots: T[];
+  nextCursor: string | null;
+}
+
+/**
  * IndexedDB service interface
  */
 export interface IndexedDbService {
@@ -40,6 +48,10 @@ export interface IndexedDbService {
   deleteItem: (store: StoreName, key: string) => Promise<void>;
   getAllItems: <T>(store: StoreName) => Promise<T[]>;
   getLatestSpot: <T extends { savedAt: string }>() => Promise<T | null>;
+  getSpotsPaginated: <T extends { savedAt: string }>(
+    limit?: number,
+    cursor?: string
+  ) => Promise<PaginatedSpotsResult<T>>;
   clearStore: (store: StoreName) => Promise<void>;
   isAvailable: () => boolean;
 }

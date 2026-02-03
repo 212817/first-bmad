@@ -291,5 +291,92 @@ describe('indexedDbService', () => {
         await expect(indexedDbService.getLatestSpot()).rejects.toThrow('GetAll error');
       });
     });
+
+    describe('getSpotsPaginated', () => {
+      const spots = [
+        { id: 'spot-1', savedAt: '2026-02-03T10:00:00Z' },
+        { id: 'spot-2', savedAt: '2026-02-02T10:00:00Z' },
+        { id: 'spot-3', savedAt: '2026-02-01T10:00:00Z' },
+      ];
+
+      it('should return empty array when no spots exist', async () => {
+        mockObjectStore.getAll.mockReturnValue(createMockRequest([]));
+
+        const result = await indexedDbService.getSpotsPaginated();
+
+        expect(result.spots).toEqual([]);
+        expect(result.nextCursor).toBeNull();
+      });
+
+      it('should return spots sorted by savedAt descending', async () => {
+        // Spots in random order
+        const unsortedSpots = [
+          { id: 'spot-2', savedAt: '2026-02-02T10:00:00Z' },
+          { id: 'spot-1', savedAt: '2026-02-03T10:00:00Z' },
+          { id: 'spot-3', savedAt: '2026-02-01T10:00:00Z' },
+        ];
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(unsortedSpots));
+
+        const result = await indexedDbService.getSpotsPaginated<{ id: string; savedAt: string }>();
+
+        expect(result.spots[0]!.id).toBe('spot-1');
+        expect(result.spots[1]!.id).toBe('spot-2');
+        expect(result.spots[2]!.id).toBe('spot-3');
+      });
+
+      it('should respect limit and return nextCursor', async () => {
+        const manySpots = Array.from({ length: 25 }, (_, i) => ({
+          id: `spot-${i}`,
+          savedAt: new Date(2026, 1, 25 - i).toISOString(),
+        }));
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(manySpots));
+
+        const result = await indexedDbService.getSpotsPaginated<{ id: string; savedAt: string }>(
+          20
+        );
+
+        expect(result.spots).toHaveLength(20);
+        expect(result.nextCursor).not.toBeNull();
+      });
+
+      it('should return null nextCursor when no more items', async () => {
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(spots));
+
+        const result = await indexedDbService.getSpotsPaginated<{ id: string; savedAt: string }>(
+          20
+        );
+
+        expect(result.spots).toHaveLength(3);
+        expect(result.nextCursor).toBeNull();
+      });
+
+      it('should filter by cursor', async () => {
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(spots));
+
+        const result = await indexedDbService.getSpotsPaginated<{ id: string; savedAt: string }>(
+          20,
+          '2026-02-02T10:00:00Z'
+        );
+
+        // Should only include spots before the cursor
+        expect(result.spots).toHaveLength(1);
+        expect(result.spots[0]!.id).toBe('spot-3');
+      });
+
+      it('should throw error when db not initialized', async () => {
+        indexedDbService.db = null;
+
+        await expect(indexedDbService.getSpotsPaginated()).rejects.toThrow(
+          'IndexedDB not initialized'
+        );
+      });
+
+      it('should reject when getAll request fails', async () => {
+        const error = new Error('GetAll error');
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(undefined, error));
+
+        await expect(indexedDbService.getSpotsPaginated()).rejects.toThrow('GetAll error');
+      });
+    });
   });
 });

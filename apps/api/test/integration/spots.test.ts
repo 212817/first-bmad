@@ -8,6 +8,7 @@ const { mockSpotRepository } = vi.hoisted(() => ({
     create: vi.fn(),
     findById: vi.fn(),
     findByUserId: vi.fn(),
+    findByUserIdPaginated: vi.fn(),
     findActiveByUserId: vi.fn(),
     findLatestByUserId: vi.fn(),
     update: vi.fn(),
@@ -214,7 +215,10 @@ describe('Spots API', () => {
     });
 
     it('should return user spots', async () => {
-      mockSpotRepository.findByUserId.mockResolvedValue([mockSpot]);
+      mockSpotRepository.findByUserIdPaginated.mockResolvedValue({
+        spots: [mockSpot],
+        nextCursor: null,
+      });
 
       const response = await request(app)
         .get('/v1/spots')
@@ -223,7 +227,25 @@ describe('Spots API', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(1);
-      expect(response.body.meta.limit).toBe(50);
+      expect(response.body.meta.limit).toBe(20);
+      expect(response.body.meta.nextCursor).toBeNull();
+    });
+
+    it('should return spots with cursor for pagination', async () => {
+      const nextCursor = '2026-01-15T12:00:00.000Z';
+      mockSpotRepository.findByUserIdPaginated.mockResolvedValue({
+        spots: [mockSpot],
+        nextCursor,
+      });
+
+      const response = await request(app)
+        .get('/v1/spots?limit=1')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.meta.nextCursor).toBe(nextCursor);
     });
   });
 
