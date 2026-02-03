@@ -52,9 +52,7 @@ export const LayerSwitcher = ({ activeLayer, onLayerChange }: LayerSwitcherProps
             >
               <span aria-hidden="true">{option.icon}</span>
               <span>{option.label}</span>
-              {activeLayer === option.value && (
-                <span className="ml-auto text-indigo-600">✓</span>
-              )}
+              {activeLayer === option.value && <span className="ml-auto text-indigo-600">✓</span>}
             </button>
           ))}
         </div>

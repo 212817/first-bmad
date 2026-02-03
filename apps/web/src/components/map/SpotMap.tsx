@@ -108,10 +108,7 @@ export const SpotMap = ({
   const tileConfig = TILE_LAYERS[activeLayer];
 
   return (
-    <div
-      className={`relative ${heightClass} rounded-lg overflow-hidden`}
-      data-testid={testId}
-    >
+    <div className={`relative ${heightClass} rounded-lg overflow-hidden`} data-testid={testId}>
       {/* Loading overlay */}
       {isLoading && (
         <div
@@ -146,11 +143,7 @@ export const SpotMap = ({
 
         {/* Overlay for hybrid view (labels on satellite) */}
         {tileConfig.overlay && (
-          <TileLayer
-            key={`overlay-${activeLayer}`}
-            url={tileConfig.overlay}
-            attribution=""
-          />
+          <TileLayer key={`overlay-${activeLayer}`} url={tileConfig.overlay} attribution="" />
         )}
 
         <Marker

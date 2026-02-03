@@ -7,9 +7,7 @@ import { TagBadge } from './TagBadge';
 import type { SpotDetailCardProps } from './types';
 
 // Lazy load the map component to avoid blocking initial render
-const SpotMap = lazy(() =>
-  import('@/components/map').then((m) => ({ default: m.SpotMap }))
-);
+const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
 
 /**
  * Format timestamp to relative time

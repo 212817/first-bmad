@@ -47,7 +47,7 @@ describe('spotsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => { });
     // Default: reverse geocoding succeeds
     vi.mocked(geocodingService.reverseGeocode).mockResolvedValue({
       address: '123 Main St, New York',

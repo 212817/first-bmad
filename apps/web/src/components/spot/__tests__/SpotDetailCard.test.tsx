@@ -6,15 +6,7 @@ import type { Spot } from '@/stores/spot.types';
 
 // Mock the map component to avoid leaflet issues in tests
 vi.mock('@/components/map', () => ({
-  SpotMap: ({
-    lat,
-    lng,
-    testId,
-  }: {
-    lat: number;
-    lng: number;
-    testId?: string;
-  }) => (
+  SpotMap: ({ lat, lng, testId }: { lat: number; lng: number; testId?: string }) => (
     <div data-testid={testId || 'spot-map'} data-lat={lat} data-lng={lng}>
       Mock Map
     </div>

@@ -95,17 +95,14 @@ describe('LayerSwitcher', () => {
       ['street', 'street'],
       ['satellite', 'satellite'],
       ['hybrid', 'hybrid'],
-    ] as [MapViewType, string][])(
-      'selects %s layer correctly',
-      (layer, expectedCall) => {
-        render(<LayerSwitcher activeLayer="street" onLayerChange={mockOnLayerChange} />);
+    ] as [MapViewType, string][])('selects %s layer correctly', (layer, expectedCall) => {
+      render(<LayerSwitcher activeLayer="street" onLayerChange={mockOnLayerChange} />);
 
-        fireEvent.click(screen.getByTestId('layer-switcher-button'));
-        fireEvent.click(screen.getByTestId(`layer-option-${layer}`));
+      fireEvent.click(screen.getByTestId('layer-switcher-button'));
+      fireEvent.click(screen.getByTestId(`layer-option-${layer}`));
 
-        expect(mockOnLayerChange).toHaveBeenCalledWith(expectedCall);
-      }
-    );
+      expect(mockOnLayerChange).toHaveBeenCalledWith(expectedCall);
+    });
   });
 
   describe('accessibility', () => {
