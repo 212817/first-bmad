@@ -10,6 +10,10 @@ export interface SpotDetailCardProps {
   hideNote?: boolean;
   /** Whether the address is being loaded asynchronously */
   isAddressLoading?: boolean;
+  /** Whether the map marker can be dragged to adjust position */
+  editable?: boolean;
+  /** Callback when marker position changes on the map */
+  onPositionChange?: (lat: number, lng: number) => void;
 }
 
 /**

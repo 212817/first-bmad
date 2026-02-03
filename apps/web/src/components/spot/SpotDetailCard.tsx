@@ -1,8 +1,13 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
+import { Suspense, lazy } from 'react';
+
 import { useCarTagStore } from '@/stores/carTagStore';
 import { SpotAddress } from './SpotAddress';
 import { TagBadge } from './TagBadge';
 import type { SpotDetailCardProps } from './types';
+
+// Lazy load the map component to avoid blocking initial render
+const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
 
 /**
  * Format timestamp to relative time
@@ -46,21 +51,45 @@ export const SpotDetailCard = ({
   spot,
   hideNote = false,
   isAddressLoading = false,
+  editable = false,
+  onPositionChange,
 }: SpotDetailCardProps) => {
   const { getTagById } = useCarTagStore();
   const carTag = spot.carTagId ? getTagById(spot.carTagId) : null;
+  const hasCoordinates = spot.lat !== null && spot.lng !== null;
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="spot-detail-card">
-      {/* Map Preview Placeholder */}
-      <div className="h-40 bg-gray-200 flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <span className="text-4xl block mb-2" aria-hidden="true">
-            📍
-          </span>
-          <span className="text-sm">Map Preview</span>
+      {/* Map or Placeholder */}
+      {hasCoordinates ? (
+        <Suspense
+          fallback={
+            <div className="h-48 bg-gray-200 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-gray-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                <span className="text-sm">Loading map...</span>
+              </div>
+            </div>
+          }
+        >
+          <SpotMap
+            lat={spot.lat!}
+            lng={spot.lng!}
+            editable={editable}
+            onPositionChange={onPositionChange}
+            heightClass="h-48"
+          />
+        </Suspense>
+      ) : (
+        <div className="h-40 bg-gray-200 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <span className="text-4xl block mb-2" aria-hidden="true">
+              📍
+            </span>
+            <span className="text-sm">No coordinates available</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Spot Details */}
       <div className="p-4 space-y-3">

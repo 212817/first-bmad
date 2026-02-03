@@ -1,8 +1,17 @@
 // apps/web/src/components/spot/__tests__/SpotDetailCard.test.tsx
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SpotDetailCard } from '../SpotDetailCard';
 import type { Spot } from '@/stores/spot.types';
+
+// Mock the map component to avoid leaflet issues in tests
+vi.mock('@/components/map', () => ({
+  SpotMap: ({ lat, lng, testId }: { lat: number; lng: number; testId?: string }) => (
+    <div data-testid={testId || 'spot-map'} data-lat={lat} data-lng={lng}>
+      Mock Map
+    </div>
+  ),
+}));
 
 const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   id: 'test-spot-123',
@@ -48,11 +57,23 @@ describe('SpotDetailCard', () => {
       expect(screen.getByText('±15m accuracy')).toBeInTheDocument();
     });
 
-    it('should display map preview placeholder', () => {
+    it('should display map section when coordinates available', () => {
       const spot = createMockSpot();
       render(<SpotDetailCard spot={spot} />);
 
-      expect(screen.getByText('Map Preview')).toBeInTheDocument();
+      // Map is lazy-loaded with Suspense, so we may see loading or mock map
+      // Either way, the spot detail card should be present with map area
+      const cardElement = screen.getByTestId('spot-detail-card');
+      expect(cardElement).toBeInTheDocument();
+      // Check that we don't show "No coordinates available" placeholder
+      expect(screen.queryByText('No coordinates available')).not.toBeInTheDocument();
+    });
+
+    it('should display placeholder when no coordinates', () => {
+      const spot = createMockSpot({ lat: null, lng: null });
+      render(<SpotDetailCard spot={spot} />);
+
+      expect(screen.getByText('No coordinates available')).toBeInTheDocument();
     });
   });
 

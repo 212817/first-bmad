@@ -176,7 +176,7 @@ test.describe('Spot Confirmation Page', () => {
     await expect(page.getByText('Navigate Now')).toBeVisible();
   });
 
-  test('shows spot detail card with map preview placeholder', async ({ page }) => {
+  test('shows spot detail card with interactive map', async ({ page }) => {
     // Enter guest mode
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
@@ -194,9 +194,9 @@ test.describe('Spot Confirmation Page', () => {
     // Wait for confirmation page
     await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
 
-    // Should display spot detail card with map preview
+    // Should display spot detail card with interactive map
     await expect(page.getByTestId('spot-detail-card')).toBeVisible();
-    await expect(page.getByText('Map Preview')).toBeVisible();
+    await expect(page.getByTestId('spot-map')).toBeVisible({ timeout: 10000 });
   });
 
   test('confirmation page is accessible on mobile viewport', async ({ page }) => {

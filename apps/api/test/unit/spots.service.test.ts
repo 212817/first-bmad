@@ -338,6 +338,57 @@ describe('spotsService', () => {
 
       expect(result.note).toBeNull();
     });
+
+    it('should update coordinates when lat and lng provided', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(spotRepository.update).mockResolvedValue({
+        ...mockSpot,
+        latitude: 48.9102,
+        longitude: 24.7085,
+      });
+
+      const result = await spotsService.updateSpot(userId, spotId, { lat: 48.9102, lng: 24.7085 });
+
+      expect(spotRepository.update).toHaveBeenCalledWith(spotId, {
+        latitude: 48.9102,
+        longitude: 24.7085,
+        address: null, // Address should be cleared for re-geocoding
+      });
+      expect(result.lat).toBe(48.9102);
+      expect(result.lng).toBe(24.7085);
+    });
+
+    it('should trigger reverse geocoding when coordinates updated', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(spotRepository.update).mockResolvedValue({
+        ...mockSpot,
+        latitude: 48.9102,
+        longitude: 24.7085,
+      });
+
+      await spotsService.updateSpot(userId, spotId, { lat: 48.9102, lng: 24.7085 });
+
+      // Wait for async operation
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(geocodingService.reverseGeocode).toHaveBeenCalledWith(48.9102, 24.7085);
+    });
+
+    it('should throw ValidationError for invalid latitude in update', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+
+      await expect(
+        spotsService.updateSpot(userId, spotId, { lat: 91, lng: 24.7085 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid longitude in update', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+
+      await expect(
+        spotsService.updateSpot(userId, spotId, { lat: 48.9102, lng: 181 })
+      ).rejects.toThrow(ValidationError);
+    });
   });
 
   describe('clearSpot', () => {
