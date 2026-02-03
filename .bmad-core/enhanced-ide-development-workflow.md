@@ -4,7 +4,13 @@ This is a simple step-by-step guide to help you efficiently manage your developm
 
 ## Create New Branch
 
-1. **Start new branch**
+> ⚠️ **CRITICAL: Never push directly to main!** Always create a feature branch and submit a Pull Request for review.
+
+1. **Create feature branch**: `git checkout -b feat/story-{X.Y}-{short-description}`
+2. **Naming convention examples**:
+   - `feat/story-3.1-latest-spot-home`
+   - `fix/story-2.4-photo-upload-error`
+   - `refactor/story-1.2-auth-cleanup`
 
 ## Story Creation (Scrum Master)
 
@@ -20,6 +26,16 @@ This is a simple step-by-step guide to help you efficiently manage your developm
 2. **Load Dev agent**
 3. **Execute**: `*develop-story {selected-story}` (runs execute-checklist task)
 4. **Review generated report** in `{selected-story}`
+
+## Story Completion (Developer)
+
+> ⚠️ **CRITICAL: Always create a Pull Request! Never push directly to main!**
+
+1. **Commit changes**: `git add -A && git commit -m "feat(story-X.Y): description"`
+2. **Push branch**: `git push -u origin feat/story-X.Y-description`
+3. **Create PR**: `gh pr create --base main --title "feat(story-X.Y): description" --body "..."`
+4. **Wait for CI** to pass before merging
+5. **Update story status** to "Done" after PR is merged
 
 ## Test Architect Integration Throughout Workflow
 
