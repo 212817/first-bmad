@@ -39,22 +39,11 @@ export const HistoryPage = () => {
     navigate('/');
   };
 
-  // Loading state for initial load
-  if (isLoadingSpots && spots.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBackClick}
-              className="p-1 -ml-1 text-gray-600 hover:text-gray-900"
-              aria-label="Go back"
-            >
-              <span className="text-xl">←</span>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900">Spot History</h1>
-          </div>
-        </header>
+  // Render content based on state
+  const renderContent = () => {
+    // Initial loading state
+    if (isLoadingSpots && spots.length === 0) {
+      return (
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3 text-gray-500">
             <div
@@ -64,48 +53,20 @@ export const HistoryPage = () => {
             <span>Loading spots...</span>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Empty state
-  if (!isLoadingSpots && spots.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBackClick}
-              className="p-1 -ml-1 text-gray-600 hover:text-gray-900"
-              aria-label="Go back"
-            >
-              <span className="text-xl">←</span>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900">Spot History</h1>
-          </div>
-        </header>
+    // Empty state
+    if (!isLoadingSpots && spots.length === 0) {
+      return (
         <div className="p-4">
           <EmptySpotState />
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="min-h-screen bg-gray-50" data-testid="history-page">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleBackClick}
-            className="p-1 -ml-1 text-gray-600 hover:text-gray-900"
-            aria-label="Go back"
-          >
-            <span className="text-xl">←</span>
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Spot History</h1>
-        </div>
-      </header>
-
+    // List content
+    return (
       <SpotList
         spots={spots}
         hasMore={hasMore}
@@ -113,6 +74,31 @@ export const HistoryPage = () => {
         loadMore={loadMore}
         onSpotClick={handleSpotClick}
       />
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex justify-center" data-testid="history-page">
+      <div className="w-full max-w-7xl bg-white min-h-screen relative shadow-xl flex flex-col">
+        {/* Header - Sticky top */}
+        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 h-16 px-4 sm:px-6 lg:px-8 flex items-center">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBackClick}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700 flex items-center gap-2"
+              aria-label="Go back"
+            >
+              <span className="text-xl" aria-hidden="true">←</span>
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Spot History</h1>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1">
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };

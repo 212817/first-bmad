@@ -61,3 +61,20 @@ export const formatCoordinates = (lat: number, lng: number): string => {
   const lngDir = lng >= 0 ? 'E' : 'W';
   return `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lng).toFixed(4)}°${lngDir}`;
 };
+
+/**
+ * Format a date/timestamp to human-readable date and time
+ * Example: "Jan 15, 2026 at 3:45 PM"
+ */
+export const formatDateTime = (date: Date | string): string => {
+  const target = typeof date === 'string' ? new Date(date) : date;
+
+  return target.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }) + ' at ' + target.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};

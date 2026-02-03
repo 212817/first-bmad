@@ -170,6 +170,40 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   },
 
   /**
+   * Get a single spot by ID
+   * Routes to API (authenticated) or IndexedDB (guest)
+   */
+  getSpotById: async (spotId: string): Promise<Spot | null> => {
+    // Check if we have it locally first
+    const local = get().spots.find((s) => s.id === spotId);
+    if (local) return local;
+
+    const isGuest = useGuestStore.getState().isGuest;
+
+    if (isGuest) {
+      // Fetch from IndexedDB for guest users
+      return await indexedDbService.getItem<Spot>(STORES.spots, spotId);
+    }
+
+    // Fetch from API for authenticated users
+    try {
+      const response = await apiClient.get<{ success: boolean; data: Spot }>(
+        `/v1/spots/${spotId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      // If 404, return null
+      if (error instanceof Error && 'response' in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          return null;
+        }
+      }
+      throw error;
+    }
+  },
+
+  /**
    * Update an existing spot
    * Uses API for authenticated users, IndexedDB for guests
    */

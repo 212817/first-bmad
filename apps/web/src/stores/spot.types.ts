@@ -101,6 +101,7 @@ export interface SpotActions {
   saveSpot: (position: SaveSpotInput) => Promise<Spot>;
   updateSpot: (id: string, data: UpdateSpotInput) => Promise<Spot>;
   fetchLatestSpot: () => Promise<Spot | null>;
+  getSpotById: (spotId: string) => Promise<Spot | null>;
   clearSpot: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
