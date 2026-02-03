@@ -149,6 +149,43 @@ export const indexedDbService: IndexedDbService = {
   },
 
   /**
+   * Get the latest (most recent) spot from IndexedDB
+   * Returns the spot with the most recent savedAt timestamp, or null if no spots exist
+   */
+  getLatestSpot: async <T extends { savedAt: string }>(): Promise<T | null> => {
+    if (!indexedDbService.db) {
+      throw new Error('IndexedDB not initialized. Call init() first.');
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = indexedDbService.db!.transaction(STORES.spots, 'readonly');
+      const objectStore = transaction.objectStore(STORES.spots);
+      const request = objectStore.getAll();
+
+      request.onerror = () => {
+        reject(new Error(`Failed to get spots: ${request.error?.message}`));
+      };
+
+      request.onsuccess = () => {
+        const spots = request.result as T[];
+        if (!spots || spots.length === 0) {
+          resolve(null);
+          return;
+        }
+
+        // Sort by savedAt descending and return the first one
+        spots.sort((a, b) => {
+          const dateA = new Date(a.savedAt).getTime();
+          const dateB = new Date(b.savedAt).getTime();
+          return dateB - dateA;
+        });
+
+        resolve(spots[0] ?? null);
+      };
+    });
+  },
+
+  /**
    * Clear all items from a store
    */
   clearStore: async (store: StoreName): Promise<void> => {

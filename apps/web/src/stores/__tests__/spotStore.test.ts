@@ -10,6 +10,7 @@ vi.mock('@/services/api/client', () => ({
   apiClient: {
     post: vi.fn(),
     patch: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -17,6 +18,7 @@ vi.mock('@/services/storage/indexedDb.service', () => ({
   indexedDbService: {
     setItem: vi.fn(),
     getItem: vi.fn(),
+    getLatestSpot: vi.fn(),
   },
 }));
 
@@ -38,7 +40,9 @@ describe('spotStore', () => {
     // Reset store state
     useSpotStore.setState({
       currentSpot: null,
+      latestSpot: null,
       isLoading: false,
+      isLoadingLatest: false,
       isSaving: false,
       error: null,
     });
@@ -53,7 +57,9 @@ describe('spotStore', () => {
       const state = useSpotStore.getState();
 
       expect(state.currentSpot).toBeNull();
+      expect(state.latestSpot).toBeNull();
       expect(state.isLoading).toBe(false);
+      expect(state.isLoadingLatest).toBe(false);
       expect(state.isSaving).toBe(false);
       expect(state.error).toBeNull();
     });
@@ -87,7 +93,7 @@ describe('spotStore', () => {
     });
 
     it('should set isSaving to true while saving', async () => {
-      vi.mocked(apiClient.post).mockImplementation(() => new Promise(() => {})); // Never resolves
+      vi.mocked(apiClient.post).mockImplementation(() => new Promise(() => { })); // Never resolves
 
       void useSpotStore.getState().saveSpot(mockPosition);
 
@@ -350,6 +356,155 @@ describe('spotStore', () => {
       ).rejects.toThrow('Spot not found');
 
       expect(useSpotStore.getState().error).toBe('Spot not found');
+    });
+  });
+
+  describe('fetchLatestSpot - authenticated user', () => {
+    const mockLatestSpot = {
+      id: 'spot-latest',
+      carTagId: 'tag-1',
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 10,
+      address: 'Near Central Park',
+      photoUrl: 'https://example.com/photo.jpg',
+      note: 'Level P2',
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2026-02-03T10:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+    });
+
+    it('should set isLoadingLatest to true while fetching', async () => {
+      vi.mocked(apiClient.get).mockImplementation(() => new Promise(() => { })); // Never resolves
+
+      void useSpotStore.getState().fetchLatestSpot();
+
+      expect(useSpotStore.getState().isLoadingLatest).toBe(true);
+      expect(useSpotStore.getState().error).toBeNull();
+    });
+
+    it('should call API and set latestSpot on success', async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: true, data: mockLatestSpot },
+      });
+
+      const result = await useSpotStore.getState().fetchLatestSpot();
+
+      expect(apiClient.get).toHaveBeenCalledWith('/v1/spots/latest');
+      expect(result).toEqual(mockLatestSpot);
+      expect(useSpotStore.getState().latestSpot).toEqual(mockLatestSpot);
+      expect(useSpotStore.getState().isLoadingLatest).toBe(false);
+    });
+
+    it('should set latestSpot to null when API returns 404', async () => {
+      const error = new Error('Not Found') as Error & { response?: { status: number } };
+      error.response = { status: 404 };
+      vi.mocked(apiClient.get).mockRejectedValue(error);
+
+      const result = await useSpotStore.getState().fetchLatestSpot();
+
+      expect(result).toBeNull();
+      expect(useSpotStore.getState().latestSpot).toBeNull();
+      expect(useSpotStore.getState().isLoadingLatest).toBe(false);
+      expect(useSpotStore.getState().error).toBeNull();
+    });
+
+    it('should set error on API failure (non-404)', async () => {
+      vi.mocked(apiClient.get).mockRejectedValue(new Error('Network error'));
+
+      await expect(useSpotStore.getState().fetchLatestSpot()).rejects.toThrow('Network error');
+
+      expect(useSpotStore.getState().error).toBe('Network error');
+      expect(useSpotStore.getState().isLoadingLatest).toBe(false);
+    });
+  });
+
+  describe('fetchLatestSpot - guest user', () => {
+    const mockLatestSpot = {
+      id: 'guest-spot',
+      carTagId: null,
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 15,
+      address: null,
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2026-02-03T10:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: true } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+    });
+
+    it('should get from IndexedDB for guest users', async () => {
+      vi.mocked(indexedDbService.getLatestSpot).mockResolvedValue(mockLatestSpot);
+
+      const result = await useSpotStore.getState().fetchLatestSpot();
+
+      expect(indexedDbService.getLatestSpot).toHaveBeenCalled();
+      expect(apiClient.get).not.toHaveBeenCalled();
+      expect(result).toEqual(mockLatestSpot);
+      expect(useSpotStore.getState().latestSpot).toEqual(mockLatestSpot);
+    });
+
+    it('should return null when no spots in IndexedDB', async () => {
+      vi.mocked(indexedDbService.getLatestSpot).mockResolvedValue(null);
+
+      const result = await useSpotStore.getState().fetchLatestSpot();
+
+      expect(result).toBeNull();
+      expect(useSpotStore.getState().latestSpot).toBeNull();
+    });
+  });
+
+  describe('saveSpot - updates latestSpot', () => {
+    const mockPosition = {
+      lat: 40.7128,
+      lng: -74.006,
+      accuracy: 15,
+    };
+
+    const mockApiSpot = {
+      id: 'new-spot-id',
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 15,
+      address: null,
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2026-02-03T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+    });
+
+    it('should update latestSpot after saving a new spot', async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: { success: true, data: mockApiSpot },
+      });
+
+      await useSpotStore.getState().saveSpot(mockPosition);
+
+      expect(useSpotStore.getState().latestSpot).toEqual(mockApiSpot);
+      expect(useSpotStore.getState().currentSpot).toEqual(mockApiSpot);
     });
   });
 });

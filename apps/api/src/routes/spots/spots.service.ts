@@ -167,6 +167,15 @@ export const spotsService = {
   },
 
   /**
+   * Get user's latest spot (most recent by savedAt)
+   * Returns null if no spots exist
+   */
+  async getLatestSpot(userId: string): Promise<SpotResponse | null> {
+    const spot = await spotRepository.findLatestByUserId(userId);
+    return spot ? mapToResponse(spot) : null;
+  },
+
+  /**
    * Get user's spots (paginated)
    */
   async getUserSpots(userId: string, limit = 50): Promise<SpotResponse[]> {

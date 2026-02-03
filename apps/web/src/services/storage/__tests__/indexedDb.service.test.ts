@@ -255,5 +255,43 @@ describe('indexedDbService', () => {
         await expect(indexedDbService.clearStore(STORES.settings)).rejects.toThrow('Clear error');
       });
     });
+
+    describe('getLatestSpot', () => {
+      it('should return null when no spots exist', async () => {
+        mockObjectStore.getAll.mockReturnValue(createMockRequest([]));
+
+        const result = await indexedDbService.getLatestSpot();
+
+        expect(result).toBeNull();
+      });
+
+      it('should return the most recent spot by savedAt', async () => {
+        const spots = [
+          { id: 'spot-1', savedAt: '2026-02-01T10:00:00Z' },
+          { id: 'spot-3', savedAt: '2026-02-03T10:00:00Z' },
+          { id: 'spot-2', savedAt: '2026-02-02T10:00:00Z' },
+        ];
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(spots));
+
+        const result = await indexedDbService.getLatestSpot<{ id: string; savedAt: string }>();
+
+        expect(result).toEqual({ id: 'spot-3', savedAt: '2026-02-03T10:00:00Z' });
+      });
+
+      it('should throw error when db not initialized', async () => {
+        indexedDbService.db = null;
+
+        await expect(indexedDbService.getLatestSpot()).rejects.toThrow(
+          'IndexedDB not initialized'
+        );
+      });
+
+      it('should reject when getAll request fails', async () => {
+        const error = new Error('GetAll error');
+        mockObjectStore.getAll.mockReturnValue(createMockRequest(undefined, error));
+
+        await expect(indexedDbService.getLatestSpot()).rejects.toThrow('GetAll error');
+      });
+    });
   });
 });

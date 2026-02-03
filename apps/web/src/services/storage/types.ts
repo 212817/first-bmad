@@ -39,6 +39,7 @@ export interface IndexedDbService {
   setItem: <T>(store: StoreName, key: string, value: T) => Promise<void>;
   deleteItem: (store: StoreName, key: string) => Promise<void>;
   getAllItems: <T>(store: StoreName) => Promise<T[]>;
+  getLatestSpot: <T extends { savedAt: string }>() => Promise<T | null>;
   clearStore: (store: StoreName) => Promise<void>;
   isAvailable: () => boolean;
 }

@@ -13,7 +13,9 @@ import { isAddressInput } from './spot.types';
  */
 export const useSpotStore = create<SpotState & SpotActions>((set) => ({
   currentSpot: null,
+  latestSpot: null,
   isLoading: false,
+  isLoadingLatest: false,
   isSaving: false,
   error: null,
 
@@ -89,11 +91,56 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
         }
       }
 
-      set({ currentSpot: spot, isSaving: false });
+      // Update both currentSpot and latestSpot when saving a new spot
+      set({ currentSpot: spot, latestSpot: spot, isSaving: false });
       return spot;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save spot';
       set({ error: message, isSaving: false });
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch the latest spot from API (authenticated) or IndexedDB (guest)
+   * Returns the most recently saved spot
+   */
+  fetchLatestSpot: async (): Promise<Spot | null> => {
+    set({ isLoadingLatest: true, error: null });
+
+    const isGuest = useGuestStore.getState().isGuest;
+
+    try {
+      let spot: Spot | null = null;
+
+      if (isGuest) {
+        // Get from IndexedDB for guest users
+        spot = await indexedDbService.getLatestSpot<Spot>();
+      } else {
+        // Get from API for authenticated users
+        try {
+          const response = await apiClient.get<{ success: boolean; data: Spot }>('/v1/spots/latest');
+          spot = response.data.data;
+        } catch (error) {
+          // If 404, no spots exist - this is not an error state
+          if (error instanceof Error && 'response' in error) {
+            const axiosError = error as { response?: { status?: number } };
+            if (axiosError.response?.status === 404) {
+              spot = null;
+            } else {
+              throw error;
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      set({ latestSpot: spot, isLoadingLatest: false });
+      return spot;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch latest spot';
+      set({ error: message, isLoadingLatest: false });
       throw error;
     }
   },

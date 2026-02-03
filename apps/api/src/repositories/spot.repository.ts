@@ -100,6 +100,21 @@ export const spotRepository: SpotRepositoryInterface = {
   },
 
   /**
+   * Find the most recent spot for a user (regardless of isActive status)
+   * Returns the latest spot ordered by savedAt DESC
+   */
+  async findLatestByUserId(userId: string): Promise<ParkingSpot | null> {
+    const rows = await db
+      .select()
+      .from(parkingSpots)
+      .where(eq(parkingSpots.userId, userId))
+      .orderBy(desc(parkingSpots.savedAt))
+      .limit(1);
+
+    return rows[0] ? mapToSpot(rows[0]) : null;
+  },
+
+  /**
    * Update a spot
    */
   async update(id: string, input: UpdateSpotInput): Promise<ParkingSpot | null> {

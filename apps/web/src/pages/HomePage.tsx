@@ -4,12 +4,14 @@ import { useAuth } from '@/hooks/useAuth/useAuth';
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSpotStore } from '@/stores/spotStore';
+import { useCarTagStore } from '@/stores/carTagStore';
 import { useGeolocation } from '@/hooks/useGeolocation/useGeolocation';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 import { Header } from '@/components/layout/Header';
+import { LatestSpotCard } from '@/components/spot/LatestSpotCard';
 import { geocodingApi } from '@/services/api/geocodingApi';
 
 export const HomePage = () => {
@@ -18,7 +20,16 @@ export const HomePage = () => {
   const { isGuest } = useGuestStore();
   const { authMode } = useAuthStore();
   const { showPrompt, dismiss } = useSignInPrompt();
-  const { saveSpot, isSaving, error: spotError, setError: setSpotError } = useSpotStore();
+  const {
+    saveSpot,
+    isSaving,
+    error: spotError,
+    setError: setSpotError,
+    latestSpot,
+    isLoadingLatest,
+    fetchLatestSpot,
+  } = useSpotStore();
+  const { fetchTags, getTagById } = useCarTagStore();
   const {
     getCurrentPosition,
     isLoading: locationLoading,
@@ -42,6 +53,46 @@ export const HomePage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch latest spot and car tags on mount (when authenticated or in guest mode)
+  useEffect(() => {
+    if (isAuthenticated || isGuest) {
+      fetchLatestSpot().catch(() => {
+        // Error is handled in the store
+      });
+      fetchTags();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isGuest]);
+
+  /**
+   * Get car tag info for the latest spot
+   */
+  const getTagInfo = () => {
+    if (!latestSpot?.carTagId) {
+      return { name: null, color: undefined };
+    }
+    const tag = getTagById(latestSpot.carTagId);
+    return tag ? { name: tag.name, color: tag.color } : { name: null, color: undefined };
+  };
+
+  /**
+   * Handle navigation to the latest spot
+   */
+  const handleNavigateToSpot = () => {
+    if (!latestSpot) return;
+
+    // If we have coordinates, open in maps app
+    if (latestSpot.lat !== null && latestSpot.lng !== null) {
+      // Use platform-appropriate maps URL
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latestSpot.lat},${latestSpot.lng}`;
+      window.open(mapsUrl, '_blank');
+    } else if (latestSpot.address) {
+      // If only address, use address-based navigation
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(latestSpot.address)}`;
+      window.open(mapsUrl, '_blank');
+    }
+  };
 
   const handleSignInFromPrompt = () => {
     window.location.href = '/login';
@@ -176,6 +227,19 @@ export const HomePage = () => {
       <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-indigo-900 mb-4">Where Did I Park?</h1>
         <p className="text-lg text-gray-600 mb-8">Never forget where you parked again</p>
+
+        {/* Latest Spot Card - shown when authenticated or in guest mode */}
+        {(isAuthenticated || isGuest) && (
+          <div className="w-full max-w-md mb-6">
+            <LatestSpotCard
+              spot={latestSpot}
+              carTagName={getTagInfo().name}
+              carTagColor={getTagInfo().color}
+              onNavigate={handleNavigateToSpot}
+              isLoading={isLoadingLatest}
+            />
+          </div>
+        )}
 
         {/* Options Container */}
         <div className="w-full max-w-md space-y-6">

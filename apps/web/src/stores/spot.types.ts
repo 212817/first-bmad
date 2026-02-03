@@ -70,7 +70,9 @@ export interface UpdateSpotInput {
  */
 export interface SpotState {
   currentSpot: Spot | null;
+  latestSpot: Spot | null;
   isLoading: boolean;
+  isLoadingLatest: boolean;
   isSaving: boolean;
   error: string | null;
 }
@@ -81,6 +83,7 @@ export interface SpotState {
 export interface SpotActions {
   saveSpot: (position: SaveSpotInput) => Promise<Spot>;
   updateSpot: (id: string, data: UpdateSpotInput) => Promise<Spot>;
+  fetchLatestSpot: () => Promise<Spot | null>;
   clearSpot: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

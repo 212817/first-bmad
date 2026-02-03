@@ -6,5 +6,8 @@ export { NoteInput } from './NoteInput';
 export { AddressInput } from './AddressInput';
 export { CarTagSelector } from './CarTagSelector';
 export { TagBadge } from './TagBadge';
+export { LatestSpotCard } from './LatestSpotCard';
+export { EmptySpotState } from './EmptySpotState';
+export { SpotThumbnail } from './SpotThumbnail';
 export * from './types';
 export * from './carTag.types';

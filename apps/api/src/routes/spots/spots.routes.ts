@@ -46,6 +46,24 @@ spotsRoutes.get('/active', async (req, res) => {
 });
 
 /**
+ * GET /spots/latest
+ * Get user's most recent spot (for home screen display)
+ */
+spotsRoutes.get('/latest', async (req, res) => {
+  const spot = await spotsService.getLatestSpot(req.user!.id);
+
+  if (!spot) {
+    res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: 'No spots found' },
+    });
+    return;
+  }
+
+  res.json({ success: true, data: spot });
+});
+
+/**
  * GET /spots/:id
  * Get a specific spot by ID
  */

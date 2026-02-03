@@ -9,6 +9,7 @@ const { mockSpotRepository } = vi.hoisted(() => ({
     findById: vi.fn(),
     findByUserId: vi.fn(),
     findActiveByUserId: vi.fn(),
+    findLatestByUserId: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
   },
@@ -354,6 +355,66 @@ describe('Spots API', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(response.status).toBe(204);
+    });
+  });
+
+  describe('GET /v1/spots/latest', () => {
+    it('should return 401 without access token', async () => {
+      const response = await request(app).get('/v1/spots/latest');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+    });
+
+    it('should return latest spot for authenticated user', async () => {
+      mockSpotRepository.findLatestByUserId.mockResolvedValue(mockSpot);
+
+      const response = await request(app)
+        .get('/v1/spots/latest')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.id).toBe('spot-123');
+      expect(response.body.data.lat).toBe(40.7128);
+      expect(response.body.data.lng).toBe(-74.006);
+      expect(mockSpotRepository.findLatestByUserId).toHaveBeenCalledWith(userId);
+    });
+
+    it('should return 404 if no spots exist', async () => {
+      mockSpotRepository.findLatestByUserId.mockResolvedValue(null);
+
+      const response = await request(app)
+        .get('/v1/spots/latest')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(response.body.error.message).toBe('No spots found');
+    });
+
+    it('should include all spot fields in response', async () => {
+      const fullSpot = {
+        ...mockSpot,
+        address: 'Near Central Park',
+        photoUrl: 'https://example.com/photo.jpg',
+        note: 'Level P2',
+        carTagId: 'tag-1',
+      };
+      mockSpotRepository.findLatestByUserId.mockResolvedValue(fullSpot);
+
+      const response = await request(app)
+        .get('/v1/spots/latest')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.address).toBe('Near Central Park');
+      expect(response.body.data.photoUrl).toBe('https://example.com/photo.jpg');
+      expect(response.body.data.note).toBe('Level P2');
+      expect(response.body.data.carTagId).toBe('tag-1');
+      expect(response.body.data.savedAt).toBeDefined();
     });
   });
 });

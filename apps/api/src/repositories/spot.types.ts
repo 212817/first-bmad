@@ -39,6 +39,7 @@ export interface SpotRepositoryInterface {
   findById(id: string): Promise<ParkingSpot | null>;
   findByUserId(userId: string, limit?: number): Promise<ParkingSpot[]>;
   findActiveByUserId(userId: string): Promise<ParkingSpot | null>;
+  findLatestByUserId(userId: string): Promise<ParkingSpot | null>;
   update(id: string, input: UpdateSpotInput): Promise<ParkingSpot | null>;
   delete(id: string): Promise<boolean>;
 }

@@ -73,3 +73,39 @@ export interface SpotAddressProps {
   /** Whether address is being loaded */
   isLoading?: boolean;
 }
+
+/**
+ * Props for LatestSpotCard component
+ */
+export interface LatestSpotCardProps {
+  /** The spot to display, or null to show empty state */
+  spot: Spot | null;
+  /** Car tag name for display */
+  carTagName?: string | null;
+  /** Car tag color for display */
+  carTagColor?: string;
+  /** Callback when navigate button is clicked */
+  onNavigate: () => void;
+  /** Whether the card is loading */
+  isLoading?: boolean;
+}
+
+/**
+ * Props for EmptySpotState component
+ */
+export interface EmptySpotStateProps {
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
+ * Props for SpotThumbnail component
+ */
+export interface SpotThumbnailProps {
+  /** URL of the photo to display */
+  url: string;
+  /** Alt text for accessibility */
+  alt?: string;
+  /** Additional CSS classes */
+  className?: string;
+}
