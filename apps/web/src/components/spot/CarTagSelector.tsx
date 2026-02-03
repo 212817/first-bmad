@@ -28,7 +28,7 @@ export const CarTagSelector = ({
   const [isOpen, setIsOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState(COLOR_OPTIONS[0].color);
+  const [newTagColor, setNewTagColor] = useState(COLOR_OPTIONS[0]?.color ?? '#3B82F6');
   const [isCreating, setIsCreating] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,7 +82,7 @@ export const CarTagSelector = ({
       const newTag = await createTag(trimmedName, newTagColor);
       onSelect(newTag.id);
       setNewTagName('');
-      setNewTagColor(COLOR_OPTIONS[0].color);
+      setNewTagColor(COLOR_OPTIONS[0]?.color ?? '#3B82F6');
       setShowAddForm(false);
       setIsOpen(false);
     } catch {
@@ -96,7 +96,7 @@ export const CarTagSelector = ({
   const handleCancelAdd = () => {
     setShowAddForm(false);
     setNewTagName('');
-    setNewTagColor(COLOR_OPTIONS[0].color);
+    setNewTagColor(COLOR_OPTIONS[0]?.color ?? '#3B82F6');
   };
 
   if (isLoading) {
