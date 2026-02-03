@@ -169,7 +169,9 @@ export const SpotDetailPage = () => {
             className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700 flex items-center gap-2"
             aria-label="Go back"
           >
-            <span className="text-xl" aria-hidden="true">←</span>
+            <span className="text-xl" aria-hidden="true">
+              ←
+            </span>
             <span className="font-medium">Back</span>
           </button>
           <h1 className="ml-4 font-semibold text-lg text-gray-900">Spot Details</h1>
@@ -177,106 +179,113 @@ export const SpotDetailPage = () => {
 
         {/* Top Section: Map (left) + Photo (right) side by side - fixed height */}
         <div className="grid grid-cols-2 gap-0.5 bg-gray-100 h-96 shrink-0">
-        {/* Map Preview - Left side */}
-        <div className="h-full bg-gray-200 overflow-hidden relative" data-testid="spot-map-preview">
-          {canNavigate ? (
-            <SpotMap
-              lat={spot.lat!}
-              lng={spot.lng!}
-              editable={false}
-              heightClass="h-full"
-              testId="spot-detail-map"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-5xl" aria-hidden="true">🗺️</span>
-            </div>
-          )}
-        </div>
-
-        {/* Photo - Right side */}
-        <div className="h-full bg-gray-200 overflow-hidden relative">
-          {spot.photoUrl ? (
-            <SpotPhoto
-              url={spot.photoUrl}
-              alt="Parking spot"
-              isZoomed={isPhotoZoomed}
-              onTap={handlePhotoTap}
-              className="!h-full"
-            />
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center"
-              data-testid="spot-photo-placeholder"
-            >
-              <span className="text-5xl" aria-hidden="true">📷</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content below */}
-      <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-        {/* Location */}
-        <LocationCard address={spot.address} lat={spot.lat} lng={spot.lng} />
-
-        {/* Metadata: Timestamp and Tag */}
-        <div className="flex items-center justify-between">
-          <time className="text-sm text-gray-500" data-testid="spot-timestamp">
-            Saved {formatDateTime(spot.savedAt)}
-          </time>
-          <TagBadge name={tagName} color={tagColor} />
-        </div>
-
-        {/* Note */}
-        {spot.note && (
-          <div className="bg-white p-4 rounded-lg border border-gray-200" data-testid="spot-note">
-            <p className="text-gray-700 whitespace-pre-wrap">{spot.note}</p>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="space-y-3 pt-4">
-          {/* Navigate button */}
-          <button
-            onClick={handleNavigate}
-            disabled={!canNavigate}
-            className={`w-full h-12 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-              canNavigate
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            data-testid="navigate-button"
+          {/* Map Preview - Left side */}
+          <div
+            className="h-full bg-gray-200 overflow-hidden relative"
+            data-testid="spot-map-preview"
           >
-            <span aria-hidden="true">🧭</span>
-            Navigate
-          </button>
+            {canNavigate ? (
+              <SpotMap
+                lat={spot.lat!}
+                lng={spot.lng!}
+                editable={false}
+                heightClass="h-full"
+                testId="spot-detail-map"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-5xl" aria-hidden="true">
+                  🗺️
+                </span>
+              </div>
+            )}
+          </div>
 
-          {/* Share and Delete buttons */}
-          <div className="flex gap-3">
+          {/* Photo - Right side */}
+          <div className="h-full bg-gray-200 overflow-hidden relative">
+            {spot.photoUrl ? (
+              <SpotPhoto
+                url={spot.photoUrl}
+                alt="Parking spot"
+                isZoomed={isPhotoZoomed}
+                onTap={handlePhotoTap}
+                className="!h-full"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center"
+                data-testid="spot-photo-placeholder"
+              >
+                <span className="text-5xl" aria-hidden="true">
+                  📷
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Content below */}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-4">
+          {/* Location */}
+          <LocationCard address={spot.address} lat={spot.lat} lng={spot.lng} />
+
+          {/* Metadata: Timestamp and Tag */}
+          <div className="flex items-center justify-between">
+            <time className="text-sm text-gray-500" data-testid="spot-timestamp">
+              Saved {formatDateTime(spot.savedAt)}
+            </time>
+            <TagBadge name={tagName} color={tagColor} />
+          </div>
+
+          {/* Note */}
+          {spot.note && (
+            <div className="bg-white p-4 rounded-lg border border-gray-200" data-testid="spot-note">
+              <p className="text-gray-700 whitespace-pre-wrap">{spot.note}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="space-y-3 pt-4">
+            {/* Navigate button */}
             <button
-              onClick={handleShare}
-              disabled
-              className="flex-1 h-12 bg-white border border-gray-200 rounded-lg font-medium flex items-center justify-center gap-2 text-gray-400 cursor-not-allowed"
-              title="Coming soon"
-              data-testid="share-button"
+              onClick={handleNavigate}
+              disabled={!canNavigate}
+              className={`w-full h-12 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+                canNavigate
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+              data-testid="navigate-button"
             >
-              <span aria-hidden="true">🔗</span>
-              Share
+              <span aria-hidden="true">🧭</span>
+              Navigate
             </button>
 
-            <button
-              onClick={handleDelete}
-              className="w-12 h-12 bg-white border border-red-200 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50 transition-colors"
-              aria-label="Delete spot"
-              data-testid="delete-button"
-            >
-              <span aria-hidden="true">🗑️</span>
-            </button>
+            {/* Share and Delete buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleShare}
+                disabled
+                className="flex-1 h-12 bg-white border border-gray-200 rounded-lg font-medium flex items-center justify-center gap-2 text-gray-400 cursor-not-allowed"
+                title="Coming soon"
+                data-testid="share-button"
+              >
+                <span aria-hidden="true">🔗</span>
+                Share
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="w-12 h-12 bg-white border border-red-200 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50 transition-colors"
+                aria-label="Delete spot"
+                data-testid="delete-button"
+              >
+                <span aria-hidden="true">🗑️</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };

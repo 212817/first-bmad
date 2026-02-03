@@ -80,14 +80,8 @@ export const SpotPhoto = ({
         data-testid="spot-photo-zoomed"
       >
         {/* Close hint */}
-        <div className="absolute top-4 right-4 text-white/70 text-sm">
-          Tap to close
-        </div>
-        <img
-          src={url}
-          alt={alt}
-          className="max-w-full max-h-full object-contain"
-        />
+        <div className="absolute top-4 right-4 text-white/70 text-sm">Tap to close</div>
+        <img src={url} alt={alt} className="max-w-full max-h-full object-contain" />
       </div>
     );
   }
