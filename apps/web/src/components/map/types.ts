@@ -4,10 +4,10 @@
  * Map tile layer configuration
  */
 export interface TileLayerConfig {
-    url: string;
-    attribution: string;
-    name: string;
-    overlay?: string; // Optional overlay URL for hybrid view
+  url: string;
+  attribution: string;
+  name: string;
+  overlay?: string; // Optional overlay URL for hybrid view
 }
 
 /**
@@ -19,51 +19,51 @@ export type MapViewType = 'street' | 'satellite' | 'hybrid';
  * Props for SpotMap component
  */
 export interface SpotMapProps {
-    /** Latitude coordinate */
-    lat: number;
-    /** Longitude coordinate */
-    lng: number;
-    /** Whether the marker can be dragged to adjust position */
-    editable?: boolean;
-    /** Callback when marker position changes */
-    onPositionChange?: (lat: number, lng: number) => void;
-    /** Custom height class (default: h-48) */
-    heightClass?: string;
-    /** Test ID for testing */
-    testId?: string;
+  /** Latitude coordinate */
+  lat: number;
+  /** Longitude coordinate */
+  lng: number;
+  /** Whether the marker can be dragged to adjust position */
+  editable?: boolean;
+  /** Callback when marker position changes */
+  onPositionChange?: (lat: number, lng: number) => void;
+  /** Custom height class (default: h-48) */
+  heightClass?: string;
+  /** Test ID for testing */
+  testId?: string;
 }
 
 /**
  * Props for LayerSwitcher component
  */
 export interface LayerSwitcherProps {
-    /** Current active layer */
-    activeLayer: MapViewType;
-    /** Callback when layer changes */
-    onLayerChange: (layer: MapViewType) => void;
+  /** Current active layer */
+  activeLayer: MapViewType;
+  /** Callback when layer changes */
+  onLayerChange: (layer: MapViewType) => void;
 }
 
 /**
  * Tile layer definitions for different map views
  */
 export const TILE_LAYERS: Record<MapViewType, TileLayerConfig> = {
-    street: {
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: '&copy; OpenStreetMap contributors',
-        name: 'Street',
-    },
-    satellite: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attribution: 'Tiles &copy; Esri',
-        name: 'Satellite',
-    },
-    hybrid: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attribution: 'Tiles &copy; Esri',
-        name: 'Hybrid',
-        overlay:
-            'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    },
+  street: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    name: 'Street',
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
+    name: 'Satellite',
+  },
+  hybrid: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
+    name: 'Hybrid',
+    overlay:
+      'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  },
 };
 
 /**
