@@ -1,11 +1,7 @@
 // apps/api/src/services/geocoding/geocoding.service.ts
 import { env } from '../../config/env.js';
 import { geocacheRepository } from '../../repositories/geocache.repository.js';
-import type {
-  GeocodingResult,
-  GeocodingServiceInterface,
-  OpenCageResponse,
-} from './types.js';
+import type { GeocodingResult, GeocodingServiceInterface, OpenCageResponse } from './types.js';
 
 /** OpenCage API base URL */
 const OPENCAGE_URL = 'https://api.opencagedata.com/geocode/v1/json';

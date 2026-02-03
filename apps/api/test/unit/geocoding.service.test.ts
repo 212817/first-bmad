@@ -20,8 +20,8 @@ describe('geocodingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
-    vi.spyOn(console, 'warn').mockImplementation(() => { });
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     // Default: no cache hit
     vi.mocked(geocacheRepository.findByAddress).mockResolvedValue(null);
     vi.mocked(geocacheRepository.create).mockResolvedValue({

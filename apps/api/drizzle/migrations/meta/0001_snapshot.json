@@ -41,12 +41,8 @@
           "name": "car_tags_spot_id_parking_spots_id_fk",
           "tableFrom": "car_tags",
           "tableTo": "parking_spots",
-          "columnsFrom": [
-            "spot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["spot_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -123,9 +119,7 @@
         "geocoding_cache_address_query_unique": {
           "name": "geocoding_cache_address_query_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "address_query"
-          ]
+          "columns": ["address_query"]
         }
       },
       "policies": {},
@@ -254,12 +248,8 @@
           "name": "parking_spots_user_id_users_id_fk",
           "tableFrom": "parking_spots",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -313,12 +303,8 @@
           "name": "refresh_tokens_user_id_users_id_fk",
           "tableFrom": "refresh_tokens",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -399,9 +385,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},

@@ -50,9 +50,7 @@ export const createRateLimiter = (options: {
 
   return (req: Request, res: Response, next: NextFunction) => {
     // Generate key from user ID or fallback to IP
-    const key = keyGenerator
-      ? keyGenerator(req)
-      : req.user?.id || req.ip || 'anonymous';
+    const key = keyGenerator ? keyGenerator(req) : req.user?.id || req.ip || 'anonymous';
 
     const now = Date.now();
     const entry = store.get(key);

@@ -31,7 +31,7 @@ describe('AuthService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   describe('getGoogleAuthUrl', () => {

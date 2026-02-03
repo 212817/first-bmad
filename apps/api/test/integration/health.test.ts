@@ -20,7 +20,7 @@ describe('Health API', () => {
 
   beforeAll(() => {
     // Suppress expected console output during tests
-    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
@@ -30,7 +30,7 @@ describe('Health API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Re-apply console mock after clearAllMocks
-    consoleSpy.mockImplementation(() => { });
+    consoleSpy.mockImplementation(() => {});
     // Default to healthy database
     mockExecute.mockResolvedValue([{ '?column?': 1 }]);
   });
