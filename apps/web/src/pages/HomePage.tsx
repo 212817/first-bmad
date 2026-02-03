@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useSpotStore } from '@/stores/spotStore';
 import { useCarTagStore } from '@/stores/carTagStore';
 import { useGeolocation } from '@/hooks/useGeolocation/useGeolocation';
+import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
@@ -36,6 +37,7 @@ export const HomePage = () => {
     permissionState,
     error: locationError,
   } = useGeolocation();
+  const { navigateToSpot } = useNavigation();
 
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -81,17 +83,7 @@ export const HomePage = () => {
    */
   const handleNavigateToSpot = () => {
     if (!latestSpot) return;
-
-    // If we have coordinates, open in maps app
-    if (latestSpot.lat !== null && latestSpot.lng !== null) {
-      // Use platform-appropriate maps URL
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latestSpot.lat},${latestSpot.lng}`;
-      window.open(mapsUrl, '_blank');
-    } else if (latestSpot.address) {
-      // If only address, use address-based navigation
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(latestSpot.address)}`;
-      window.open(mapsUrl, '_blank');
-    }
+    navigateToSpot(latestSpot);
   };
 
   const handleSignInFromPrompt = () => {
