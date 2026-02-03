@@ -217,22 +217,6 @@ export const HomePage = () => {
       )}
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold text-indigo-900 mb-4">Where Did I Park?</h1>
-        <p className="text-lg text-gray-600 mb-8">Never forget where you parked again</p>
-
-        {/* Latest Spot Card - shown when authenticated or in guest mode */}
-        {(isAuthenticated || isGuest) && (
-          <div className="w-full max-w-md mb-6">
-            <LatestSpotCard
-              spot={latestSpot}
-              carTagName={getTagInfo().name}
-              carTagColor={getTagInfo().color}
-              onNavigate={handleNavigateToSpot}
-              isLoading={isLoadingLatest}
-            />
-          </div>
-        )}
-
         {/* Options Container */}
         <div className="w-full max-w-md space-y-6">
           {/* Option 1: Enable Location Button */}
@@ -289,7 +273,7 @@ export const HomePage = () => {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g., 123 Main St, City"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg text-gray-900 placeholder-gray-400"
               data-testid="address-input"
             />
             <button
@@ -327,6 +311,22 @@ export const HomePage = () => {
             </button>
           </form>
         </div>
+
+        {/* Latest Spot Card - shown when authenticated or in guest mode */}
+        {(isAuthenticated || isGuest) && (
+          <div className="w-full max-w-md mt-10">
+            <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">
+              Last parked spot
+            </h2>
+            <LatestSpotCard
+              spot={latestSpot}
+              carTagName={getTagInfo().name}
+              carTagColor={getTagInfo().color}
+              onNavigate={handleNavigateToSpot}
+              isLoading={isLoadingLatest}
+            />
+          </div>
+        )}
 
         {/* Error Display */}
         {(spotError || locationError || geocodeError) && (

@@ -2,22 +2,20 @@
 description: 'Activates the Full Stack Developer agent persona.'
 tools:
   [
-    'changes',
-    'codebase',
-    'fetch',
-    'findTestFiles',
-    'githubRepo',
-    'problems',
-    'usages',
-    'editFiles',
-    'runCommands',
-    'runTasks',
-    'runTests',
+    'execute/testFailure',
+    'execute/getTerminalOutput',
+    'execute/runTask',
+    'execute/createAndRunTask',
+    'execute/runInTerminal',
+    'execute/runTests',
+    'read/problems',
+    'read/readFile',
+    'read/terminalSelection',
+    'read/terminalLastCommand',
+    'read/getTaskOutput',
+    'edit/editFiles',
     'search',
-    'searchResults',
-    'terminalLastCommand',
-    'terminalSelection',
-    'testFailure',
+    'web',
   ]
 ---
 

@@ -9,5 +9,7 @@ export { TagBadge } from './TagBadge';
 export { LatestSpotCard } from './LatestSpotCard';
 export { EmptySpotState } from './EmptySpotState';
 export { SpotThumbnail } from './SpotThumbnail';
+export { LocationCard } from './LocationCard';
+export { SpotPhoto } from './SpotPhoto';
 export * from './types';
 export * from './carTag.types';
