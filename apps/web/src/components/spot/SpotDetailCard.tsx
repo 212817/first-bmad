@@ -4,32 +4,11 @@ import { Suspense, lazy } from 'react';
 import { useCarTagStore } from '@/stores/carTagStore';
 import { SpotAddress } from './SpotAddress';
 import { TagBadge } from './TagBadge';
+import { formatRelativeTime } from '@/utils/formatters';
 import type { SpotDetailCardProps } from './types';
 
 // Lazy load the map component to avoid blocking initial render
 const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
-
-/**
- * Format timestamp to relative time
- */
-const formatRelativeTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) {
-    return 'Just now';
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  } else {
-    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  }
-};
 
 /**
  * Format timestamp for display

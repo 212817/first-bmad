@@ -134,6 +134,12 @@ importers:
       react-router-dom:
         specifier: ^7.12.0
         version: 7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-window:
+        specifier: 2.2.6
+        version: 2.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-window-infinite-loader:
+        specifier: 2.0.1
+        version: 2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       zustand:
         specifier: ^5.0.10
         version: 5.0.10(@types/react@19.2.8)(react@19.2.3)
@@ -162,6 +168,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.8)
+      '@types/react-window':
+        specifier: ^2.0.0
+        version: 2.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/react-window-infinite-loader':
+        specifier: ^2.0.0
+        version: 2.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@vitejs/plugin-react':
         specifier: ^5.1.2
         version: 5.1.2(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
@@ -2538,6 +2550,20 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
+  '@types/react-window-infinite-loader@2.0.0':
+    resolution:
+      {
+        integrity: sha512-2YYQRI77fduB8sQJ9h43FR5qIC7C8qodN6waHcWZQmkc+PFw9vKjAs5WUeJHZZk9EGQDy95umYegK4CgZ1CYOw==,
+      }
+    deprecated: This is a stub types definition. react-window-infinite-loader provides its own type definitions, so you do not need this installed.
+
+  '@types/react-window@2.0.0':
+    resolution:
+      {
+        integrity: sha512-E8hMDtImEpMk1SjswSvqoSmYvk7GEtyVaTa/GJV++FdDNuMVVEzpAClyJ0nqeKYBrMkGiyH6M1+rPLM0Nu1exQ==,
+      }
+    deprecated: This is a stub types definition. react-window provides its own type definitions, so you do not need this installed.
+
   '@types/react@19.2.8':
     resolution:
       {
@@ -4696,6 +4722,24 @@ packages:
     peerDependenciesMeta:
       react-dom:
         optional: true
+
+  react-window-infinite-loader@2.0.1:
+    resolution:
+      {
+        integrity: sha512-+Deq2JkxfDr5N6WAwKQJLECiBARZ1yvVv9rElSXPO6yaMt3YTIs2y8TpsH67lIWGYFMnESvO6mgvETEZuCCjuw==,
+      }
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+
+  react-window@2.2.6:
+    resolution:
+      {
+        integrity: sha512-v89O08xRdpCaEuf380B39D1C/0KgUDZA59xft6SVAjzjz/xQxSyXrgDWHymIsYI6TMrqE8WO+G0/PB9AGE8VNA==,
+      }
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   react@19.2.3:
     resolution:
@@ -6986,6 +7030,20 @@ snapshots:
     dependencies:
       '@types/react': 19.2.8
 
+  '@types/react-window-infinite-loader@2.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      react-window-infinite-loader: 2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
+  '@types/react-window@2.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      react-window: 2.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@types/react@19.2.8':
     dependencies:
       csstype: 3.2.3
@@ -8269,6 +8327,16 @@ snapshots:
       react: 19.2.3
       set-cookie-parser: 2.7.2
     optionalDependencies:
+      react-dom: 19.2.3(react@19.2.3)
+
+  react-window-infinite-loader@2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
+  react-window@2.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
   react@19.2.3: {}

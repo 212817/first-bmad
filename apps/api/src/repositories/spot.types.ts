@@ -32,12 +32,25 @@ export interface UpdateSpotInput {
 }
 
 /**
+ * Result of paginated spot query
+ */
+export interface PaginatedSpotsResult {
+  spots: ParkingSpot[];
+  nextCursor: string | null;
+}
+
+/**
  * Spot repository interface
  */
 export interface SpotRepositoryInterface {
   create(input: CreateSpotInput): Promise<ParkingSpot>;
   findById(id: string): Promise<ParkingSpot | null>;
   findByUserId(userId: string, limit?: number): Promise<ParkingSpot[]>;
+  findByUserIdPaginated(
+    userId: string,
+    limit?: number,
+    cursor?: string
+  ): Promise<PaginatedSpotsResult>;
   findActiveByUserId(userId: string): Promise<ParkingSpot | null>;
   findLatestByUserId(userId: string): Promise<ParkingSpot | null>;
   update(id: string, input: UpdateSpotInput): Promise<ParkingSpot | null>;

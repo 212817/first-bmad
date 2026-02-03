@@ -19,6 +19,7 @@ vi.mock('@/services/storage/indexedDb.service', () => ({
     setItem: vi.fn(),
     getItem: vi.fn(),
     getLatestSpot: vi.fn(),
+    getSpotsPaginated: vi.fn(),
   },
 }));
 
@@ -45,6 +46,11 @@ describe('spotStore', () => {
       isLoadingLatest: false,
       isSaving: false,
       error: null,
+      spots: [],
+      hasMore: true,
+      nextCursor: null,
+      isLoadingSpots: false,
+      isLoadingMore: false,
     });
   });
 
@@ -505,6 +511,165 @@ describe('spotStore', () => {
 
       expect(useSpotStore.getState().latestSpot).toEqual(mockApiSpot);
       expect(useSpotStore.getState().currentSpot).toEqual(mockApiSpot);
+    });
+  });
+
+  describe('fetchSpots', () => {
+    const mockSpots = [
+      {
+        id: 'spot-1',
+        lat: 40.7128,
+        lng: -74.006,
+        address: '123 Main St',
+        savedAt: '2026-02-03T12:00:00Z',
+      },
+      {
+        id: 'spot-2',
+        lat: 40.7129,
+        lng: -74.007,
+        address: '456 Oak Ave',
+        savedAt: '2026-02-02T12:00:00Z',
+      },
+    ];
+
+    describe('authenticated user', () => {
+      beforeEach(() => {
+        vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as ReturnType<
+          typeof useGuestStore.getState
+        >);
+      });
+
+      it('should fetch spots from API', async () => {
+        vi.mocked(apiClient.get).mockResolvedValue({
+          data: {
+            success: true,
+            data: mockSpots,
+            meta: { limit: 20, nextCursor: null },
+          },
+        });
+
+        await useSpotStore.getState().fetchSpots();
+
+        expect(apiClient.get).toHaveBeenCalledWith('/v1/spots?limit=20');
+        expect(useSpotStore.getState().spots).toEqual(mockSpots);
+        expect(useSpotStore.getState().hasMore).toBe(false);
+        expect(useSpotStore.getState().nextCursor).toBeNull();
+      });
+
+      it('should handle pagination with cursor', async () => {
+        vi.mocked(apiClient.get).mockResolvedValue({
+          data: {
+            success: true,
+            data: mockSpots,
+            meta: { limit: 20, nextCursor: '2026-02-01T12:00:00Z' },
+          },
+        });
+
+        await useSpotStore.getState().fetchSpots();
+
+        expect(useSpotStore.getState().hasMore).toBe(true);
+        expect(useSpotStore.getState().nextCursor).toBe('2026-02-01T12:00:00Z');
+      });
+
+      it('should set loading states correctly', async () => {
+        vi.mocked(apiClient.get).mockImplementation(() => {
+          expect(useSpotStore.getState().isLoadingSpots).toBe(true);
+          return Promise.resolve({
+            data: { success: true, data: [], meta: { limit: 20, nextCursor: null } },
+          });
+        });
+
+        await useSpotStore.getState().fetchSpots();
+
+        expect(useSpotStore.getState().isLoadingSpots).toBe(false);
+      });
+    });
+
+    describe('guest user', () => {
+      beforeEach(() => {
+        vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: true } as ReturnType<
+          typeof useGuestStore.getState
+        >);
+      });
+
+      it('should fetch spots from IndexedDB', async () => {
+        vi.mocked(indexedDbService.getSpotsPaginated).mockResolvedValue({
+          spots: mockSpots,
+          nextCursor: null,
+        });
+
+        await useSpotStore.getState().fetchSpots();
+
+        expect(indexedDbService.getSpotsPaginated).toHaveBeenCalledWith(20, undefined);
+        expect(useSpotStore.getState().spots).toEqual(mockSpots);
+      });
+    });
+  });
+
+  describe('loadMore', () => {
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+    });
+
+    it('should not load more when hasMore is false', async () => {
+      useSpotStore.setState({ hasMore: false, nextCursor: null });
+
+      await useSpotStore.getState().loadMore();
+
+      expect(apiClient.get).not.toHaveBeenCalled();
+    });
+
+    it('should not load more when already loading', async () => {
+      useSpotStore.setState({ hasMore: true, isLoadingMore: true });
+
+      await useSpotStore.getState().loadMore();
+
+      expect(apiClient.get).not.toHaveBeenCalled();
+    });
+
+    it('should load more with cursor', async () => {
+      useSpotStore.setState({
+        hasMore: true,
+        nextCursor: '2026-02-01T12:00:00Z',
+        spots: [{ id: 'existing' }] as any,
+      });
+
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: {
+          success: true,
+          data: [{ id: 'new-spot' }],
+          meta: { limit: 20, nextCursor: null },
+        },
+      });
+
+      await useSpotStore.getState().loadMore();
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/v1/spots?limit=20&cursor=2026-02-01T12%3A00%3A00Z'
+      );
+      expect(useSpotStore.getState().spots).toHaveLength(2);
+    });
+  });
+
+  describe('clearHistory', () => {
+    it('should reset history state', () => {
+      useSpotStore.setState({
+        spots: [{ id: 'spot-1' }] as any,
+        hasMore: false,
+        nextCursor: 'some-cursor',
+        isLoadingSpots: true,
+        isLoadingMore: true,
+      });
+
+      useSpotStore.getState().clearHistory();
+
+      expect(useSpotStore.getState().spots).toEqual([]);
+      expect(useSpotStore.getState().hasMore).toBe(true);
+      expect(useSpotStore.getState().nextCursor).toBeNull();
+      expect(useSpotStore.getState().isLoadingSpots).toBe(false);
+      expect(useSpotStore.getState().isLoadingMore).toBe(false);
     });
   });
 });

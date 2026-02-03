@@ -4,20 +4,35 @@ import { apiClient } from '@/services/api/client';
 import { indexedDbService } from '@/services/storage/indexedDb.service';
 import { STORES } from '@/services/storage/types';
 import { useGuestStore } from './guestStore';
-import type { SpotState, SpotActions, Spot, SaveSpotInput, UpdateSpotInput } from './spot.types';
+import type {
+  SpotState,
+  SpotActions,
+  Spot,
+  SaveSpotInput,
+  UpdateSpotInput,
+  PaginatedSpotsResponse,
+} from './spot.types';
 import { isAddressInput } from './spot.types';
+
+const DEFAULT_PAGE_SIZE = 20;
 
 /**
  * Spot store for managing parking spot state
  * Routes to API (authenticated) or IndexedDB (guest) based on auth mode
  */
-export const useSpotStore = create<SpotState & SpotActions>((set) => ({
+export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   currentSpot: null,
   latestSpot: null,
   isLoading: false,
   isLoadingLatest: false,
   isSaving: false,
   error: null,
+  // History state
+  spots: [],
+  hasMore: true,
+  nextCursor: null,
+  isLoadingSpots: false,
+  isLoadingMore: false,
 
   /**
    * Save a new parking spot
@@ -210,5 +225,94 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
    */
   setError: (error: string | null) => {
     set({ error });
+  },
+
+  /**
+   * Fetch spots with pagination
+   * Routes to API (authenticated) or IndexedDB (guest)
+   */
+  fetchSpots: async (cursor?: string): Promise<void> => {
+    const isGuest = useGuestStore.getState().isGuest;
+    const isInitialLoad = !cursor;
+
+    if (isInitialLoad) {
+      set({ isLoadingSpots: true, error: null });
+    } else {
+      set({ isLoadingMore: true, error: null });
+    }
+
+    try {
+      let spots: Spot[];
+      let nextCursor: string | null;
+
+      if (isGuest) {
+        // Get from IndexedDB for guest users
+        const result = await indexedDbService.getSpotsPaginated<Spot>(DEFAULT_PAGE_SIZE, cursor);
+        spots = result.spots;
+        nextCursor = result.nextCursor;
+      } else {
+        // Get from API for authenticated users
+        const params = new URLSearchParams({ limit: String(DEFAULT_PAGE_SIZE) });
+        if (cursor) {
+          params.set('cursor', cursor);
+        }
+
+        const response = await apiClient.get<{ success: boolean } & PaginatedSpotsResponse>(
+          `/v1/spots?${params.toString()}`
+        );
+
+        spots = response.data.data;
+        nextCursor = response.data.meta.nextCursor;
+      }
+
+      if (isInitialLoad) {
+        set({
+          spots,
+          hasMore: nextCursor !== null,
+          nextCursor,
+          isLoadingSpots: false,
+        });
+      } else {
+        set((state) => ({
+          spots: [...state.spots, ...spots],
+          hasMore: nextCursor !== null,
+          nextCursor,
+          isLoadingMore: false,
+        }));
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch spots';
+      set({
+        error: message,
+        isLoadingSpots: false,
+        isLoadingMore: false,
+      });
+    }
+  },
+
+  /**
+   * Load more spots (using the current cursor)
+   */
+  loadMore: async (): Promise<void> => {
+    const { hasMore, nextCursor, isLoadingMore } = get();
+
+    if (!hasMore || isLoadingMore) {
+      return;
+    }
+
+    await get().fetchSpots(nextCursor ?? undefined);
+  },
+
+  /**
+   * Clear history state
+   */
+  clearHistory: () => {
+    set({
+      spots: [],
+      hasMore: true,
+      nextCursor: null,
+      isLoadingSpots: false,
+      isLoadingMore: false,
+    });
   },
 }));

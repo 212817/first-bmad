@@ -88,10 +88,10 @@ test.describe('Spot Confirmation Page', () => {
     // Wait for confirmation page
     await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
 
-    // Should display relative time
+    // Should display relative time (shared utility returns lowercase "just now")
     const relativeTime = page.getByTestId('spot-relative-time');
     await expect(relativeTime).toBeVisible();
-    await expect(relativeTime).toContainText('Just now');
+    await expect(relativeTime).toContainText('just now');
   });
 
   test('displays action buttons for photo, gallery, timer and car tag selector (AC4)', async ({

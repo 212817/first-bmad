@@ -138,12 +138,12 @@ describe('SpotDetailCard', () => {
       Date.now = originalDateNow;
     });
 
-    it('should show "Just now" for very recent spots', () => {
+    it('should show "just now" for very recent spots', () => {
       const now = new Date();
       const spot = createMockSpot({ savedAt: now.toISOString() });
       render(<SpotDetailCard spot={spot} />);
 
-      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('Just now');
+      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('just now');
     });
 
     it('should show minutes ago for recent spots', () => {
@@ -151,7 +151,7 @@ describe('SpotDetailCard', () => {
       const spot = createMockSpot({ savedAt: fiveMinutesAgo.toISOString() });
       render(<SpotDetailCard spot={spot} />);
 
-      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('5 minutes ago');
+      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('5m ago');
     });
 
     it('should show hours ago for older spots', () => {
@@ -159,7 +159,7 @@ describe('SpotDetailCard', () => {
       const spot = createMockSpot({ savedAt: twoHoursAgo.toISOString() });
       render(<SpotDetailCard spot={spot} />);
 
-      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('2 hours ago');
+      expect(screen.getByTestId('spot-relative-time')).toHaveTextContent('2h ago');
     });
 
     it('should display formatted timestamp', () => {

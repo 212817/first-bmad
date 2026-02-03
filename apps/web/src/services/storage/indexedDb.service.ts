@@ -1,5 +1,5 @@
 // apps/web/src/services/storage/indexedDb.service.ts
-import { STORES, type StoreName, type IndexedDbService } from './types';
+import { STORES, type StoreName, type IndexedDbService, type PaginatedSpotsResult } from './types';
 
 const DB_NAME = 'wdip-local';
 const DB_VERSION = 1;
@@ -181,6 +181,54 @@ export const indexedDbService: IndexedDbService = {
         });
 
         resolve(spots[0] ?? null);
+      };
+    });
+  },
+
+  /**
+   * Get spots with cursor-based pagination from IndexedDB
+   * Returns spots sorted by savedAt descending with pagination support
+   */
+  getSpotsPaginated: async <T extends { savedAt: string }>(
+    limit = 20,
+    cursor?: string
+  ): Promise<PaginatedSpotsResult<T>> => {
+    if (!indexedDbService.db) {
+      throw new Error('IndexedDB not initialized. Call init() first.');
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = indexedDbService.db!.transaction(STORES.spots, 'readonly');
+      const objectStore = transaction.objectStore(STORES.spots);
+      const request = objectStore.getAll();
+
+      request.onerror = () => {
+        reject(new Error(`Failed to get spots: ${request.error?.message}`));
+      };
+
+      request.onsuccess = () => {
+        let spots = request.result as T[];
+
+        // Sort by savedAt descending (newest first)
+        spots.sort((a, b) => {
+          const dateA = new Date(a.savedAt).getTime();
+          const dateB = new Date(b.savedAt).getTime();
+          return dateB - dateA;
+        });
+
+        // Apply cursor filter if provided
+        if (cursor) {
+          const cursorTime = new Date(cursor).getTime();
+          spots = spots.filter((spot) => new Date(spot.savedAt).getTime() < cursorTime);
+        }
+
+        // Check if there are more items beyond the limit
+        const hasMore = spots.length > limit;
+        const items = hasMore ? spots.slice(0, limit) : spots;
+        const lastItem = items[items.length - 1];
+        const nextCursor = hasMore && lastItem ? lastItem.savedAt : null;
+
+        resolve({ spots: items, nextCursor });
       };
     });
   },
