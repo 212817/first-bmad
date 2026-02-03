@@ -63,20 +63,22 @@ export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) 
 
       {/* Spot Details */}
       <div className="p-4 space-y-3">
-        {/* Coordinates */}
-        <div className="flex items-start gap-2">
-          <span className="text-gray-400" aria-hidden="true">
-            🗺️
-          </span>
-          <div>
-            <p className="text-sm font-mono text-gray-700" data-testid="spot-coordinates">
-              {formatCoordinates(spot.lat, spot.lng)}
-            </p>
-            {spot.accuracyMeters && (
-              <p className="text-xs text-gray-500">±{spot.accuracyMeters}m accuracy</p>
-            )}
+        {/* Coordinates (only when available) */}
+        {spot.lat !== null && spot.lng !== null && (
+          <div className="flex items-start gap-2">
+            <span className="text-gray-400" aria-hidden="true">
+              🗺️
+            </span>
+            <div>
+              <p className="text-sm font-mono text-gray-700" data-testid="spot-coordinates">
+                {formatCoordinates(spot.lat, spot.lng)}
+              </p>
+              {spot.accuracyMeters && (
+                <p className="text-xs text-gray-500">±{spot.accuracyMeters}m accuracy</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Address (when available) */}
         {spot.address && (
