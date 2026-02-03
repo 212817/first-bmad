@@ -21,11 +21,12 @@ export interface Spot {
 
 /**
  * Input for saving a new spot with GPS coordinates
+ * accuracy can be null/undefined for manually set positions
  */
 export interface SaveSpotWithCoordsInput {
   lat: number;
   lng: number;
-  accuracy: number;
+  accuracy?: number | null;
 }
 
 /**
