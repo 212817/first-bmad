@@ -15,41 +15,41 @@ const YEAR = 365 * DAY;
  * Examples: "just now", "5 minutes ago", "2 hours ago", "3 days ago"
  */
 export const formatRelativeTime = (date: Date | string): string => {
-    const now = new Date();
-    const target = typeof date === 'string' ? new Date(date) : date;
-    const diff = now.getTime() - target.getTime();
+  const now = new Date();
+  const target = typeof date === 'string' ? new Date(date) : date;
+  const diff = now.getTime() - target.getTime();
 
-    if (diff < MINUTE) {
-        return 'just now';
-    }
+  if (diff < MINUTE) {
+    return 'just now';
+  }
 
-    if (diff < HOUR) {
-        const minutes = Math.floor(diff / MINUTE);
-        return `${minutes}m ago`;
-    }
+  if (diff < HOUR) {
+    const minutes = Math.floor(diff / MINUTE);
+    return `${minutes}m ago`;
+  }
 
-    if (diff < DAY) {
-        const hours = Math.floor(diff / HOUR);
-        return `${hours}h ago`;
-    }
+  if (diff < DAY) {
+    const hours = Math.floor(diff / HOUR);
+    return `${hours}h ago`;
+  }
 
-    if (diff < WEEK) {
-        const days = Math.floor(diff / DAY);
-        return `${days}d ago`;
-    }
+  if (diff < WEEK) {
+    const days = Math.floor(diff / DAY);
+    return `${days}d ago`;
+  }
 
-    if (diff < MONTH) {
-        const weeks = Math.floor(diff / WEEK);
-        return `${weeks}w ago`;
-    }
+  if (diff < MONTH) {
+    const weeks = Math.floor(diff / WEEK);
+    return `${weeks}w ago`;
+  }
 
-    if (diff < YEAR) {
-        const months = Math.floor(diff / MONTH);
-        return `${months}mo ago`;
-    }
+  if (diff < YEAR) {
+    const months = Math.floor(diff / MONTH);
+    return `${months}mo ago`;
+  }
 
-    const years = Math.floor(diff / YEAR);
-    return `${years}y ago`;
+  const years = Math.floor(diff / YEAR);
+  return `${years}y ago`;
 };
 
 /**
@@ -57,7 +57,7 @@ export const formatRelativeTime = (date: Date | string): string => {
  * e.g., "40.7128°N, 74.0060°W"
  */
 export const formatCoordinates = (lat: number, lng: number): string => {
-    const latDir = lat >= 0 ? 'N' : 'S';
-    const lngDir = lng >= 0 ? 'E' : 'W';
-    return `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lng).toFixed(4)}°${lngDir}`;
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const lngDir = lng >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lng).toFixed(4)}°${lngDir}`;
 };
