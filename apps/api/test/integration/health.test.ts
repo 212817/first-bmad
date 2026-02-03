@@ -1,5 +1,5 @@
 // apps/api/test/integration/health.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { db } from '../../src/config/db.js';
@@ -16,9 +16,21 @@ const mockExecute = db.execute as ReturnType<typeof vi.fn>;
 
 describe('Health API', () => {
   const app = createApp();
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeAll(() => {
+    // Suppress expected console output during tests
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+  });
+
+  afterAll(() => {
+    consoleSpy.mockRestore();
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Re-apply console mock after clearAllMocks
+    consoleSpy.mockImplementation(() => { });
     // Default to healthy database
     mockExecute.mockResolvedValue([{ '?column?': 1 }]);
   });

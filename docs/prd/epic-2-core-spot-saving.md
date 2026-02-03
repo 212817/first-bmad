@@ -147,3 +147,22 @@
 6. Handle rate limits gracefully (queue, retry, or skip)
 
 ---
+
+### Story 2.9: Interactive Map with Marker Adjustment
+
+**As a** user,  
+**I want** to see an interactive map of my parking spot,  
+**so that** I can verify the location and manually adjust it if GPS was inaccurate.
+
+**Acceptance Criteria:**
+
+1. Confirmation screen displays an interactive map instead of static placeholder
+2. Map uses free tile provider (OpenStreetMap via Leaflet)
+3. Map supports hybrid view (satellite imagery with street labels overlay)
+4. User can toggle between street view and hybrid/satellite view
+5. A draggable marker shows the saved parking location
+6. User can drag marker to adjust location if GPS was inaccurate
+7. Adjusted coordinates are saved when user confirms the change
+8. Map is responsive and works on mobile devices
+
+---

@@ -3,11 +3,12 @@ import type { ParkingSpot } from '@repo/shared/types';
 
 /**
  * Input for creating a new spot
+ * Note: latitude/longitude can be null for address-only spots
  */
 export interface CreateSpotInput {
   userId: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   accuracyMeters?: number | null;
   address?: string | null;
   photoUrl?: string | null;

@@ -42,3 +42,15 @@ export interface NoteInputProps {
   onSave: () => void;
   disabled?: boolean;
 }
+
+/**
+ * Props for AddressInput component
+ */
+export interface AddressInputProps {
+  /** Callback when address is submitted */
+  onSubmit: (address: string) => void;
+  /** Whether the form is in loading state */
+  isLoading?: boolean;
+  /** Whether the input is disabled */
+  disabled?: boolean;
+}

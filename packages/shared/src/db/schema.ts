@@ -32,8 +32,8 @@ export const parkingSpots = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    latitude: doublePrecision('latitude').notNull(),
-    longitude: doublePrecision('longitude').notNull(),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
     accuracyMeters: integer('accuracy_meters'),
     address: text('address'),
     photoUrl: text('photo_url'),
@@ -58,15 +58,19 @@ export const carTags = pgTable('car_tags', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Geocoding cache table
-export const geocodingCache = pgTable('geocoding_cache', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  lat: doublePrecision('lat').notNull(),
-  lng: doublePrecision('lng').notNull(),
-  address: text('address').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-});
+// Geocoding cache table - caches address lookups to conserve API quota
+export const geocodingCache = pgTable(
+  'geocoding_cache',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    addressQuery: text('address_query').notNull().unique(),
+    lat: doublePrecision('lat').notNull(),
+    lng: doublePrecision('lng').notNull(),
+    formattedAddress: text('formatted_address'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_geocache_address_query').on(table.addressQuery)]
+);
 
 // Refresh tokens table for session management
 export const refreshTokens = pgTable('refresh_tokens', {

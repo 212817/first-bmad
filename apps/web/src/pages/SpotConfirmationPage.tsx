@@ -7,6 +7,7 @@ import { SpotActions } from '@/components/spot/SpotActions';
 import { NoteInput } from '@/components/spot/NoteInput';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
+import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
 import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
 import { imageProcessor } from '@/services/image/imageProcessor.service';
@@ -233,6 +234,9 @@ export const SpotConfirmationPage = () => {
     isProcessingGallery || (uploadStatus !== 'idle' && uploadStatus !== 'success');
   const hasPhoto = !!currentSpot.photoUrl;
 
+  // Determine if spot has address but no coordinates (manual entry without geocoding)
+  const hasNoCoordinates = !currentSpot.lat && !currentSpot.lng && !!currentSpot.address;
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col"
@@ -256,6 +260,13 @@ export const SpotConfirmationPage = () => {
       <main className="flex-1 px-4 pb-4 flex flex-col">
         {/* Spot Details Card */}
         <SpotDetailCard spot={currentSpot} hideNote />
+
+        {/* Warning for address-only spots without coordinates */}
+        {hasNoCoordinates && (
+          <div className="mt-4">
+            <NoCoordinatesWarning />
+          </div>
+        )}
 
         {/* Upload Progress Indicator */}
         {showUploadProgress && (
