@@ -5,6 +5,7 @@ import { indexedDbService } from '@/services/storage/indexedDb.service';
 import { STORES } from '@/services/storage/types';
 import { useGuestStore } from './guestStore';
 import type { SpotState, SpotActions, Spot, SaveSpotInput, UpdateSpotInput } from './spot.types';
+import { isAddressInput } from './spot.types';
 
 /**
  * Spot store for managing parking spot state
@@ -19,41 +20,71 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
   /**
    * Save a new parking spot
    * Uses API for authenticated users, IndexedDB for guests
+   * Supports both GPS coordinates and address-only saves
    */
-  saveSpot: async (position: SaveSpotInput): Promise<Spot> => {
+  saveSpot: async (input: SaveSpotInput): Promise<Spot> => {
     set({ isSaving: true, error: null });
 
     const isGuest = useGuestStore.getState().isGuest;
+    const isAddress = isAddressInput(input);
 
     try {
       let spot: Spot;
 
       if (isGuest) {
         // Save to IndexedDB for guest users
-        spot = {
-          id: crypto.randomUUID(),
-          lat: position.lat,
-          lng: position.lng,
-          accuracyMeters: Math.round(position.accuracy),
-          address: null,
-          photoUrl: null,
-          note: null,
-          floor: null,
-          spotIdentifier: null,
-          isActive: true,
-          savedAt: new Date().toISOString(),
-        };
+        if (isAddress) {
+          // Address-only save (manual entry)
+          spot = {
+            id: crypto.randomUUID(),
+            lat: input.lat ?? null,
+            lng: input.lng ?? null,
+            accuracyMeters: null,
+            address: input.address,
+            photoUrl: null,
+            note: null,
+            floor: null,
+            spotIdentifier: null,
+            isActive: true,
+            savedAt: new Date().toISOString(),
+          };
+        } else {
+          // GPS coordinates save
+          spot = {
+            id: crypto.randomUUID(),
+            lat: input.lat,
+            lng: input.lng,
+            accuracyMeters: Math.round(input.accuracy),
+            address: null,
+            photoUrl: null,
+            note: null,
+            floor: null,
+            spotIdentifier: null,
+            isActive: true,
+            savedAt: new Date().toISOString(),
+          };
+        }
 
         await indexedDbService.setItem(STORES.spots, spot.id, spot);
       } else {
         // Save to API for authenticated users
-        const response = await apiClient.post<{ success: boolean; data: Spot }>('/v1/spots', {
-          lat: position.lat,
-          lng: position.lng,
-          accuracyMeters: Math.round(position.accuracy),
-        });
-
-        spot = response.data.data;
+        if (isAddress) {
+          // Address-only save (manual entry)
+          const response = await apiClient.post<{ success: boolean; data: Spot }>('/v1/spots', {
+            lat: input.lat ?? null,
+            lng: input.lng ?? null,
+            address: input.address,
+          });
+          spot = response.data.data;
+        } else {
+          // GPS coordinates save
+          const response = await apiClient.post<{ success: boolean; data: Spot }>('/v1/spots', {
+            lat: input.lat,
+            lng: input.lng,
+            accuracyMeters: Math.round(input.accuracy),
+          });
+          spot = response.data.data;
+        }
       }
 
       set({ currentSpot: spot, isSaving: false });

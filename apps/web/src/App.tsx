@@ -4,6 +4,7 @@ import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { HealthPage } from '@/pages/HealthPage';
 import { SpotConfirmationPage } from '@/pages/SpotConfirmationPage';
+import { ManualEntryPage } from '@/pages/ManualEntryPage';
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -79,6 +80,7 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/health" element={<HealthPage />} />
+        <Route path="/spots/manual" element={<ManualEntryPage />} />
         <Route path="/spot/:spotId/confirm" element={<SpotConfirmationPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -129,6 +129,80 @@ describe('Spots API', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
     });
+
+    it('should create an address-only spot without coordinates', async () => {
+      const addressOnlySpot = {
+        id: 'spot-456',
+        userId: userId,
+        latitude: null,
+        longitude: null,
+        accuracyMeters: null,
+        address: '123 Main St, Test City',
+        photoUrl: null,
+        note: null,
+        floor: null,
+        spotIdentifier: null,
+        isActive: true,
+        savedAt: new Date('2026-01-15T12:00:00Z'),
+        createdAt: new Date('2026-01-15T12:00:00Z'),
+        updatedAt: new Date('2026-01-15T12:00:00Z'),
+      };
+      mockSpotRepository.create.mockResolvedValue(addressOnlySpot);
+
+      const response = await request(app)
+        .post('/v1/spots')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ address: '123 Main St, Test City' });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.id).toBe('spot-456');
+      expect(response.body.data.lat).toBeNull();
+      expect(response.body.data.lng).toBeNull();
+      expect(response.body.data.address).toBe('123 Main St, Test City');
+    });
+
+    it('should create a spot with address and coordinates (geocoded)', async () => {
+      const geocodedSpot = {
+        id: 'spot-789',
+        userId: userId,
+        latitude: 40.7128,
+        longitude: -74.006,
+        accuracyMeters: null,
+        address: '123 Main St, New York, NY',
+        photoUrl: null,
+        note: null,
+        floor: null,
+        spotIdentifier: null,
+        isActive: true,
+        savedAt: new Date('2026-01-15T12:00:00Z'),
+        createdAt: new Date('2026-01-15T12:00:00Z'),
+        updatedAt: new Date('2026-01-15T12:00:00Z'),
+      };
+      mockSpotRepository.create.mockResolvedValue(geocodedSpot);
+
+      const response = await request(app)
+        .post('/v1/spots')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ address: '123 Main St, New York, NY', lat: 40.7128, lng: -74.006 });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.lat).toBe(40.7128);
+      expect(response.body.data.lng).toBe(-74.006);
+      expect(response.body.data.address).toBe('123 Main St, New York, NY');
+    });
+
+    it('should return 400 for address too short', async () => {
+      const response = await request(app)
+        .post('/v1/spots')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ address: 'ab' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    });
   });
 
   describe('GET /v1/spots', () => {

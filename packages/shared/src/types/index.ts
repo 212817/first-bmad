@@ -23,12 +23,13 @@ export interface User {
 
 /**
  * Parking spot entity
+ * Note: latitude/longitude can be null for address-only spots (manual entry)
  */
 export interface ParkingSpot {
   id: string;
   userId: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   accuracyMeters: number | null;
   address: string | null;
   photoUrl: string | null;

@@ -71,6 +71,17 @@ Required variables:
 | `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:5173`                        |
 | `VITE_API_URL` | API URL for frontend            | `http://localhost:3001`                        |
 
+#### External Services (Optional)
+
+| Variable               | Description                      | How to Get                                                                    |
+| ---------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
+| `OPENCAGE_API_KEY`     | Geocoding API for address lookup | Sign up at [opencagedata.com](https://opencagedata.com/) (2,500 req/day free) |
+| `R2_ACCOUNT_ID`        | Cloudflare R2 for photo storage  | Cloudflare Dashboard > R2                                                     |
+| `R2_ACCESS_KEY_ID`     | R2 API access key                | R2 > Manage R2 API Tokens                                                     |
+| `R2_SECRET_ACCESS_KEY` | R2 API secret key                | R2 > Manage R2 API Tokens                                                     |
+| `R2_BUCKET_NAME`       | R2 bucket name                   | Create in Cloudflare R2                                                       |
+| `R2_PUBLIC_URL`        | Public URL for R2 bucket         | R2 bucket settings                                                            |
+
 ### 3. Database Setup
 
 Create a Neon database at [neon.tech](https://neon.tech) and add the connection string to `.env`.

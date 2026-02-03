@@ -2,11 +2,12 @@
 
 /**
  * Spot data for local storage (guest mode) and API responses
+ * Note: lat/lng can be null for address-only spots (manual entry without geocoding)
  */
 export interface Spot {
   id: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   accuracyMeters: number | null;
   address: string | null;
   photoUrl: string | null;
@@ -18,13 +19,34 @@ export interface Spot {
 }
 
 /**
- * Input for saving a new spot
+ * Input for saving a new spot with GPS coordinates
  */
-export interface SaveSpotInput {
+export interface SaveSpotWithCoordsInput {
   lat: number;
   lng: number;
   accuracy: number;
 }
+
+/**
+ * Input for saving a new spot with address only (manual entry)
+ */
+export interface SaveSpotWithAddressInput {
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+}
+
+/**
+ * Combined save spot input type
+ */
+export type SaveSpotInput = SaveSpotWithCoordsInput | SaveSpotWithAddressInput;
+
+/**
+ * Type guard for address-only input
+ */
+export const isAddressInput = (input: SaveSpotInput): input is SaveSpotWithAddressInput => {
+  return 'address' in input;
+};
 
 /**
  * Input for updating a spot

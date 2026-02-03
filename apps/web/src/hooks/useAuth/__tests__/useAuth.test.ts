@@ -114,6 +114,9 @@ describe('useAuth', () => {
     });
 
     it('should clear auth state even if logout API fails', async () => {
+      // Suppress expected console.error for this test
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       vi.mocked(authApi.logout).mockRejectedValue(new Error('Network error'));
 
       // Set up authenticated state
@@ -128,6 +131,8 @@ describe('useAuth', () => {
       // Should still clear local state
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.user).toBeNull();
+
+      consoleSpy.mockRestore();
     });
   });
 

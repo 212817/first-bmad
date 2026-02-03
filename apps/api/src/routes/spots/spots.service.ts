@@ -3,6 +3,7 @@ import { spotRepository } from '../../repositories/spot.repository.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 import type { ParkingSpot } from '@repo/shared/types';
 import type { CreateSpotRequest, UpdateSpotRequest, SpotResponse } from './types.js';
+import { isAddressOnlyRequest } from './types.js';
 
 /**
  * Map internal ParkingSpot to API response
@@ -11,8 +12,8 @@ const mapToResponse = (spot: ParkingSpot): SpotResponse => {
   const savedAtDate = spot.savedAt instanceof Date ? spot.savedAt : new Date(spot.savedAt);
   return {
     id: spot.id,
-    lat: spot.latitude,
-    lng: spot.longitude,
+    lat: spot.latitude ?? null,
+    lng: spot.longitude ?? null,
     accuracyMeters: spot.accuracyMeters,
     address: spot.address,
     photoUrl: spot.photoUrl,
@@ -48,13 +49,57 @@ const validateCoordinates = (lat: number, lng: number): void => {
 };
 
 /**
+ * Validate address for address-only spots
+ */
+const validateAddress = (address: string): void => {
+  if (!address || typeof address !== 'string') {
+    throw new ValidationError('Address is required', { address: 'Address is required' });
+  }
+
+  const trimmed = address.trim();
+  if (trimmed.length < 5) {
+    throw new ValidationError('Address must be at least 5 characters', {
+      address: 'Address must be at least 5 characters',
+    });
+  }
+
+  if (trimmed.length > 500) {
+    throw new ValidationError('Address must be 500 characters or less', {
+      address: 'Address must be 500 characters or less',
+    });
+  }
+};
+
+/**
  * Spots service - business logic for parking spots
  */
 export const spotsService = {
   /**
    * Create a new parking spot
+   * Supports both GPS-based and address-only modes
    */
   async createSpot(userId: string, input: CreateSpotRequest): Promise<SpotResponse> {
+    if (isAddressOnlyRequest(input)) {
+      // Address-only mode (manual entry)
+      validateAddress(input.address);
+
+      // Optionally validate coordinates if provided
+      if (input.lat != null && input.lng != null) {
+        validateCoordinates(input.lat, input.lng);
+      }
+
+      const spot = await spotRepository.create({
+        userId,
+        latitude: input.lat ?? null,
+        longitude: input.lng ?? null,
+        accuracyMeters: null,
+        address: input.address.trim(),
+      });
+
+      return mapToResponse(spot);
+    }
+
+    // GPS-based mode (normal flow)
     validateCoordinates(input.lat, input.lng);
 
     const spot = await spotRepository.create({

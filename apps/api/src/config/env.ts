@@ -16,6 +16,7 @@ const TEST_GOOGLE_ID = 'test-client-id';
 const TEST_GOOGLE_SECRET = 'test-client-secret';
 const TEST_R2_ENDPOINT = 'https://test.r2.cloudflarestorage.com';
 const TEST_R2_KEY = 'test-access-key';
+const TEST_OPENCAGE_KEY = 'test-opencage-api-key';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -60,6 +61,11 @@ const envSchema = z.object({
     .optional()
     .default(isTest ? 'test-bucket' : 'wdip-photos'),
   R2_PUBLIC_URL: z.string().url().optional(),
+  // OpenCage Geocoding API - optional in dev/test
+  OPENCAGE_API_KEY: z
+    .string()
+    .optional()
+    .default(isTest ? TEST_OPENCAGE_KEY : ''),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -251,4 +251,68 @@ describe('SpotConfirmationPage', () => {
       expect(document.querySelector('.animate-spin')).toBeTruthy();
     });
   });
+
+  describe('NoCoordinatesWarning', () => {
+    it('should show warning when spot has address but no coordinates', () => {
+      const addressOnlySpot: Spot = {
+        id: 'address-only-spot',
+        lat: null,
+        lng: null,
+        accuracyMeters: null,
+        address: '123 Manual Entry St, Test City',
+        photoUrl: null,
+        note: null,
+        floor: null,
+        spotIdentifier: null,
+        isActive: true,
+        savedAt: new Date().toISOString(),
+      };
+
+      useSpotStore.setState({
+        currentSpot: addressOnlySpot,
+        isLoading: false,
+        isSaving: false,
+        error: null,
+      });
+
+      renderWithRouter();
+
+      expect(screen.getByTestId('no-coordinates-warning')).toBeInTheDocument();
+      expect(screen.getByText(/navigation may be less accurate/i)).toBeInTheDocument();
+    });
+
+    it('should not show warning when spot has coordinates', () => {
+      // mockSpot has lat/lng, so warning should not appear
+      renderWithRouter();
+
+      expect(screen.queryByTestId('no-coordinates-warning')).not.toBeInTheDocument();
+    });
+
+    it('should not show warning when spot has no address either', () => {
+      const spotWithoutAddress: Spot = {
+        id: 'no-address-spot',
+        lat: null,
+        lng: null,
+        accuracyMeters: null,
+        address: null,
+        photoUrl: null,
+        note: null,
+        floor: null,
+        spotIdentifier: null,
+        isActive: true,
+        savedAt: new Date().toISOString(),
+      };
+
+      useSpotStore.setState({
+        currentSpot: spotWithoutAddress,
+        isLoading: false,
+        isSaving: false,
+        error: null,
+      });
+
+      renderWithRouter();
+
+      expect(screen.queryByTestId('no-coordinates-warning')).not.toBeInTheDocument();
+    });
+  });
 });
