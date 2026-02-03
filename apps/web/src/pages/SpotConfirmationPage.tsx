@@ -249,13 +249,14 @@ export const SpotConfirmationPage = () => {
 
   /**
    * Handle map marker position change - update spot coordinates
+   * accuracy=0 indicates manually set position (no GPS uncertainty)
    */
   const handlePositionChange = useCallback(
-    async (lat: number, lng: number) => {
+    async (lat: number, lng: number, accuracy: number) => {
       if (!currentSpot) return;
 
       try {
-        await updateSpot(currentSpot.id, { lat, lng });
+        await updateSpot(currentSpot.id, { lat, lng, accuracy });
       } catch (error) {
         console.error('Failed to update position:', error);
       }
@@ -298,132 +299,143 @@ export const SpotConfirmationPage = () => {
       {/* Camera Capture Modal */}
       {showCamera && <CameraCapture onCapture={handlePhotoCapture} onClose={handleCameraClose} />}
 
-      {/* Success Header */}
-      <div className="text-center py-8">
-        <div
-          className={`text-5xl mb-3 transition-all duration-500 ${showSuccess ? 'animate-bounce' : ''}`}
+      {/* Success Header - inline and compact */}
+      <div className="flex items-center justify-center gap-2 py-2">
+        <span
+          className={`text-lg text-green-600 transition-all duration-500 ${showSuccess ? 'animate-bounce' : ''}`}
           aria-hidden="true"
         >
           ✓
-        </div>
-        <h1 className="text-2xl font-bold text-indigo-900">Spot Saved!</h1>
+        </span>
+        <h1 className="text-base font-bold text-indigo-900">Spot Saved!</h1>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 pb-4 flex flex-col">
-        {/* Spot Details Card - use displaySpot with resolved address */}
-        <SpotDetailCard
-          spot={displaySpot!}
-          hideNote
-          isAddressLoading={isAddressLoading}
-          editable={!isGuest}
-          onPositionChange={handlePositionChange}
-        />
-
-        {/* Warning for address-only spots without coordinates */}
-        {hasNoCoordinates && (
-          <div className="mt-4">
-            <NoCoordinatesWarning />
-          </div>
-        )}
-
-        {/* Upload Progress Indicator */}
-        {showUploadProgress && (
-          <div className="mt-4" data-testid="photo-upload-section">
-            <UploadProgress
-              status={uploadStatus}
-              progress={uploadProgress}
-              errorMessage={uploadError?.message}
-              onRetry={handleRetryUpload}
-              onCancel={handleCancelUpload}
+      <main className="flex-1 px-4 pb-4 max-w-5xl mx-auto w-full">
+        {/* Two-column layout on large screens */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6">
+          {/* Left Column: Map Card */}
+          <div className="lg:order-2">
+            <SpotDetailCard
+              spot={displaySpot!}
+              hideNote
+              isAddressLoading={isAddressLoading}
+              editable={true}
+              onPositionChange={handlePositionChange}
             />
           </div>
-        )}
 
-        {/* Photo Preview Section */}
-        {hasPhoto && !isUploading && (
-          <div className="mt-4 bg-white rounded-xl p-4 shadow-sm" data-testid="photo-section">
-            <div className="flex items-start gap-3">
-              <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                <img
-                  src={currentSpot.photoUrl!}
-                  alt="Parking spot photo"
-                  className="w-full h-full object-cover"
-                  data-testid="photo-thumbnail"
+          {/* Right Column: Actions & Details */}
+          <div className="lg:order-1 flex flex-col">
+            {/* Warning for address-only spots without coordinates */}
+            {hasNoCoordinates && (
+              <div className="mt-4 lg:mt-0">
+                <NoCoordinatesWarning />
+              </div>
+            )}
+
+            {/* Upload Progress Indicator */}
+            {showUploadProgress && (
+              <div className="mt-4 lg:mt-0" data-testid="photo-upload-section">
+                <UploadProgress
+                  status={uploadStatus}
+                  progress={uploadProgress}
+                  errorMessage={uploadError?.message}
+                  onRetry={handleRetryUpload}
+                  onCancel={handleCancelUpload}
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <span className="text-sm text-gray-600">Photo attached</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handlePhotoClick}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                    data-testid="retake-photo-button"
-                  >
-                    Retake
-                  </button>
-                  <button
-                    onClick={handlePhotoDelete}
-                    disabled={isSaving}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                    data-testid="delete-photo-button"
-                  >
-                    Delete
-                  </button>
+            )}
+
+            {/* Photo Preview Section */}
+            {hasPhoto && !isUploading && (
+              <div
+                className="mt-4 lg:mt-0 bg-white rounded-xl p-4 shadow-sm"
+                data-testid="photo-section"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={currentSpot.photoUrl!}
+                      alt="Parking spot photo"
+                      className="w-full h-full object-cover"
+                      data-testid="photo-thumbnail"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <span className="text-sm text-gray-600">Photo attached</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handlePhotoClick}
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                        data-testid="retake-photo-button"
+                      >
+                        Retake
+                      </button>
+                      <button
+                        onClick={handlePhotoDelete}
+                        disabled={isSaving}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                        data-testid="delete-photo-button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Note Input Section */}
+            <div className="mt-4 lg:mt-4" data-testid="note-section">
+              <NoteInput
+                value={noteValue}
+                onChange={handleNoteChange}
+                onSave={handleNoteSave}
+                disabled={isSaving}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-4">
+              <SpotActions
+                spot={currentSpot}
+                onPhotoClick={handlePhotoClick}
+                onGalleryClick={handleGalleryClick}
+                onTimerClick={handleTimerClick}
+              />
+            </div>
+
+            {/* Car Tag Selector */}
+            <div className="mt-4" data-testid="car-tag-section">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Car Tag:</span>
+                <CarTagSelector
+                  selectedTagId={currentSpot.carTagId}
+                  onSelect={handleTagSelect}
+                  disabled={isSaving}
+                />
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="mt-auto pt-6 space-y-3">
+              <button
+                onClick={handleNavigate}
+                className="w-full h-12 border-2 border-indigo-500 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
+                data-testid="navigate-button"
+              >
+                Navigate Now
+              </button>
+              <button
+                onClick={handleDone}
+                className="w-full h-12 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                data-testid="done-button"
+              >
+                Done
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Note Input Section */}
-        <div className="mt-4" data-testid="note-section">
-          <NoteInput
-            value={noteValue}
-            onChange={handleNoteChange}
-            onSave={handleNoteSave}
-            disabled={isSaving}
-          />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-6">
-          <SpotActions
-            spot={currentSpot}
-            onPhotoClick={handlePhotoClick}
-            onGalleryClick={handleGalleryClick}
-            onTimerClick={handleTimerClick}
-          />
-        </div>
-
-        {/* Car Tag Selector */}
-        <div className="mt-4" data-testid="car-tag-section">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Car Tag:</span>
-            <CarTagSelector
-              selectedTagId={currentSpot.carTagId}
-              onSelect={handleTagSelect}
-              disabled={isSaving}
-            />
-          </div>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="mt-auto pt-6 space-y-3">
-          <button
-            onClick={handleNavigate}
-            className="w-full h-12 border-2 border-indigo-500 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
-            data-testid="navigate-button"
-          >
-            Navigate Now
-          </button>
-          <button
-            onClick={handleDone}
-            className="w-full h-12 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-            data-testid="done-button"
-          >
-            Done
-          </button>
         </div>
       </main>
     </div>

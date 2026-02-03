@@ -1,5 +1,5 @@
 // apps/web/src/components/map/SpotMap.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -26,14 +26,55 @@ const defaultIcon = L.icon({
 L.Marker.prototype.options.icon = defaultIcon;
 
 /**
- * Component to update map center when coordinates change
+ * Component to update map center when coordinates change (only for external prop changes)
  */
-const MapUpdater = ({ center }: { center: [number, number] }) => {
+const MapUpdater = ({
+  center,
+  onCenterChange,
+  editable,
+}: {
+  center: [number, number];
+  onCenterChange?: (lat: number, lng: number) => void;
+  editable?: boolean;
+}) => {
   const map = useMap();
+  const isUserDragging = useRef(false);
+  const lastPropsCenter = useRef(center);
 
+  // Update map view only when external props change (not during user drag)
   useEffect(() => {
-    map.setView(center, map.getZoom());
+    // Check if the center prop actually changed (not just a re-render)
+    const propsChanged =
+      lastPropsCenter.current[0] !== center[0] || lastPropsCenter.current[1] !== center[1];
+
+    if (propsChanged && !isUserDragging.current) {
+      map.setView(center, map.getZoom());
+      lastPropsCenter.current = center;
+    }
   }, [map, center]);
+
+  // Track map movement when editable
+  useEffect(() => {
+    if (!editable || !onCenterChange) return;
+
+    const handleMoveStart = () => {
+      isUserDragging.current = true;
+    };
+
+    const handleMoveEnd = () => {
+      const mapCenter = map.getCenter();
+      onCenterChange(mapCenter.lat, mapCenter.lng);
+      // Keep dragging flag true to prevent snap-back on re-render
+      // It will be reset when props change externally
+    };
+
+    map.on('movestart', handleMoveStart);
+    map.on('moveend', handleMoveEnd);
+    return () => {
+      map.off('movestart', handleMoveStart);
+      map.off('moveend', handleMoveEnd);
+    };
+  }, [map, editable, onCenterChange]);
 
   return null;
 };
@@ -105,6 +146,7 @@ const getInitialLayer = (): MapViewType => {
 
 /**
  * Interactive map component for displaying and adjusting parking spot location
+ * When editable, the marker stays centered and user pans the map to adjust position
  */
 export const SpotMap = ({
   lat,
@@ -114,14 +156,15 @@ export const SpotMap = ({
   heightClass = 'h-48',
   testId = 'spot-map',
 }: SpotMapProps) => {
-  // Track adjusted position only when user drags marker
+  // Track adjusted position only when user pans the map
   const [adjustedPosition, setAdjustedPosition] = useState<[number, number] | null>(null);
   const [activeLayer, setActiveLayer] = useState<MapViewType>(getInitialLayer);
   const [isLoading, setIsLoading] = useState(true);
-  const markerRef = useRef<L.Marker>(null);
 
-  // Current position: use adjusted position if set, otherwise props
-  const position: [number, number] = adjustedPosition ?? [lat, lng];
+  // Original position from props
+  const originalPosition: [number, number] = [lat, lng];
+  // Current display position (adjusted or original)
+  const displayPosition: [number, number] = adjustedPosition ?? originalPosition;
   const isDirty = adjustedPosition !== null;
 
   // Reset adjusted position when props change (new spot loaded)
@@ -135,17 +178,18 @@ export const SpotMap = ({
     localStorage.setItem(MAP_LAYER_STORAGE_KEY, layer);
   };
 
-  const handleDragEnd = () => {
-    const marker = markerRef.current;
-    if (marker) {
-      const pos = marker.getLatLng();
-      setAdjustedPosition([pos.lat, pos.lng]);
+  // Handle map center change when user pans
+  const handleCenterChange = (newLat: number, newLng: number) => {
+    // Only mark as dirty if position actually changed
+    if (Math.abs(newLat - lat) > 0.000001 || Math.abs(newLng - lng) > 0.000001) {
+      setAdjustedPosition([newLat, newLng]);
     }
   };
 
   const handleConfirm = () => {
     if (adjustedPosition) {
-      onPositionChange?.(adjustedPosition[0], adjustedPosition[1]);
+      // Pass accuracy=0 to indicate manually set position
+      onPositionChange?.(adjustedPosition[0], adjustedPosition[1], 0);
     }
     setAdjustedPosition(null);
   };
@@ -176,13 +220,17 @@ export const SpotMap = ({
       )}
 
       <MapContainer
-        center={position}
+        center={originalPosition}
         zoom={DEFAULT_ZOOM}
         scrollWheelZoom={false}
         className="h-full w-full z-0"
         zoomControl={true}
       >
-        <MapUpdater center={position} />
+        <MapUpdater
+          center={originalPosition}
+          onCenterChange={handleCenterChange}
+          editable={editable}
+        />
 
         {/* Base tile layer */}
         <TileLayer
@@ -199,26 +247,38 @@ export const SpotMap = ({
           <TileLayer key={`overlay-${activeLayer}`} url={tileConfig.overlay} attribution="" />
         )}
 
-        <Marker
-          ref={markerRef}
-          position={position}
-          draggable={editable}
-          eventHandlers={{
-            dragend: handleDragEnd,
-          }}
-        />
+        {/* Marker only shown in non-editable mode */}
+        {!editable && <Marker position={displayPosition} />}
+
+        {/* Locate me button - only show when editable (must be inside MapContainer for useMap) */}
+        {editable && (
+          <LocateControl
+            onLocate={(lat, lng) => {
+              setAdjustedPosition([lat, lng]);
+            }}
+          />
+        )}
       </MapContainer>
 
       {/* Layer switcher */}
       <LayerSwitcher activeLayer={activeLayer} onLayerChange={handleLayerChange} />
 
-      {/* Locate me button - only show when editable */}
+      {/* Centered marker pin overlay - shown when editable */}
       {editable && (
-        <LocateControl
-          onLocate={(lat, lng) => {
-            setAdjustedPosition([lat, lng]);
-          }}
-        />
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-[500] pointer-events-none"
+          data-testid="map-center-marker"
+        >
+          <svg width="30" height="46" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5s12.5-19.1 12.5-28.5C25 5.6 19.4 0 12.5 0z"
+              fill="none"
+              stroke="#ef4444"
+              strokeWidth="3"
+            />
+            <circle cx="12.5" cy="12.5" r="4" fill="none" stroke="#ef4444" strokeWidth="3" />
+          </svg>
+        </div>
       )}
 
       {/* Confirm/Cancel buttons when marker moved */}
@@ -250,7 +310,7 @@ export const SpotMap = ({
           className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 text-white text-xs rounded-full z-[1000]"
           data-testid="map-drag-hint"
         >
-          Drag marker to adjust
+          Drag map to adjust location
         </div>
       )}
     </div>

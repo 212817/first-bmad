@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
 import { useGuestStore } from '@/stores/guestStore';
@@ -10,6 +10,7 @@ import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 import { Header } from '@/components/layout/Header';
+import { geocodingApi } from '@/services/api/geocodingApi';
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -27,6 +28,10 @@ export const HomePage = () => {
 
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [address, setAddress] = useState('');
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Check auth status on mount (only if not in guest mode)
   // When OAuth completes, authMode won't be 'guest' yet (it's set after hydration)
@@ -43,8 +48,8 @@ export const HomePage = () => {
   };
 
   /**
-   * Handle "Save my spot" button click
-   * Shows permission prompt if needed, then captures location
+   * Handle "Use my location" button click
+   * Only shows modal if permission was denied, otherwise requests permission directly
    */
   const handleSaveSpotClick = () => {
     // Check if user is authenticated or in guest mode
@@ -53,14 +58,12 @@ export const HomePage = () => {
       return;
     }
 
-    // Check permission state - show prompt if first time
-    if (permissionState === 'prompt') {
-      setShowLocationPrompt(true);
-    } else if (permissionState === 'denied') {
-      // Permission was denied - offer manual entry
+    // Only show modal if permission was explicitly denied
+    if (permissionState === 'denied') {
       setShowLocationPrompt(true);
     } else {
-      // Permission granted - capture location directly
+      // Permission granted or prompt - request location directly
+      // Browser will show its own permission dialog if needed
       captureAndSaveLocation();
     }
   };
@@ -103,11 +106,52 @@ export const HomePage = () => {
    */
   const handleEnterManually = () => {
     setShowLocationPrompt(false);
-    // TODO: Story 2.6 will add manual entry
-    navigate('/spots/manual');
+    // Focus on address input
+    addressInputRef.current?.focus();
+  };
+
+  /**
+   * Handle address form submission
+   */
+  const handleAddressSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!address.trim()) return;
+
+    // Check if user is authenticated or in guest mode
+    if (!isAuthenticated && !isGuest) {
+      navigate('/login');
+      return;
+    }
+
+    setIsGeocoding(true);
+    setGeocodeError(null);
+
+    try {
+      const result = await geocodingApi.geocodeAddress(address.trim());
+
+      if (!result) {
+        setGeocodeError('Address not found. Please try a different address.');
+        return;
+      }
+
+      const spot = await saveSpot({
+        lat: result.lat,
+        lng: result.lng,
+        accuracy: null, // Manual entry has no accuracy
+      });
+
+      navigate(`/spot/${spot.id}/confirm`);
+    } catch (err) {
+      console.error('Failed to geocode address:', err);
+      setGeocodeError('Failed to find address. Please try again.');
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
   const isBusy = isCapturing || isSaving || locationLoading;
+  const isAddressBusy = isGeocoding || isSaving;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
@@ -133,47 +177,110 @@ export const HomePage = () => {
         <h1 className="text-4xl md:text-6xl font-bold text-indigo-900 mb-4">Where Did I Park?</h1>
         <p className="text-lg text-gray-600 mb-8">Never forget where you parked again</p>
 
-        {/* Save My Spot Button - Primary CTA */}
-        <button
-          onClick={handleSaveSpotClick}
-          disabled={isBusy}
-          className="mb-8 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center gap-3 min-w-[200px] justify-center"
-          data-testid="save-spot-button"
-        >
-          {isBusy ? (
-            <>
-              <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Saving...
-            </>
-          ) : (
-            <>
-              <span className="text-2xl">🚗</span>
-              Save my spot
-            </>
-          )}
-        </button>
+        {/* Options Container */}
+        <div className="w-full max-w-md space-y-6">
+          {/* Option 1: Enable Location Button */}
+          <button
+            onClick={handleSaveSpotClick}
+            disabled={isBusy}
+            className="w-full px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center gap-3 justify-center"
+            data-testid="save-spot-button"
+          >
+            {isBusy ? (
+              <>
+                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <span className="text-2xl">📍</span>
+                Use my location
+              </>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gray-300" />
+            <span className="text-gray-500 font-medium">or</span>
+            <div className="flex-1 h-px bg-gray-300" />
+          </div>
+
+          {/* Option 2: Enter Address */}
+          <form onSubmit={handleAddressSubmit} className="space-y-3">
+            <label htmlFor="address-input" className="block text-left text-gray-700 font-medium">
+              Enter parking address
+            </label>
+            <input
+              ref={addressInputRef}
+              id="address-input"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="e.g., 123 Main St, City"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+              data-testid="address-input"
+            />
+            <button
+              type="submit"
+              disabled={!address.trim() || isAddressBusy}
+              className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white text-lg font-semibold rounded-lg transition-colors flex items-center gap-2 justify-center"
+              data-testid="save-address-button"
+            >
+              {isAddressBusy ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span>🚗</span>
+                  Save spot
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
         {/* Error Display */}
-        {(spotError || locationError) && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md">
-            <p className="text-red-700">{spotError || locationError?.message}</p>
+        {(spotError || locationError || geocodeError) && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md">
+            <p className="text-red-700">{spotError || locationError?.message || geocodeError}</p>
             <button
-              onClick={() => setSpotError(null)}
+              onClick={() => {
+                setSpotError(null);
+                setGeocodeError(null);
+              }}
               className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
             >
               Dismiss

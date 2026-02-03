@@ -61,38 +61,40 @@ export const SpotDetailCard = ({
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="spot-detail-card">
       {/* Map or Placeholder */}
-      {hasCoordinates ? (
-        <Suspense
-          fallback={
-            <div className="h-48 bg-gray-200 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2 text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-                <span className="text-sm">Loading map...</span>
+      <div>
+        {hasCoordinates ? (
+          <Suspense
+            fallback={
+              <div className="aspect-square bg-gray-200 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2 text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                  <span className="text-sm">Loading map...</span>
+                </div>
               </div>
+            }
+          >
+            <SpotMap
+              lat={spot.lat!}
+              lng={spot.lng!}
+              editable={editable}
+              onPositionChange={onPositionChange}
+              heightClass="aspect-square"
+            />
+          </Suspense>
+        ) : (
+          <div className="h-40 bg-gray-200 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <span className="text-4xl block mb-2" aria-hidden="true">
+                📍
+              </span>
+              <span className="text-sm">No coordinates available</span>
             </div>
-          }
-        >
-          <SpotMap
-            lat={spot.lat!}
-            lng={spot.lng!}
-            editable={editable}
-            onPositionChange={onPositionChange}
-            heightClass="h-48"
-          />
-        </Suspense>
-      ) : (
-        <div className="h-40 bg-gray-200 flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <span className="text-4xl block mb-2" aria-hidden="true">
-              📍
-            </span>
-            <span className="text-sm">No coordinates available</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Spot Details */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-2">
         {/* Address/Coordinates - unified display */}
         <SpotAddress
           lat={spot.lat}
@@ -102,7 +104,7 @@ export const SpotDetailCard = ({
         />
 
         {/* Accuracy (when available and has coords) */}
-        {spot.accuracyMeters && spot.lat !== null && spot.lng !== null && (
+        {spot.accuracyMeters !== null && spot.lat !== null && spot.lng !== null && (
           <p className="text-xs text-gray-500 ml-7">±{spot.accuracyMeters}m accuracy</p>
         )}
 

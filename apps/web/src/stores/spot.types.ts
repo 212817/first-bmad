@@ -56,6 +56,7 @@ export interface UpdateSpotInput {
   carTagId?: string | null;
   lat?: number;
   lng?: number;
+  accuracy?: number;
   address?: string | null;
   photoUrl?: string | null;
   note?: string | null;
