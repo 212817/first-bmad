@@ -248,6 +248,22 @@ export const SpotConfirmationPage = () => {
   );
 
   /**
+   * Handle map marker position change - update spot coordinates
+   */
+  const handlePositionChange = useCallback(
+    async (lat: number, lng: number) => {
+      if (!currentSpot) return;
+
+      try {
+        await updateSpot(currentSpot.id, { lat, lng });
+      } catch (error) {
+        console.error('Failed to update position:', error);
+      }
+    },
+    [currentSpot, updateSpot]
+  );
+
+  /**
    * Handle Timer action button click
    */
   const handleTimerClick = () => {
@@ -296,7 +312,13 @@ export const SpotConfirmationPage = () => {
       {/* Main Content */}
       <main className="flex-1 px-4 pb-4 flex flex-col">
         {/* Spot Details Card - use displaySpot with resolved address */}
-        <SpotDetailCard spot={displaySpot!} hideNote isAddressLoading={isAddressLoading} />
+        <SpotDetailCard
+          spot={displaySpot!}
+          hideNote
+          isAddressLoading={isAddressLoading}
+          editable={!isGuest}
+          onPositionChange={handlePositionChange}
+        />
 
         {/* Warning for address-only spots without coordinates */}
         {hasNoCoordinates && (

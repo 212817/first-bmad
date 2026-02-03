@@ -189,6 +189,12 @@ export const spotsService = {
       });
     }
 
+    // Validate coordinates if provided
+    const hasLatLng = input.lat !== undefined && input.lng !== undefined;
+    if (hasLatLng) {
+      validateCoordinates(input.lat!, input.lng!);
+    }
+
     const spot = await spotRepository.findById(spotId);
 
     if (!spot) {
@@ -199,7 +205,24 @@ export const spotsService = {
       throw new AuthorizationError('Not authorized to update this spot');
     }
 
-    const updated = await spotRepository.update(spotId, input);
+    // Map lat/lng to internal field names
+    const updateData: Record<string, unknown> = { ...input };
+    if (hasLatLng) {
+      updateData.latitude = input.lat;
+      updateData.longitude = input.lng;
+      delete updateData.lat;
+      delete updateData.lng;
+      // Clear address so it can be re-geocoded
+      updateData.address = null;
+    }
+
+    const updated = await spotRepository.update(spotId, updateData);
+
+    // Trigger reverse geocoding if coordinates were updated
+    if (hasLatLng) {
+      triggerAsyncReverseGeocode(spotId, input.lat!, input.lng!);
+    }
+
     return mapToResponse(updated!);
   },
 
