@@ -216,6 +216,12 @@ export const spotsService = {
       updateData.address = null;
     }
 
+    // Map accuracy to accuracyMeters
+    if (input.accuracy !== undefined) {
+      updateData.accuracyMeters = input.accuracy;
+      delete updateData.accuracy;
+    }
+
     const updated = await spotRepository.update(spotId, updateData);
 
     // Trigger reverse geocoding if coordinates were updated

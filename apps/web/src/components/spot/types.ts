@@ -13,7 +13,7 @@ export interface SpotDetailCardProps {
   /** Whether the map marker can be dragged to adjust position */
   editable?: boolean;
   /** Callback when marker position changes on the map */
-  onPositionChange?: (lat: number, lng: number) => void;
+  onPositionChange?: (lat: number, lng: number, accuracy: number) => void;
 }
 
 /**

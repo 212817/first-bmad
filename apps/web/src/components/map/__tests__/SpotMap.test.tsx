@@ -19,31 +19,15 @@ vi.mock('react-leaflet', () => ({
     }
     return <div data-testid="tile-layer" data-url={url} />;
   },
-  Marker: ({
-    position,
-    draggable,
-    eventHandlers,
-  }: {
-    position: [number, number];
-    draggable: boolean;
-    eventHandlers?: { dragend?: () => void };
-  }) => (
-    <div
-      data-testid="map-marker"
-      data-lat={position[0]}
-      data-lng={position[1]}
-      data-draggable={draggable}
-      onClick={() => {
-        // Simulate drag end for testing
-        if (eventHandlers?.dragend) {
-          eventHandlers.dragend();
-        }
-      }}
-    />
+  Marker: ({ position }: { position: [number, number] }) => (
+    <div data-testid="map-marker" data-lat={position[0]} data-lng={position[1]} />
   ),
   useMap: () => ({
     setView: vi.fn(),
     getZoom: () => 17,
+    getCenter: () => ({ lat: 48.9102, lng: 24.7085 }),
+    on: vi.fn(),
+    off: vi.fn(),
   }),
 }));
 
@@ -94,10 +78,12 @@ describe('SpotMap', () => {
       expect(marker).toHaveAttribute('data-lng', '24.7085');
     });
 
-    it('renders tile layer', () => {
+    it('renders tile layers (base + overlays for hybrid)', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} />);
 
-      expect(screen.getByTestId('tile-layer')).toBeInTheDocument();
+      // Hybrid mode (default) has multiple tile layers
+      const tileLayers = screen.getAllByTestId('tile-layer');
+      expect(tileLayers.length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows loading state initially', () => {
@@ -116,31 +102,43 @@ describe('SpotMap', () => {
   });
 
   describe('editable mode', () => {
-    it('renders non-draggable marker by default', () => {
+    it('shows marker in non-editable mode', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} />);
 
-      const marker = screen.getByTestId('map-marker');
-      expect(marker).toHaveAttribute('data-draggable', 'false');
+      expect(screen.getByTestId('map-marker')).toBeInTheDocument();
     });
 
-    it('renders draggable marker when editable', () => {
+    it('hides marker in editable mode (uses centered pin overlay)', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} editable />);
 
-      const marker = screen.getByTestId('map-marker');
-      expect(marker).toHaveAttribute('data-draggable', 'true');
+      // Marker is not rendered in editable mode - we use centered pin overlay instead
+      expect(screen.queryByTestId('map-marker')).not.toBeInTheDocument();
+      expect(screen.getByTestId('map-center-marker')).toBeInTheDocument();
     });
 
     it('shows drag hint when editable', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} editable />);
 
       expect(screen.getByTestId('map-drag-hint')).toBeInTheDocument();
-      expect(screen.getByText('Drag marker to adjust')).toBeInTheDocument();
+      expect(screen.getByText('Drag map to adjust location')).toBeInTheDocument();
     });
 
     it('does not show drag hint when not editable', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} />);
 
       expect(screen.queryByTestId('map-drag-hint')).not.toBeInTheDocument();
+    });
+
+    it('shows locate button when editable', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} editable />);
+
+      expect(screen.getByTestId('map-locate-button')).toBeInTheDocument();
+    });
+
+    it('does not show locate button when not editable', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} />);
+
+      expect(screen.queryByTestId('map-locate-button')).not.toBeInTheDocument();
     });
   });
 

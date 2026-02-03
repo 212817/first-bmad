@@ -21,11 +21,12 @@ export interface Spot {
 
 /**
  * Input for saving a new spot with GPS coordinates
+ * accuracy can be null/undefined for manually set positions
  */
 export interface SaveSpotWithCoordsInput {
   lat: number;
   lng: number;
-  accuracy: number;
+  accuracy?: number | null;
 }
 
 /**
@@ -56,6 +57,7 @@ export interface UpdateSpotInput {
   carTagId?: string | null;
   lat?: number;
   lng?: number;
+  accuracy?: number;
   address?: string | null;
   photoUrl?: string | null;
   note?: string | null;

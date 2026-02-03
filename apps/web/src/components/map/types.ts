@@ -25,8 +25,8 @@ export interface SpotMapProps {
   lng: number;
   /** Whether the marker can be dragged to adjust position */
   editable?: boolean;
-  /** Callback when marker position changes */
-  onPositionChange?: (lat: number, lng: number) => void;
+  /** Callback when marker position changes (accuracy=0 means manually set) */
+  onPositionChange?: (lat: number, lng: number, accuracy: number) => void;
   /** Custom height class (default: h-48) */
   heightClass?: string;
   /** Test ID for testing */
