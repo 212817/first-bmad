@@ -28,6 +28,7 @@ export interface User {
 export interface ParkingSpot {
   id: string;
   userId: string;
+  carTagId: string | null;
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
@@ -43,12 +44,14 @@ export interface ParkingSpot {
 }
 
 /**
- * Car tag entity
+ * Car tag entity - user's tag library for labeling vehicles
  */
 export interface CarTag {
   id: string;
-  spotId: string;
-  label: string;
+  userId: string | null; // null = system default tag
+  name: string;
+  color: string;
+  isDefault: boolean;
   createdAt: Date;
 }
 

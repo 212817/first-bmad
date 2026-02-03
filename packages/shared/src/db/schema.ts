@@ -24,6 +24,20 @@ export const users = pgTable('users', {
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Car tags table - user's tag library (null userId = system default tag)
+export const carTags = pgTable(
+  'car_tags',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // null = default tag
+    name: varchar('name', { length: 50 }).notNull(),
+    color: varchar('color', { length: 7 }).notNull().default('#3B82F6'), // hex color
+    isDefault: boolean('is_default').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_car_tags_user').on(table.userId)]
+);
+
 // Parking spots table
 export const parkingSpots = pgTable(
   'parking_spots',
@@ -32,6 +46,7 @@ export const parkingSpots = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    carTagId: uuid('car_tag_id').references(() => carTags.id, { onDelete: 'set null' }), // optional car tag
     latitude: doublePrecision('latitude'),
     longitude: doublePrecision('longitude'),
     accuracyMeters: integer('accuracy_meters'),
@@ -47,16 +62,6 @@ export const parkingSpots = pgTable(
   },
   (table) => [index('idx_spots_user_saved').on(table.userId, table.savedAt)]
 );
-
-// Car tags table
-export const carTags = pgTable('car_tags', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  spotId: uuid('spot_id')
-    .notNull()
-    .references(() => parkingSpots.id, { onDelete: 'cascade' }),
-  label: varchar('label', { length: 50 }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
 
 // Geocoding cache table - caches address lookups to conserve API quota
 export const geocodingCache = pgTable(

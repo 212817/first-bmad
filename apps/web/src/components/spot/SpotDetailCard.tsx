@@ -1,4 +1,6 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
+import { useCarTagStore } from '@/stores/carTagStore';
+import { TagBadge } from './TagBadge';
 import type { SpotDetailCardProps } from './types';
 
 /**
@@ -49,6 +51,9 @@ const formatTimestamp = (isoString: string): string => {
  * Card component displaying parking spot details
  */
 export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) => {
+  const { getTagById } = useCarTagStore();
+  const carTag = spot.carTagId ? getTagById(spot.carTagId) : null;
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="spot-detail-card">
       {/* Map Preview Placeholder */}
@@ -89,6 +94,16 @@ export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) 
             <p className="text-sm text-gray-700" data-testid="spot-address">
               {spot.address}
             </p>
+          </div>
+        )}
+
+        {/* Car Tag (when set) */}
+        {carTag && (
+          <div className="flex items-center gap-2" data-testid="spot-car-tag">
+            <span className="text-gray-400" aria-hidden="true">
+              🚗
+            </span>
+            <TagBadge name={carTag.name} color={carTag.color} />
           </div>
         )}
 

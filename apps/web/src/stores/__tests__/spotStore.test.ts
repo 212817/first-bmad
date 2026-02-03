@@ -234,6 +234,7 @@ describe('spotStore', () => {
   describe('updateSpot - authenticated user', () => {
     const existingSpot = {
       id: 'spot-123',
+      carTagId: null,
       lat: 40.7128,
       lng: -74.006,
       accuracyMeters: 15,
@@ -300,6 +301,7 @@ describe('spotStore', () => {
   describe('updateSpot - guest user', () => {
     const existingSpot = {
       id: 'spot-123',
+      carTagId: null,
       lat: 40.7128,
       lng: -74.006,
       accuracyMeters: 15,

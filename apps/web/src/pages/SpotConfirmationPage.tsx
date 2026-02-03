@@ -2,9 +2,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSpotStore } from '@/stores/spotStore';
+import { useCarTagStore } from '@/stores/carTagStore';
 import { SpotDetailCard } from '@/components/spot/SpotDetailCard';
 import { SpotActions } from '@/components/spot/SpotActions';
 import { NoteInput } from '@/components/spot/NoteInput';
+import { CarTagSelector } from '@/components/spot/CarTagSelector';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
@@ -26,6 +28,7 @@ export const SpotConfirmationPage = () => {
   const { spotId } = useParams<{ spotId: string }>();
   const navigate = useNavigate();
   const { currentSpot, updateSpot, isSaving } = useSpotStore();
+  const { fetchTags, isHydrated: tagsHydrated } = useCarTagStore();
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
@@ -46,6 +49,13 @@ export const SpotConfirmationPage = () => {
       navigate('/', { replace: true });
     }
   }, [currentSpot, spotId, navigate]);
+
+  // Fetch car tags on mount
+  useEffect(() => {
+    if (!tagsHydrated) {
+      fetchTags();
+    }
+  }, [tagsHydrated, fetchTags]);
 
   // Hide success animation after delay
   useEffect(() => {
@@ -203,12 +213,20 @@ export const SpotConfirmationPage = () => {
   }, [currentSpot, noteValue, updateSpot]);
 
   /**
-   * Handle Tag action button click
+   * Handle tag selection - update spot with new car tag
    */
-  const handleTagClick = () => {
-    // TODO: Story 2.7 - Car tag selector
-    console.log('Set Tag - Coming in Story 2.7');
-  };
+  const handleTagSelect = useCallback(
+    async (tagId: string) => {
+      if (!currentSpot) return;
+
+      try {
+        await updateSpot(currentSpot.id, { carTagId: tagId });
+      } catch (error) {
+        console.error('Failed to update car tag:', error);
+      }
+    },
+    [currentSpot, updateSpot]
+  );
 
   /**
    * Handle Timer action button click
@@ -333,9 +351,20 @@ export const SpotConfirmationPage = () => {
             spot={currentSpot}
             onPhotoClick={handlePhotoClick}
             onGalleryClick={handleGalleryClick}
-            onTagClick={handleTagClick}
             onTimerClick={handleTimerClick}
           />
+        </div>
+
+        {/* Car Tag Selector */}
+        <div className="mt-4" data-testid="car-tag-section">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Car Tag:</span>
+            <CarTagSelector
+              selectedTagId={currentSpot.carTagId}
+              onSelect={handleTagSelect}
+              disabled={isSaving}
+            />
+          </div>
         </div>
 
         {/* Navigation Buttons */}

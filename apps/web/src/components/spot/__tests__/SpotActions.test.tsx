@@ -6,6 +6,7 @@ import type { Spot } from '@/stores/spot.types';
 
 const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   id: 'test-spot-123',
+  carTagId: null,
   lat: 40.7128,
   lng: -74.006,
   accuracyMeters: 10,
@@ -40,13 +41,6 @@ describe('SpotActions', () => {
       render(<SpotActions spot={spot} />);
 
       expect(screen.getByTestId('action-button-gallery')).toBeInTheDocument();
-    });
-
-    it('should render Tag action button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByTestId('action-button-tag')).toBeInTheDocument();
     });
 
     it('should render Timer action button as disabled', () => {
@@ -96,15 +90,6 @@ describe('SpotActions', () => {
       expect(onGalleryClick).toHaveBeenCalledTimes(1);
     });
 
-    it('should call onTagClick when Tag button is clicked', () => {
-      const onTagClick = vi.fn();
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} onTagClick={onTagClick} />);
-
-      fireEvent.click(screen.getByTestId('action-button-tag'));
-      expect(onTagClick).toHaveBeenCalledTimes(1);
-    });
-
     it('should not call onTimerClick when Timer button is clicked (disabled)', () => {
       const onTimerClick = vi.fn();
       const spot = createMockSpot();
@@ -131,13 +116,6 @@ describe('SpotActions', () => {
       expect(screen.getByText('Gallery')).toBeInTheDocument();
     });
 
-    it('should display "Tag" label on Tag button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByText('Tag')).toBeInTheDocument();
-    });
-
     it('should display "Timer" label on Timer button', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
@@ -159,13 +137,6 @@ describe('SpotActions', () => {
       render(<SpotActions spot={spot} />);
 
       expect(screen.getByText('🖼️')).toBeInTheDocument();
-    });
-
-    it('should display car emoji for Tag button', () => {
-      const spot = createMockSpot();
-      render(<SpotActions spot={spot} />);
-
-      expect(screen.getByText('🚗')).toBeInTheDocument();
     });
 
     it('should display timer emoji for Timer button', () => {

@@ -20,6 +20,7 @@ const toDate = (value: Date | string | null | undefined): Date => {
 const mapToSpot = (row: typeof parkingSpots.$inferSelect): ParkingSpot => ({
   id: row.id,
   userId: row.userId,
+  carTagId: row.carTagId,
   latitude: row.latitude,
   longitude: row.longitude,
   accuracyMeters: row.accuracyMeters,
@@ -46,6 +47,7 @@ export const spotRepository: SpotRepositoryInterface = {
       .insert(parkingSpots)
       .values({
         userId: input.userId,
+        carTagId: input.carTagId ?? null,
         latitude: input.latitude,
         longitude: input.longitude,
         accuracyMeters: input.accuracyMeters ?? null,

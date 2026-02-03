@@ -40,8 +40,48 @@ vi.mock('@/hooks/usePhotoUpload/usePhotoUpload', () => ({
   }),
 }));
 
+// Mock carTagStore
+vi.mock('@/stores/carTagStore', () => ({
+  useCarTagStore: () => ({
+    tags: [
+      {
+        id: 'tag-1',
+        name: 'My Car',
+        color: '#3B82F6',
+        isDefault: true,
+        userId: null,
+        createdAt: '2024-01-01',
+      },
+      {
+        id: 'tag-2',
+        name: 'Rental',
+        color: '#10B981',
+        isDefault: true,
+        userId: null,
+        createdAt: '2024-01-01',
+      },
+    ],
+    isLoading: false,
+    error: null,
+    fetchTags: vi.fn(),
+    getTagById: vi.fn((id: string) =>
+      id === 'tag-1'
+        ? {
+            id: 'tag-1',
+            name: 'My Car',
+            color: '#3B82F6',
+            isDefault: true,
+            userId: null,
+            createdAt: '2024-01-01',
+          }
+        : null
+    ),
+  }),
+}));
+
 const mockSpot: Spot = {
   id: 'test-spot-123',
+  carTagId: null,
   lat: 40.7128,
   lng: -74.006,
   accuracyMeters: 10,
@@ -205,15 +245,12 @@ describe('SpotConfirmationPage', () => {
       expect(screen.getByTestId('note-input-textarea')).toBeInTheDocument();
     });
 
-    it('should log message when Tag action is clicked', () => {
-      const consoleSpy = vi.spyOn(console, 'log');
+    it('should show CarTagSelector always visible', () => {
       renderWithRouter();
 
-      const tagButton = screen.getByTestId('action-button-tag');
-      fireEvent.click(tagButton);
-
-      expect(consoleSpy).toHaveBeenCalledWith('Set Tag - Coming in Story 2.7');
-      consoleSpy.mockRestore();
+      // CarTagSelector should be visible immediately (no toggle needed)
+      expect(screen.getByTestId('car-tag-section')).toBeInTheDocument();
+      expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
     });
 
     it('should log message when Timer action is clicked (disabled)', () => {
@@ -256,6 +293,7 @@ describe('SpotConfirmationPage', () => {
     it('should show warning when spot has address but no coordinates', () => {
       const addressOnlySpot: Spot = {
         id: 'address-only-spot',
+        carTagId: null,
         lat: null,
         lng: null,
         accuracyMeters: null,
@@ -291,6 +329,7 @@ describe('SpotConfirmationPage', () => {
     it('should not show warning when spot has no address either', () => {
       const spotWithoutAddress: Spot = {
         id: 'no-address-spot',
+        carTagId: null,
         lat: null,
         lng: null,
         accuracyMeters: null,

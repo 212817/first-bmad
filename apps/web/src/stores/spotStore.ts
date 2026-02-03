@@ -37,6 +37,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
           // Address-only save (manual entry)
           spot = {
             id: crypto.randomUUID(),
+            carTagId: null,
             lat: input.lat ?? null,
             lng: input.lng ?? null,
             accuracyMeters: null,
@@ -52,6 +53,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
           // GPS coordinates save
           spot = {
             id: crypto.randomUUID(),
+            carTagId: null,
             lat: input.lat,
             lng: input.lng,
             accuracyMeters: Math.round(input.accuracy),
