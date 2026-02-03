@@ -187,9 +187,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
 
     // Fetch from API for authenticated users
     try {
-      const response = await apiClient.get<{ success: boolean; data: Spot }>(
-        `/v1/spots/${spotId}`
-      );
+      const response = await apiClient.get<{ success: boolean; data: Spot }>(`/v1/spots/${spotId}`);
       return response.data.data;
     } catch (error) {
       // If 404, return null

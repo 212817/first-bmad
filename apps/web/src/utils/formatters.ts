@@ -69,12 +69,16 @@ export const formatCoordinates = (lat: number, lng: number): string => {
 export const formatDateTime = (date: Date | string): string => {
   const target = typeof date === 'string' ? new Date(date) : date;
 
-  return target.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }) + ' at ' + target.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return (
+    target.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }) +
+    ' at ' +
+    target.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  );
 };

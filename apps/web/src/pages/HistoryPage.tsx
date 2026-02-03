@@ -88,16 +88,16 @@ export const HistoryPage = () => {
               className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700 flex items-center gap-2"
               aria-label="Go back"
             >
-              <span className="text-xl" aria-hidden="true">←</span>
+              <span className="text-xl" aria-hidden="true">
+                ←
+              </span>
             </button>
             <h1 className="text-xl font-bold text-gray-900">Spot History</h1>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1">
-          {renderContent()}
-        </main>
+        <main className="flex-1">{renderContent()}</main>
       </div>
     </div>
   );

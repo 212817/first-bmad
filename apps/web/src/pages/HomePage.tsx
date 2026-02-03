@@ -315,7 +315,9 @@ export const HomePage = () => {
         {/* Latest Spot Card - shown when authenticated or in guest mode */}
         {(isAuthenticated || isGuest) && (
           <div className="w-full max-w-md mt-10">
-            <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">Last parked spot</h2>
+            <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">
+              Last parked spot
+            </h2>
             <LatestSpotCard
               spot={latestSpot}
               carTagName={getTagInfo().name}
