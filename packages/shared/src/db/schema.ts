@@ -74,7 +74,10 @@ export const geocodingCache = pgTable(
     formattedAddress: text('formatted_address'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('idx_geocache_address_query').on(table.addressQuery)]
+  (table) => [
+    index('idx_geocache_address_query').on(table.addressQuery),
+    index('idx_geocache_coords').on(table.lat, table.lng),
+  ]
 );
 
 // Refresh tokens table for session management

@@ -13,6 +13,16 @@ export interface GeocodingResult {
 }
 
 /**
+ * Reverse geocoding result returned by the service
+ */
+export interface ReverseGeocodingResult {
+  /** Short address for display (e.g., "Main St, Downtown") */
+  address: string;
+  /** Full formatted address from provider */
+  formattedAddress: string;
+}
+
+/**
  * OpenCage API response structure
  */
 export interface OpenCageResponse {
@@ -38,6 +48,26 @@ export interface OpenCageResult {
   };
   formatted: string;
   confidence: number;
+  components?: OpenCageComponents;
+}
+
+/**
+ * Address components from OpenCage API
+ */
+export interface OpenCageComponents {
+  road?: string;
+  house_number?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  county?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+  country_code?: string;
+  _type?: string;
 }
 
 /**
@@ -50,6 +80,14 @@ export interface GeocodingServiceInterface {
    * @returns GeocodingResult if found, null if not found
    */
   geocodeAddress: (address: string) => Promise<GeocodingResult | null>;
+
+  /**
+   * Reverse geocode coordinates to address
+   * @param lat - Latitude coordinate
+   * @param lng - Longitude coordinate
+   * @returns ReverseGeocodingResult if found, null if not found
+   */
+  reverseGeocode: (lat: number, lng: number) => Promise<ReverseGeocodingResult | null>;
 }
 
 /**

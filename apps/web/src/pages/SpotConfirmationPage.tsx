@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSpotStore } from '@/stores/spotStore';
 import { useCarTagStore } from '@/stores/carTagStore';
+import { useGuestStore } from '@/stores/guestStore';
 import { SpotDetailCard } from '@/components/spot/SpotDetailCard';
 import { SpotActions } from '@/components/spot/SpotActions';
 import { NoteInput } from '@/components/spot/NoteInput';
@@ -12,6 +13,7 @@ import { UploadProgress } from '@/components/ui/UploadProgress';
 import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
 import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
+import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { imageProcessor } from '@/services/image/imageProcessor.service';
 
 /** Large file threshold (5MB) for gallery uploads */
@@ -29,6 +31,7 @@ export const SpotConfirmationPage = () => {
   const navigate = useNavigate();
   const { currentSpot, updateSpot, isSaving } = useSpotStore();
   const { fetchTags, isHydrated: tagsHydrated } = useCarTagStore();
+  const { isGuest } = useGuestStore();
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
@@ -42,6 +45,22 @@ export const SpotConfirmationPage = () => {
     error: uploadError,
     reset: resetUpload,
   } = usePhotoUpload();
+
+  // Fetch address asynchronously if not available (skip for guests)
+  const { address: fetchedAddress, isLoading: isAddressLoading } = useReverseGeocode(
+    currentSpot?.lat ?? null,
+    currentSpot?.lng ?? null,
+    currentSpot?.address ?? null,
+    { skip: isGuest }
+  );
+
+  // Create spot with resolved address for display
+  const displaySpot = currentSpot
+    ? {
+        ...currentSpot,
+        address: fetchedAddress ?? currentSpot.address,
+      }
+    : null;
 
   // If no spot data, redirect to home
   useEffect(() => {
@@ -276,8 +295,8 @@ export const SpotConfirmationPage = () => {
 
       {/* Main Content */}
       <main className="flex-1 px-4 pb-4 flex flex-col">
-        {/* Spot Details Card */}
-        <SpotDetailCard spot={currentSpot} hideNote />
+        {/* Spot Details Card - use displaySpot with resolved address */}
+        <SpotDetailCard spot={displaySpot!} hideNote isAddressLoading={isAddressLoading} />
 
         {/* Warning for address-only spots without coordinates */}
         {hasNoCoordinates && (

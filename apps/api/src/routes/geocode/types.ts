@@ -15,3 +15,19 @@ export interface GeocodeResponse {
   lng: number;
   formattedAddress: string | null;
 }
+
+/**
+ * Request body for reverse geocoding endpoint
+ */
+export interface ReverseGeocodeRequest {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Response for successful reverse geocoding
+ */
+export interface ReverseGeocodeResponse {
+  address: string;
+  formattedAddress: string;
+}

@@ -110,6 +110,20 @@ describe('carTagStore', () => {
       expect(apiClient.get).toHaveBeenCalledWith('/v1/car-tags');
     });
 
+    it('should fallback to defaults when API returns empty array', async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: true, data: [] },
+      });
+
+      await useCarTagStore.getState().fetchTags();
+
+      const state = useCarTagStore.getState();
+      expect(state.tags).toHaveLength(3);
+      expect(state.tags[0]?.name).toBe('My Car');
+      expect(state.isLoading).toBe(false);
+      expect(state.isHydrated).toBe(true);
+    });
+
     it('should fallback to defaults on API error', async () => {
       vi.mocked(apiClient.get).mockRejectedValue(new Error('Network error'));
 

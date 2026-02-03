@@ -1,0 +1,52 @@
+# Quality Gate: Story 2.8 - Reverse Geocoding for Address Display
+schema: 1
+story: '2.8'
+story_title: 'Reverse Geocoding for Address Display'
+gate: PASS
+status_reason: 'All 6 acceptance criteria met with comprehensive test coverage (631 tests). Implementation follows established patterns with clean async architecture.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-02-03T13:17:00Z'
+
+waiver: { active: false }
+
+top_issues: []
+
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 0, low: 0 }
+  recommendations:
+    must_fix: []
+    monitor:
+      - 'Consider adding E2E tests for reverse geocoding flow in future'
+      - 'Monitor OpenCage API usage and cache hit rates in production'
+
+quality_score: 100
+expires: '2026-02-17T00:00:00Z'
+
+evidence:
+  tests_reviewed: 631
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Auth required, rate limiting applied, input validation present'
+  performance:
+    status: PASS
+    notes: 'DB index for coords, async pattern, 10s timeout, cache tolerance optimized'
+  reliability:
+    status: PASS
+    notes: "Graceful fallback on API failure (429/402 → null), fire-and-forget doesn't block saves"
+  maintainability:
+    status: PASS
+    notes: 'Clean service/repository separation, well-documented code, comprehensive tests'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Add E2E tests for reverse geocoding user flow'
+      refs: ['apps/web/e2e/spot-confirmation.spec.ts']
+    - action: 'Consider telemetry for geocoding success/failure rates'
+      refs: ['apps/api/src/services/geocoding/geocoding.service.ts']

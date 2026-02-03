@@ -39,6 +39,7 @@ export const isAddressOnlyRequest = (
  */
 export interface SpotResponse {
   id: string;
+  carTagId: string | null;
   lat: number | null;
   lng: number | null;
   accuracyMeters: number | null;
@@ -55,6 +56,7 @@ export interface SpotResponse {
  * Request body for updating a spot
  */
 export interface UpdateSpotRequest {
+  carTagId?: string | null;
   address?: string | null;
   photoUrl?: string | null;
   note?: string | null;

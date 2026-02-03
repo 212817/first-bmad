@@ -1,5 +1,5 @@
 // apps/api/src/repositories/geocache.repository.ts
-import { eq } from 'drizzle-orm';
+import { eq, and, between } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import { geocodingCache } from '@repo/shared/db';
 import type {
@@ -38,6 +38,9 @@ const normalizeQuery = (query: string): string => {
   return query.toLowerCase().trim();
 };
 
+/** Tolerance for coordinate matching (about 11m at equator) */
+const COORD_TOLERANCE = 0.0001;
+
 /**
  * Geocache repository - data access layer for geocoding_cache table
  */
@@ -52,6 +55,25 @@ export const geocacheRepository: GeocacheRepositoryInterface = {
       .select()
       .from(geocodingCache)
       .where(eq(geocodingCache.addressQuery, normalized))
+      .limit(1);
+
+    return rows[0] ? mapToEntry(rows[0]) : null;
+  },
+
+  /**
+   * Find a cached reverse geocoding result by coordinates
+   * Uses a small tolerance for matching to handle precision differences
+   */
+  async findByCoords(lat: number, lng: number): Promise<GeocacheEntry | null> {
+    const rows = await db
+      .select()
+      .from(geocodingCache)
+      .where(
+        and(
+          between(geocodingCache.lat, lat - COORD_TOLERANCE, lat + COORD_TOLERANCE),
+          between(geocodingCache.lng, lng - COORD_TOLERANCE, lng + COORD_TOLERANCE)
+        )
+      )
       .limit(1);
 
     return rows[0] ? mapToEntry(rows[0]) : null;

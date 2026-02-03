@@ -1,5 +1,6 @@
 // apps/api/src/routes/spots/spots.service.ts
 import { spotRepository } from '../../repositories/spot.repository.js';
+import { geocodingService } from '../../services/geocoding/geocoding.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 import type { ParkingSpot } from '@repo/shared/types';
 import type { CreateSpotRequest, UpdateSpotRequest, SpotResponse } from './types.js';
@@ -12,6 +13,7 @@ const mapToResponse = (spot: ParkingSpot): SpotResponse => {
   const savedAtDate = spot.savedAt instanceof Date ? spot.savedAt : new Date(spot.savedAt);
   return {
     id: spot.id,
+    carTagId: spot.carTagId,
     lat: spot.latitude ?? null,
     lng: spot.longitude ?? null,
     accuracyMeters: spot.accuracyMeters,
@@ -23,6 +25,24 @@ const mapToResponse = (spot: ParkingSpot): SpotResponse => {
     isActive: spot.isActive,
     savedAt: savedAtDate.toISOString(),
   };
+};
+
+/**
+ * Trigger async reverse geocoding and update spot with address
+ * Fire-and-forget: don't block the response, don't fail if geocoding fails
+ */
+const triggerAsyncReverseGeocode = (spotId: string, lat: number, lng: number): void => {
+  geocodingService
+    .reverseGeocode(lat, lng)
+    .then(async (result) => {
+      if (result) {
+        await spotRepository.update(spotId, { address: result.address });
+      }
+    })
+    .catch((error) => {
+      console.error('[Spots] Async reverse geocoding failed:', error);
+      // Don't throw - spot already saved
+    });
 };
 
 /**
@@ -96,6 +116,12 @@ export const spotsService = {
         address: input.address.trim(),
       });
 
+      // Trigger async reverse geocoding if we have coords but no detailed address yet
+      // (Address-only spots already have user-provided address)
+      if (input.lat != null && input.lng != null) {
+        triggerAsyncReverseGeocode(spot.id, input.lat, input.lng);
+      }
+
       return mapToResponse(spot);
     }
 
@@ -108,6 +134,9 @@ export const spotsService = {
       longitude: input.lng,
       accuracyMeters: input.accuracyMeters ?? null,
     });
+
+    // Trigger async reverse geocoding for GPS-based spots (fire-and-forget)
+    triggerAsyncReverseGeocode(spot.id, input.lat, input.lng);
 
     return mapToResponse(spot);
   },

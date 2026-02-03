@@ -1,0 +1,1 @@
+CREATE INDEX "idx_geocache_coords" ON "geocoding_cache" USING btree ("lat","lng");

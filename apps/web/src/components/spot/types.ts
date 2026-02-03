@@ -8,6 +8,8 @@ export interface SpotDetailCardProps {
   spot: Spot;
   showMap?: boolean;
   hideNote?: boolean;
+  /** Whether the address is being loaded asynchronously */
+  isAddressLoading?: boolean;
 }
 
 /**
@@ -52,4 +54,18 @@ export interface AddressInputProps {
   isLoading?: boolean;
   /** Whether the input is disabled */
   disabled?: boolean;
+}
+
+/**
+ * Props for SpotAddress component
+ */
+export interface SpotAddressProps {
+  /** Latitude coordinate */
+  lat: number | null;
+  /** Longitude coordinate */
+  lng: number | null;
+  /** Human-readable address */
+  address: string | null;
+  /** Whether address is being loaded */
+  isLoading?: boolean;
 }

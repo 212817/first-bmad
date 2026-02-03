@@ -1,11 +1,24 @@
 // apps/web/src/components/spot/CarTagSelector.tsx
 import { useState, useRef, useEffect } from 'react';
 import { useCarTagStore } from '@/stores/carTagStore';
+import { useGuestStore } from '@/stores/guestStore';
 import type { CarTagSelectorProps } from './carTag.types';
+
+// Predefined color options for custom tags
+const COLOR_OPTIONS = [
+  { color: '#3B82F6', name: 'Blue' },
+  { color: '#10B981', name: 'Green' },
+  { color: '#F59E0B', name: 'Orange' },
+  { color: '#EF4444', name: 'Red' },
+  { color: '#8B5CF6', name: 'Purple' },
+  { color: '#EC4899', name: 'Pink' },
+  { color: '#6B7280', name: 'Gray' },
+];
 
 /**
  * Dropdown selector for car tags
  * Shows default tags first, then user's custom tags
+ * Authenticated users can add custom tags
  */
 export const CarTagSelector = ({
   selectedTagId,
@@ -13,8 +26,14 @@ export const CarTagSelector = ({
   disabled = false,
 }: CarTagSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(COLOR_OPTIONS[0].color);
+  const [isCreating, setIsCreating] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { tags, isLoading } = useCarTagStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { tags, isLoading, createTag } = useCarTagStore();
+  const isGuest = useGuestStore((state) => state.isGuest);
 
   // Find the currently selected tag, fallback to first tag (My Car)
   const currentTag = tags.find((t) => t.id === selectedTagId) || tags[0];
@@ -39,13 +58,48 @@ export const CarTagSelector = ({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       setIsOpen(false);
+      setShowAddForm(false);
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       setIsOpen(!isOpen);
     }
   };
 
-  if (isLoading || tags.length === 0) {
+  // Focus input when showing add form
+  useEffect(() => {
+    if (showAddForm && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showAddForm]);
+
+  // Handle creating a new custom tag
+  const handleCreateTag = async () => {
+    const trimmedName = newTagName.trim();
+    if (!trimmedName || isCreating) return;
+
+    setIsCreating(true);
+    try {
+      const newTag = await createTag(trimmedName, newTagColor);
+      onSelect(newTag.id);
+      setNewTagName('');
+      setNewTagColor(COLOR_OPTIONS[0].color);
+      setShowAddForm(false);
+      setIsOpen(false);
+    } catch {
+      // Error handled by store
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Handle canceling add form
+  const handleCancelAdd = () => {
+    setShowAddForm(false);
+    setNewTagName('');
+    setNewTagColor(COLOR_OPTIONS[0].color);
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
         <span className="w-3 h-3 rounded-full bg-gray-300 animate-pulse" />
@@ -149,16 +203,90 @@ export const CarTagSelector = ({
               </button>
             ))}
           </div>
-          {/* Future: Add custom tag button */}
+
+          {/* Add custom tag section */}
           <div className="border-t border-gray-100">
-            <button
-              type="button"
-              className="w-full px-3 py-2.5 text-left text-sm text-gray-400 cursor-not-allowed"
-              disabled
-              title="Coming in Epic 5"
-            >
-              + Add custom tag
-            </button>
+            {isGuest ? (
+              // Guest mode: disabled with tooltip
+              <button
+                type="button"
+                className="w-full px-3 py-2.5 text-left text-sm text-gray-400 cursor-not-allowed"
+                disabled
+                title="Sign in to add custom tags"
+                data-testid="add-tag-disabled"
+              >
+                + Add custom tag
+              </button>
+            ) : showAddForm ? (
+              // Authenticated: show add form
+              <div className="p-3 space-y-3" data-testid="add-tag-form">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateTag();
+                    } else if (e.key === 'Escape') {
+                      handleCancelAdd();
+                    }
+                  }}
+                  placeholder="Tag name"
+                  maxLength={20}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  data-testid="add-tag-input"
+                />
+                <div className="flex gap-1.5 flex-wrap">
+                  {COLOR_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.color}
+                      type="button"
+                      onClick={() => setNewTagColor(opt.color)}
+                      className={`w-6 h-6 rounded-full transition-all ${
+                        newTagColor === opt.color
+                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110'
+                          : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: opt.color }}
+                      title={opt.name}
+                      aria-label={`Select ${opt.name} color`}
+                      data-testid={`color-option-${opt.name.toLowerCase()}`}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCancelAdd}
+                    className="flex-1 px-2 py-1.5 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                    data-testid="cancel-add-tag"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateTag}
+                    disabled={!newTagName.trim() || isCreating}
+                    className="flex-1 px-2 py-1.5 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    data-testid="save-add-tag"
+                  >
+                    {isCreating ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Authenticated: show add button
+              <button
+                type="button"
+                onClick={() => setShowAddForm(true)}
+                className="w-full px-3 py-2.5 text-left text-sm text-indigo-600 hover:bg-indigo-50 transition-colors"
+                data-testid="add-tag-button"
+              >
+                + Add custom tag
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -91,6 +91,62 @@ describe('GeocacheRepository', () => {
     });
   });
 
+  describe('findByCoords', () => {
+    it('should return cached entry when found by coordinates', async () => {
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([mockDbRow]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as never);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      const result = await geocacheRepository.findByCoords(40.7128, -74.006);
+
+      expect(result).not.toBeNull();
+      expect(result?.lat).toBe(40.7128);
+      expect(result?.lng).toBe(-74.006);
+      expect(result?.formattedAddress).toBe('123 Main St, New York, NY 10001, USA');
+    });
+
+    it('should return null when not found by coordinates', async () => {
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as never);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      const result = await geocacheRepository.findByCoords(0.0, 0.0);
+
+      expect(result).toBeNull();
+    });
+
+    it('should call database select for coordinate lookup', async () => {
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([mockDbRow]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as never);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      await geocacheRepository.findByCoords(40.7128, -74.006);
+
+      expect(db.select).toHaveBeenCalled();
+      expect(mockFrom).toHaveBeenCalled();
+      expect(mockWhere).toHaveBeenCalled();
+      expect(mockLimit).toHaveBeenCalledWith(1);
+    });
+  });
+
   describe('create', () => {
     it('should create a new geocache entry', async () => {
       const mockValues = vi.fn().mockReturnThis();

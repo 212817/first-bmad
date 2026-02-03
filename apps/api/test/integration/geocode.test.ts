@@ -6,9 +6,11 @@ import request from 'supertest';
 const { mockGeocodingService, mockGeocacheRepository } = vi.hoisted(() => ({
   mockGeocodingService: {
     geocodeAddress: vi.fn(),
+    reverseGeocode: vi.fn(),
   },
   mockGeocacheRepository: {
     findByAddress: vi.fn(),
+    findByCoords: vi.fn(),
     create: vi.fn(),
   },
 }));
@@ -49,10 +51,16 @@ describe('Geocode API', () => {
   const userId = 'user-123';
   const userEmail = 'test@example.com';
 
+  // Use a separate user for reverse geocode tests to avoid rate limiting
+  let reverseValidToken: string;
+  const reverseUserId = 'user-456';
+  const reverseUserEmail = 'reverse-test@example.com';
+
   beforeEach(() => {
     vi.resetAllMocks();
     // Generate a valid JWT for testing
     validToken = jwtService.generateAccessToken(userId, userEmail);
+    reverseValidToken = jwtService.generateAccessToken(reverseUserId, reverseUserEmail);
   });
 
   describe('POST /v1/geocode', () => {
@@ -131,6 +139,110 @@ describe('Geocode API', () => {
         .post('/v1/geocode')
         .set('Authorization', `Bearer ${validToken}`)
         .send({ address: '123 Main St, New York' });
+
+      expect(response.headers['x-ratelimit-limit']).toBe('10');
+      expect(response.headers['x-ratelimit-remaining']).toBeDefined();
+      expect(response.headers['x-ratelimit-reset']).toBeDefined();
+    });
+  });
+
+  describe('POST /v1/geocode/reverse', () => {
+    it('should return 401 without access token', async () => {
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .send({ lat: 40.7128, lng: -74.006 });
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+    });
+
+    it('should return address for valid coordinates', async () => {
+      mockGeocodingService.reverseGeocode.mockResolvedValueOnce({
+        address: '123 Main St, New York',
+        formattedAddress: '123 Main St, New York, NY 10001, USA',
+      });
+
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 40.7128, lng: -74.006 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toEqual({
+        address: '123 Main St, New York',
+        formattedAddress: '123 Main St, New York, NY 10001, USA',
+      });
+    });
+
+    it('should return 400 for invalid latitude (too high)', async () => {
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 91, lng: -74.006 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should return 400 for invalid latitude (too low)', async () => {
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: -91, lng: -74.006 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should return 400 for invalid longitude (too high)', async () => {
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 40.7128, lng: 181 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should return 400 for invalid longitude (too low)', async () => {
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 40.7128, lng: -181 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should return 404 when location cannot be geocoded', async () => {
+      mockGeocodingService.reverseGeocode.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 0.0, lng: 0.0 });
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
+    });
+
+    it('should include rate limit headers', async () => {
+      mockGeocodingService.reverseGeocode.mockResolvedValueOnce({
+        address: '123 Main St',
+        formattedAddress: '123 Main St, NY',
+      });
+
+      const response = await request(app)
+        .post('/v1/geocode/reverse')
+        .set('Authorization', `Bearer ${reverseValidToken}`)
+        .send({ lat: 40.7128, lng: -74.006 });
 
       expect(response.headers['x-ratelimit-limit']).toBe('10');
       expect(response.headers['x-ratelimit-remaining']).toBeDefined();

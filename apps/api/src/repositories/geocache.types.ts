@@ -32,6 +32,12 @@ export interface GeocacheRepositoryInterface {
   findByAddress(query: string): Promise<GeocacheEntry | null>;
 
   /**
+   * Find a cached reverse geocoding result by coordinates
+   * Uses rounded coordinates for matching
+   */
+  findByCoords(lat: number, lng: number): Promise<GeocacheEntry | null>;
+
+  /**
    * Create a new geocache entry
    */
   create(input: CreateGeocacheInput): Promise<GeocacheEntry>;

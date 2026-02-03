@@ -190,6 +190,35 @@ describe('CarTagRepository', () => {
     });
   });
 
+  describe('createDefault', () => {
+    it('should create a system default tag with null userId', async () => {
+      const defaultTagRow = {
+        id: 'default-tag-123',
+        userId: null,
+        name: 'My Car',
+        color: '#3B82F6',
+        isDefault: true,
+        createdAt: new Date(),
+      };
+      const mockValues = vi.fn().mockReturnThis();
+      const mockReturning = vi.fn().mockResolvedValue([defaultTagRow]);
+
+      vi.mocked(db.insert).mockReturnValue({
+        values: mockValues,
+      } as any);
+      mockValues.mockReturnValue({ returning: mockReturning });
+
+      const result = await carTagRepository.createDefault('My Car', '#3B82F6');
+
+      expect(result).not.toBeNull();
+      expect(result.id).toBe('default-tag-123');
+      expect(result.name).toBe('My Car');
+      expect(result.color).toBe('#3B82F6');
+      expect(result.isDefault).toBe(true);
+      expect(result.userId).toBeNull();
+    });
+  });
+
   describe('update', () => {
     it('should update tag name', async () => {
       const updatedRow = { ...mockCustomTagRow, name: 'Updated Name' };

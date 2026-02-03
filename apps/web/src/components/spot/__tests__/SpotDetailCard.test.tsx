@@ -33,10 +33,12 @@ describe('SpotDetailCard', () => {
       const spot = createMockSpot({ lat: 40.7128, lng: -74.006 });
       render(<SpotDetailCard spot={spot} />);
 
-      const coordinates = screen.getByTestId('spot-coordinates');
+      // SpotAddress uses spot-coordinates-primary when no address is provided
+      const coordinates = screen.getByTestId('spot-coordinates-primary');
       expect(coordinates).toBeInTheDocument();
-      expect(coordinates.textContent).toContain('40.712800');
-      expect(coordinates.textContent).toContain('74.006000');
+      // New format: "40.7128°N, 74.0060°W"
+      expect(coordinates.textContent).toContain('40.7128');
+      expect(coordinates.textContent).toContain('74.0060');
     });
 
     it('should display accuracy when available', () => {
@@ -60,14 +62,18 @@ describe('SpotDetailCard', () => {
       render(<SpotDetailCard spot={spot} />);
 
       expect(screen.getByTestId('spot-address')).toBeInTheDocument();
-      expect(screen.getByText('123 Main St, New York, NY')).toBeInTheDocument();
+      // SpotAddress displays "Near [address]" format
+      expect(screen.getByText(/Near/)).toBeInTheDocument();
+      expect(screen.getByText(/123 Main St, New York, NY/)).toBeInTheDocument();
     });
 
     it('should not display address section when not provided', () => {
       const spot = createMockSpot({ address: null });
       render(<SpotDetailCard spot={spot} />);
 
+      // SpotAddress uses spot-coordinates-primary when there's no address
       expect(screen.queryByTestId('spot-address')).not.toBeInTheDocument();
+      expect(screen.getByTestId('spot-coordinates-primary')).toBeInTheDocument();
     });
 
     it('should display note when provided', () => {
@@ -148,7 +154,7 @@ describe('SpotDetailCard', () => {
       const spot = createMockSpot({ lat: 40.7128, lng: 74.006 });
       render(<SpotDetailCard spot={spot} />);
 
-      const coordinates = screen.getByTestId('spot-coordinates');
+      const coordinates = screen.getByTestId('spot-coordinates-primary');
       expect(coordinates.textContent).toContain('N');
       expect(coordinates.textContent).toContain('E');
     });
@@ -157,7 +163,7 @@ describe('SpotDetailCard', () => {
       const spot = createMockSpot({ lat: -33.8688, lng: -74.006 });
       render(<SpotDetailCard spot={spot} />);
 
-      const coordinates = screen.getByTestId('spot-coordinates');
+      const coordinates = screen.getByTestId('spot-coordinates-primary');
       expect(coordinates.textContent).toContain('S');
       expect(coordinates.textContent).toContain('W');
     });

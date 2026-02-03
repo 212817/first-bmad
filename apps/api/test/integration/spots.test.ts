@@ -306,6 +306,25 @@ describe('Spots API', () => {
       expect(response.status).toBe(200);
       expect(response.body.data.note).toBe('Updated note');
     });
+
+    it('should update spot carTagId', async () => {
+      const carTagId = 'car-tag-uuid-123';
+      // First call returns the spot for ownership check
+      mockSpotRepository.findById.mockResolvedValueOnce(mockSpot);
+      mockSpotRepository.update.mockResolvedValue({
+        ...mockSpot,
+        carTagId,
+      });
+
+      const response = await request(app)
+        .patch('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ carTagId });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.carTagId).toBe(carTagId);
+      expect(mockSpotRepository.update).toHaveBeenCalledWith('spot-123', { carTagId });
+    });
   });
 
   describe('POST /v1/spots/:id/clear', () => {

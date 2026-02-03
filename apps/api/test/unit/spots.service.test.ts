@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { spotsService } from '../../src/routes/spots/spots.service.js';
 import { spotRepository } from '../../src/repositories/spot.repository.js';
+import { geocodingService } from '../../src/services/geocoding/geocoding.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 
 vi.mock('../../src/repositories/spot.repository.js', () => ({
@@ -15,6 +16,12 @@ vi.mock('../../src/repositories/spot.repository.js', () => ({
   },
 }));
 
+vi.mock('../../src/services/geocoding/geocoding.service.js', () => ({
+  geocodingService: {
+    reverseGeocode: vi.fn(),
+  },
+}));
+
 describe('spotsService', () => {
   const userId = 'user-123';
   const spotId = 'spot-123';
@@ -22,6 +29,7 @@ describe('spotsService', () => {
   const mockSpot = {
     id: spotId,
     userId,
+    carTagId: null,
     latitude: 40.7128,
     longitude: -74.006,
     accuracyMeters: 15,
@@ -38,6 +46,14 @@ describe('spotsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Suppress expected console output during tests
+    vi.spyOn(console, 'error').mockImplementation(() => { });
+    // Default: reverse geocoding succeeds
+    vi.mocked(geocodingService.reverseGeocode).mockResolvedValue({
+      address: '123 Main St, New York',
+      formattedAddress: '123 Main St, New York, NY 10001, USA',
+    });
+    vi.mocked(spotRepository.update).mockResolvedValue(mockSpot);
   });
 
   describe('createSpot', () => {
@@ -113,6 +129,76 @@ describe('spotsService', () => {
         longitude: -74.006,
         accuracyMeters: null,
       });
+    });
+
+    it('should trigger async reverse geocoding for GPS-based spots', async () => {
+      vi.mocked(spotRepository.create).mockResolvedValue(mockSpot);
+
+      await spotsService.createSpot(userId, {
+        lat: 40.7128,
+        lng: -74.006,
+      });
+
+      // Wait for async operation to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(geocodingService.reverseGeocode).toHaveBeenCalledWith(40.7128, -74.006);
+    });
+
+    it('should update spot with address after async reverse geocoding', async () => {
+      vi.mocked(spotRepository.create).mockResolvedValue(mockSpot);
+      vi.mocked(geocodingService.reverseGeocode).mockResolvedValue({
+        address: '123 Main St, New York',
+        formattedAddress: '123 Main St, New York, NY 10001, USA',
+      });
+
+      await spotsService.createSpot(userId, {
+        lat: 40.7128,
+        lng: -74.006,
+      });
+
+      // Wait for async operation to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(spotRepository.update).toHaveBeenCalledWith(spotId, {
+        address: '123 Main St, New York',
+      });
+    });
+
+    it('should not fail spot creation if reverse geocoding fails', async () => {
+      vi.mocked(spotRepository.create).mockResolvedValue(mockSpot);
+      vi.mocked(geocodingService.reverseGeocode).mockRejectedValue(
+        new Error('Geocoding service unavailable')
+      );
+
+      // Should not throw
+      const result = await spotsService.createSpot(userId, {
+        lat: 40.7128,
+        lng: -74.006,
+      });
+
+      expect(result.id).toBe(spotId);
+
+      // Wait for async operation to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Should have logged the error but not thrown
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    it('should not update spot if reverse geocoding returns null', async () => {
+      vi.mocked(spotRepository.create).mockResolvedValue(mockSpot);
+      vi.mocked(geocodingService.reverseGeocode).mockResolvedValue(null);
+
+      await spotsService.createSpot(userId, {
+        lat: 40.7128,
+        lng: -74.006,
+      });
+
+      // Wait for async operation to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(spotRepository.update).not.toHaveBeenCalled();
     });
   });
 

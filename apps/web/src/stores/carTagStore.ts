@@ -67,8 +67,10 @@ export const useCarTagStore = create<CarTagState & CarTagActions>((set, get) => 
       } else {
         // Fetch from API for authenticated users
         const response = await apiClient.get<{ success: boolean; data: CarTag[] }>('/v1/car-tags');
+        const apiTags = response.data.data;
+        // Fallback to defaults if API returns empty (e.g., no default tags seeded in DB)
         set({
-          tags: response.data.data,
+          tags: apiTags.length > 0 ? apiTags : DEFAULT_TAGS,
           isLoading: false,
           isHydrated: true,
         });

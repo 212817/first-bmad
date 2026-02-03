@@ -5,6 +5,15 @@ import type { CarTag } from '@repo/shared/types';
 import type { CreateCarTagRequest, UpdateCarTagRequest, CarTagResponse } from './types.js';
 
 /**
+ * Default system tags that should exist for all users
+ */
+const SYSTEM_DEFAULT_TAGS = [
+  { name: 'My Car', color: '#3B82F6' },
+  { name: 'Rental', color: '#10B981' },
+  { name: 'Other', color: '#6B7280' },
+];
+
+/**
  * Maps CarTag entity to API response
  */
 const toResponse = (tag: CarTag): CarTagResponse => ({
@@ -15,6 +24,24 @@ const toResponse = (tag: CarTag): CarTagResponse => ({
 });
 
 /**
+ * Ensures default system tags exist in the database
+ * Called on first request to get tags
+ */
+let defaultsSeeded = false;
+const ensureDefaultTagsExist = async (): Promise<void> => {
+  if (defaultsSeeded) return;
+
+  const existing = await carTagRepository.getDefaults();
+  if (existing.length === 0) {
+    // Seed default tags (system-level, no userId)
+    for (const tag of SYSTEM_DEFAULT_TAGS) {
+      await carTagRepository.createDefault(tag.name, tag.color);
+    }
+  }
+  defaultsSeeded = true;
+};
+
+/**
  * Car tags service - business logic for car tag operations
  */
 export const carTagsService = {
@@ -22,6 +49,9 @@ export const carTagsService = {
    * Get all tags for a user (defaults + custom)
    */
   async getAllTags(userId: string): Promise<CarTagResponse[]> {
+    // Ensure default tags exist before fetching
+    await ensureDefaultTagsExist();
+
     const [defaults, custom] = await Promise.all([
       carTagRepository.getDefaults(),
       carTagRepository.findByUserId(userId),

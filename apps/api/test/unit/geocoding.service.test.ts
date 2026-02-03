@@ -12,6 +12,7 @@ global.fetch = mockFetch;
 vi.mock('../../src/repositories/geocache.repository.js', () => ({
   geocacheRepository: {
     findByAddress: vi.fn(),
+    findByCoords: vi.fn(),
     create: vi.fn(),
   },
 }));
@@ -20,10 +21,11 @@ describe('geocodingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => { });
+    vi.spyOn(console, 'error').mockImplementation(() => { });
     // Default: no cache hit
     vi.mocked(geocacheRepository.findByAddress).mockResolvedValue(null);
+    vi.mocked(geocacheRepository.findByCoords).mockResolvedValue(null);
     vi.mocked(geocacheRepository.create).mockResolvedValue({
       id: 'cache-123',
       addressQuery: '123 main st',
@@ -296,6 +298,261 @@ describe('geocodingService', () => {
       expect(url).toContain('api.opencagedata.com');
       expect(url).toContain('limit=1');
       expect(url).toContain('no_annotations=1');
+    });
+  });
+
+  describe('reverseGeocode', () => {
+    it('should return address for valid coordinates', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: '123 Main St, New York, NY 10001, USA',
+            confidence: 9,
+            components: {
+              road: 'Main St',
+              house_number: '123',
+              city: 'New York',
+              state: 'NY',
+              country: 'USA',
+            },
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result).toEqual({
+        address: '123 Main St, New York',
+        formattedAddress: '123 Main St, New York, NY 10001, USA',
+      });
+    });
+
+    it('should return cached result when available', async () => {
+      vi.mocked(geocacheRepository.findByCoords).mockResolvedValueOnce({
+        id: 'cache-123',
+        addressQuery: '40.7128,-74.006',
+        lat: 40.7128,
+        lng: -74.006,
+        formattedAddress: '123 Main St, NY (cached)',
+        createdAt: new Date(),
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result).toEqual({
+        address: '123 Main St, NY (cached)',
+        formattedAddress: '123 Main St, NY (cached)',
+      });
+      // Should not call OpenCage API
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should cache new results from API', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: '123 Main St, New York, NY',
+            confidence: 9,
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      // Wait for async cache write
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(geocacheRepository.create).toHaveBeenCalledWith({
+        addressQuery: '40.7128,-74.006',
+        lat: 40.7128,
+        lng: -74.006,
+        formattedAddress: '123 Main St, New York, NY',
+      });
+    });
+
+    it('should format address from components', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: 'Full Address, Very Long, Multiple Parts, USA',
+            confidence: 9,
+            components: {
+              road: 'Broadway',
+              neighbourhood: 'Downtown',
+              city: 'New York',
+              state: 'NY',
+              country: 'USA',
+            },
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      // Should use components to build short address
+      expect(result?.address).toBe('Broadway, Downtown, New York');
+    });
+
+    it('should fall back to formatted when no components', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: '123 Main St, New York, NY',
+            confidence: 9,
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result?.address).toBe('123 Main St, New York, NY');
+    });
+
+    it('should return null for invalid latitude', async () => {
+      const result = await geocodingService.reverseGeocode(91, -74.006);
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should return null for invalid longitude', async () => {
+      const result = await geocodingService.reverseGeocode(40.7128, 181);
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should return null for NaN coordinates', async () => {
+      const result = await geocodingService.reverseGeocode(NaN, -74.006);
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should return null when no results found', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await geocodingService.reverseGeocode(0.0, 0.0);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null on rate limit (429)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null on quota exceeded (402)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 402,
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result).toBeNull();
+    });
+
+    it('should continue to API if cache lookup fails', async () => {
+      vi.mocked(geocacheRepository.findByCoords).mockRejectedValueOnce(
+        new Error('DB connection error')
+      );
+
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: '123 Main St, New York, NY',
+            confidence: 9,
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(result).not.toBeNull();
+      expect(mockFetch).toHaveBeenCalled();
+    });
+
+    it('should call OpenCage API with coordinates as query', async () => {
+      const mockResponse: OpenCageResponse = {
+        results: [
+          {
+            geometry: { lat: 40.7128, lng: -74.006 },
+            formatted: '123 Main St, New York, NY',
+            confidence: 9,
+          },
+        ],
+        status: { code: 200, message: 'OK' },
+        rate: { limit: 2500, remaining: 2499, reset: 1700000000 },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await geocodingService.reverseGeocode(40.7128, -74.006);
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url] = mockFetch.mock.calls[0] as [string, unknown];
+      expect(url).toContain('api.opencagedata.com');
+      expect(url).toContain('q=40.7128%2B-74.006');
+      expect(url).toContain('limit=1');
     });
   });
 });

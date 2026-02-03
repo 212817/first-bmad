@@ -1,16 +1,8 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
 import { useCarTagStore } from '@/stores/carTagStore';
+import { SpotAddress } from './SpotAddress';
 import { TagBadge } from './TagBadge';
 import type { SpotDetailCardProps } from './types';
-
-/**
- * Format coordinates to human-readable string
- */
-const formatCoordinates = (lat: number, lng: number): string => {
-  const latDir = lat >= 0 ? 'N' : 'S';
-  const lngDir = lng >= 0 ? 'E' : 'W';
-  return `${Math.abs(lat).toFixed(6)}° ${latDir}, ${Math.abs(lng).toFixed(6)}° ${lngDir}`;
-};
 
 /**
  * Format timestamp to relative time
@@ -50,7 +42,11 @@ const formatTimestamp = (isoString: string): string => {
 /**
  * Card component displaying parking spot details
  */
-export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) => {
+export const SpotDetailCard = ({
+  spot,
+  hideNote = false,
+  isAddressLoading = false,
+}: SpotDetailCardProps) => {
   const { getTagById } = useCarTagStore();
   const carTag = spot.carTagId ? getTagById(spot.carTagId) : null;
 
@@ -68,33 +64,17 @@ export const SpotDetailCard = ({ spot, hideNote = false }: SpotDetailCardProps) 
 
       {/* Spot Details */}
       <div className="p-4 space-y-3">
-        {/* Coordinates (only when available) */}
-        {spot.lat !== null && spot.lng !== null && (
-          <div className="flex items-start gap-2">
-            <span className="text-gray-400" aria-hidden="true">
-              🗺️
-            </span>
-            <div>
-              <p className="text-sm font-mono text-gray-700" data-testid="spot-coordinates">
-                {formatCoordinates(spot.lat, spot.lng)}
-              </p>
-              {spot.accuracyMeters && (
-                <p className="text-xs text-gray-500">±{spot.accuracyMeters}m accuracy</p>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Address/Coordinates - unified display */}
+        <SpotAddress
+          lat={spot.lat}
+          lng={spot.lng}
+          address={spot.address}
+          isLoading={isAddressLoading}
+        />
 
-        {/* Address (when available) */}
-        {spot.address && (
-          <div className="flex items-start gap-2">
-            <span className="text-gray-400" aria-hidden="true">
-              📍
-            </span>
-            <p className="text-sm text-gray-700" data-testid="spot-address">
-              {spot.address}
-            </p>
-          </div>
+        {/* Accuracy (when available and has coords) */}
+        {spot.accuracyMeters && spot.lat !== null && spot.lng !== null && (
+          <p className="text-xs text-gray-500 ml-7">±{spot.accuracyMeters}m accuracy</p>
         )}
 
         {/* Car Tag (when set) */}

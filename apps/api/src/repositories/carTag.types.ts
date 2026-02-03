@@ -34,6 +34,9 @@ export interface CarTagRepositoryInterface {
   /** Create a custom tag for a user */
   create(input: CreateCarTagInput): Promise<CarTag>;
 
+  /** Create a default (system-level) tag with no userId */
+  createDefault(name: string, color: string): Promise<CarTag>;
+
   /** Update a tag */
   update(id: string, input: UpdateCarTagInput): Promise<CarTag | null>;
 

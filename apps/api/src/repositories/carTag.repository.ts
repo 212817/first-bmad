@@ -76,6 +76,23 @@ export const carTagRepository: CarTagRepositoryInterface = {
   },
 
   /**
+   * Create a default (system-level) tag with no userId
+   */
+  async createDefault(name: string, color: string): Promise<CarTag> {
+    const rows = await db
+      .insert(carTags)
+      .values({
+        userId: null,
+        name,
+        color,
+        isDefault: true,
+      })
+      .returning();
+
+    return mapToCarTag(rows[0]!);
+  },
+
+  /**
    * Update a tag
    */
   async update(id: string, input: UpdateCarTagInput): Promise<CarTag | null> {
