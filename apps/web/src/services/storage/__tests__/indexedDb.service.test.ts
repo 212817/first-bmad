@@ -281,9 +281,7 @@ describe('indexedDbService', () => {
       it('should throw error when db not initialized', async () => {
         indexedDbService.db = null;
 
-        await expect(indexedDbService.getLatestSpot()).rejects.toThrow(
-          'IndexedDB not initialized'
-        );
+        await expect(indexedDbService.getLatestSpot()).rejects.toThrow('IndexedDB not initialized');
       });
 
       it('should reject when getAll request fails', async () => {
