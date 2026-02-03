@@ -56,7 +56,8 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
             carTagId: null,
             lat: input.lat,
             lng: input.lng,
-            accuracyMeters: Math.round(input.accuracy),
+            accuracyMeters:
+              input.accuracy != null ? Math.round(input.accuracy) : null,
             address: null,
             photoUrl: null,
             note: null,
@@ -83,7 +84,8 @@ export const useSpotStore = create<SpotState & SpotActions>((set) => ({
           const response = await apiClient.post<{ success: boolean; data: Spot }>('/v1/spots', {
             lat: input.lat,
             lng: input.lng,
-            accuracyMeters: Math.round(input.accuracy),
+            accuracyMeters:
+              input.accuracy != null ? Math.round(input.accuracy) : null,
           });
           spot = response.data.data;
         }
