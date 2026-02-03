@@ -39,15 +39,68 @@ const MapUpdater = ({ center }: { center: [number, number] }) => {
 };
 
 /**
+ * Locate me button component - gets user's current location
+ */
+const LocateControl = ({ onLocate }: { onLocate: (lat: number, lng: number) => void }) => {
+  const map = useMap();
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleLocate = () => {
+    if (!navigator.geolocation) return;
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.setView([latitude, longitude], DEFAULT_ZOOM);
+        onLocate(latitude, longitude);
+        setIsLocating(false);
+      },
+      () => {
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  return (
+    <button
+      onClick={handleLocate}
+      disabled={isLocating}
+      className="absolute bottom-16 right-2 z-[1000] w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 disabled:opacity-50"
+      data-testid="map-locate-button"
+      aria-label="Find my location"
+    >
+      {isLocating ? (
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600" />
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-5 h-5 text-gray-700"
+        >
+          <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+      )}
+    </button>
+  );
+};
+
+/**
  * Get initial layer preference from localStorage
  */
 const getInitialLayer = (): MapViewType => {
-  if (typeof window === 'undefined') return 'street';
+  if (typeof window === 'undefined') return 'hybrid';
   const stored = localStorage.getItem(MAP_LAYER_STORAGE_KEY);
   if (stored && (stored === 'street' || stored === 'satellite' || stored === 'hybrid')) {
     return stored;
   }
-  return 'street';
+  return 'hybrid';
 };
 
 /**
@@ -158,6 +211,15 @@ export const SpotMap = ({
 
       {/* Layer switcher */}
       <LayerSwitcher activeLayer={activeLayer} onLayerChange={handleLayerChange} />
+
+      {/* Locate me button - only show when editable */}
+      {editable && (
+        <LocateControl
+          onLocate={(lat, lng) => {
+            setAdjustedPosition([lat, lng]);
+          }}
+        />
+      )}
 
       {/* Confirm/Cancel buttons when marker moved */}
       {isDirty && editable && (

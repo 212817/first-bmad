@@ -94,10 +94,12 @@ describe('SpotMap', () => {
       expect(marker).toHaveAttribute('data-lng', '24.7085');
     });
 
-    it('renders tile layer', () => {
+    it('renders tile layers (base + overlays for hybrid)', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} />);
 
-      expect(screen.getByTestId('tile-layer')).toBeInTheDocument();
+      // Hybrid mode (default) has multiple tile layers
+      const tileLayers = screen.getAllByTestId('tile-layer');
+      expect(tileLayers.length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows loading state initially', () => {
@@ -141,6 +143,18 @@ describe('SpotMap', () => {
       render(<SpotMap lat={48.9102} lng={24.7085} />);
 
       expect(screen.queryByTestId('map-drag-hint')).not.toBeInTheDocument();
+    });
+
+    it('shows locate button when editable', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} editable />);
+
+      expect(screen.getByTestId('map-locate-button')).toBeInTheDocument();
+    });
+
+    it('does not show locate button when not editable', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} />);
+
+      expect(screen.queryByTestId('map-locate-button')).not.toBeInTheDocument();
     });
   });
 
