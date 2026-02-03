@@ -65,9 +65,9 @@ test.describe('Spot Confirmation Page', () => {
     // Should display coordinates (uses spot-coordinates-primary when no address)
     const coordinates = page.getByTestId('spot-coordinates-primary');
     await expect(coordinates).toBeVisible();
-    // Coordinates should contain the lat/lng values
-    await expect(coordinates).toContainText('48.910200');
-    await expect(coordinates).toContainText('24.708500');
+    // Coordinates are formatted as "📍48.9102°N, 24.7085°E"
+    await expect(coordinates).toContainText('48.9102');
+    await expect(coordinates).toContainText('24.7085');
   });
 
   test('displays timestamp on confirmation page (AC3)', async ({ page }) => {
