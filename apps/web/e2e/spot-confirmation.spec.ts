@@ -94,7 +94,9 @@ test.describe('Spot Confirmation Page', () => {
     await expect(relativeTime).toContainText('Just now');
   });
 
-  test('displays action buttons for photo, gallery, tag, timer (AC4)', async ({ page }) => {
+  test('displays action buttons for photo, gallery, timer and car tag selector (AC4)', async ({
+    page,
+  }) => {
     // Enter guest mode
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
@@ -115,11 +117,14 @@ test.describe('Spot Confirmation Page', () => {
     // Should display action buttons (Note is now inline, not a button)
     await expect(page.getByTestId('action-button-camera')).toBeVisible();
     await expect(page.getByTestId('action-button-gallery')).toBeVisible();
-    await expect(page.getByTestId('action-button-tag')).toBeVisible();
     await expect(page.getByTestId('action-button-timer')).toBeVisible();
 
     // Timer should be disabled
     await expect(page.getByTestId('action-button-timer')).toBeDisabled();
+
+    // Car tag selector should be visible (always shown, not a button)
+    await expect(page.getByTestId('car-tag-section')).toBeVisible();
+    await expect(page.getByTestId('car-tag-selector')).toBeVisible();
   });
 
   test('Done button returns to home screen (AC5, AC7)', async ({ page }) => {

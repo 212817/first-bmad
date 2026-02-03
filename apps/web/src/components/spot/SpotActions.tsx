@@ -47,7 +47,6 @@ export const SpotActions = ({
   spot,
   onPhotoClick,
   onGalleryClick,
-  onTagClick,
   onTimerClick,
 }: SpotActionsProps) => {
   return (
@@ -62,9 +61,6 @@ export const SpotActions = ({
 
       {/* Gallery Upload Button */}
       <ActionButton icon="🖼️" label="Gallery" onClick={onGalleryClick} />
-
-      {/* Car Tag Button */}
-      <ActionButton icon="🚗" label="Tag" onClick={onTagClick} />
 
       {/* Timer Button - disabled placeholder for Epic 4 */}
       <ActionButton

@@ -7,6 +7,7 @@ import type { ParkingSpot } from '@repo/shared/types';
  */
 export interface CreateSpotInput {
   userId: string;
+  carTagId?: string | null;
   latitude: number | null;
   longitude: number | null;
   accuracyMeters?: number | null;
@@ -21,6 +22,7 @@ export interface CreateSpotInput {
  * Input for updating a spot
  */
 export interface UpdateSpotInput {
+  carTagId?: string | null;
   address?: string | null;
   photoUrl?: string | null;
   note?: string | null;

@@ -6,6 +6,7 @@
  */
 export interface Spot {
   id: string;
+  carTagId: string | null;
   lat: number | null;
   lng: number | null;
   accuracyMeters: number | null;
@@ -52,6 +53,7 @@ export const isAddressInput = (input: SaveSpotInput): input is SaveSpotWithAddre
  * Input for updating a spot
  */
 export interface UpdateSpotInput {
+  carTagId?: string | null;
   address?: string | null;
   photoUrl?: string | null;
   note?: string | null;
