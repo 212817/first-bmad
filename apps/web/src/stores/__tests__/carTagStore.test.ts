@@ -60,7 +60,7 @@ describe('carTagStore', () => {
       const state = useCarTagStore.getState();
 
       expect(state.tags).toHaveLength(3);
-      expect(state.tags[0].name).toBe('My Car');
+      expect(state.tags[0]?.name).toBe('My Car');
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
     });
@@ -89,7 +89,7 @@ describe('carTagStore', () => {
 
       const state = useCarTagStore.getState();
       expect(state.tags).toHaveLength(4);
-      expect(state.tags[3].name).toBe('Work Car');
+      expect(state.tags[3]?.name).toBe('Work Car');
     });
   });
 

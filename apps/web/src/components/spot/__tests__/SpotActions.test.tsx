@@ -6,6 +6,7 @@ import type { Spot } from '@/stores/spot.types';
 
 const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   id: 'test-spot-123',
+  carTagId: null,
   lat: 40.7128,
   lng: -74.006,
   accuracyMeters: 10,

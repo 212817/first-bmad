@@ -81,6 +81,7 @@ vi.mock('@/stores/carTagStore', () => ({
 
 const mockSpot: Spot = {
   id: 'test-spot-123',
+  carTagId: null,
   lat: 40.7128,
   lng: -74.006,
   accuracyMeters: 10,
@@ -292,6 +293,7 @@ describe('SpotConfirmationPage', () => {
     it('should show warning when spot has address but no coordinates', () => {
       const addressOnlySpot: Spot = {
         id: 'address-only-spot',
+        carTagId: null,
         lat: null,
         lng: null,
         accuracyMeters: null,
@@ -327,6 +329,7 @@ describe('SpotConfirmationPage', () => {
     it('should not show warning when spot has no address either', () => {
       const spotWithoutAddress: Spot = {
         id: 'no-address-spot',
+        carTagId: null,
         lat: null,
         lng: null,
         accuracyMeters: null,
