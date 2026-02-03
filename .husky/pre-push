@@ -33,3 +33,22 @@ if ! git diff --quiet; then
   git status --short
   exit 1
 fi
+
+# TypeScript check for changed .ts/.tsx files only
+TS_FILES=""
+for file in $(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx)$'); do
+  if [ -f "$file" ]; then
+    TS_FILES="$TS_FILES $file"
+  fi
+done
+
+if [ -n "$TS_FILES" ]; then
+  echo "TypeScript checking changed files..."
+  pnpm tsc --noEmit
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ TypeScript errors found. Please fix them before pushing."
+    exit 1
+  fi
+  echo "✓ TypeScript check passed"
+fi
