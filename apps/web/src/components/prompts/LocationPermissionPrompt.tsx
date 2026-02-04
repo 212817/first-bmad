@@ -78,18 +78,15 @@ export const LocationPermissionPrompt = ({
               {oniOSSafari && (
                 <ol className="text-left list-decimal list-inside space-y-1 bg-gray-50 p-3 rounded-lg">
                   <li>
-                    Open <strong>Settings</strong> on your iPhone
+                    Open <strong>Settings</strong> → <strong>Safari</strong> →{' '}
+                    <strong>Advanced</strong> → <strong>Website Data</strong>
                   </li>
-                  <li>
-                    Scroll down and tap <strong>Safari</strong>
-                  </li>
-                  <li>
-                    Tap <strong>Location</strong>
-                  </li>
-                  <li>
-                    Select <strong>Ask</strong> or <strong>Allow</strong>
-                  </li>
+                  <li>Find this website and swipe to delete it</li>
                   <li>Come back and refresh this page</li>
+                  <li className="mt-2 pt-2 border-t border-gray-200">
+                    <em>Also check:</em> <strong>Settings</strong> → <strong>Safari</strong> →{' '}
+                    <strong>Location</strong> is set to <strong>Ask</strong>
+                  </li>
                 </ol>
               )}
               {oniOSChrome && (
