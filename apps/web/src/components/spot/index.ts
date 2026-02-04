@@ -11,5 +11,7 @@ export { EmptySpotState } from './EmptySpotState';
 export { SpotThumbnail } from './SpotThumbnail';
 export { LocationCard } from './LocationCard';
 export { SpotPhoto } from './SpotPhoto';
+export { DeleteConfirmDialog } from './DeleteConfirmDialog';
+export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
 export * from './types';
 export * from './carTag.types';

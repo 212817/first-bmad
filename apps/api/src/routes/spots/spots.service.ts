@@ -1,6 +1,7 @@
 // apps/api/src/routes/spots/spots.service.ts
 import { spotRepository } from '../../repositories/spot.repository.js';
 import { geocodingService } from '../../services/geocoding/geocoding.service.js';
+import { r2Service } from '../../services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 import type { ParkingSpot } from '@repo/shared/types';
 import type { CreateSpotRequest, UpdateSpotRequest, SpotResponse } from './types.js';
@@ -276,6 +277,7 @@ export const spotsService = {
 
   /**
    * Delete a spot
+   * Also deletes associated photo from R2 storage (fire-and-forget)
    */
   async deleteSpot(userId: string, spotId: string): Promise<void> {
     const spot = await spotRepository.findById(spotId);
@@ -288,6 +290,39 @@ export const spotsService = {
       throw new AuthorizationError('Not authorized to delete this spot');
     }
 
+    // Delete spot from database first
     await spotRepository.delete(spotId);
+
+    // Clean up photo from R2 (fire-and-forget)
+    if (spot.photoUrl) {
+      const key = extractPhotoKeyFromUrl(spot.photoUrl);
+      if (key) {
+        r2Service.deleteObject(key).catch((error) => {
+          console.error('[Spots] Failed to delete photo from R2:', error);
+          // Don't throw - spot already deleted
+        });
+      }
+    }
   },
+};
+
+/**
+ * Extract the R2 key from a photo URL
+ * Handles both public URLs and signed URLs
+ */
+const extractPhotoKeyFromUrl = (photoUrl: string): string | null => {
+  try {
+    const url = new URL(photoUrl);
+    // The path should be like /photos/{userId}/{timestamp}-{random}.{ext}
+    const path = url.pathname;
+    // Remove leading slash
+    const key = path.startsWith('/') ? path.slice(1) : path;
+    // Validate it's a photos key
+    if (key.startsWith('photos/')) {
+      return key;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 };

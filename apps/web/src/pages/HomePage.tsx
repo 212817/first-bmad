@@ -1,6 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
+
+// Lazy load the map component
+const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSpotStore } from '@/stores/spotStore';
@@ -11,6 +14,7 @@ import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
+import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { Header } from '@/components/layout/Header';
 import { LatestSpotCard } from '@/components/spot/LatestSpotCard';
 import { geocodingApi } from '@/services/api/geocodingApi';
@@ -44,7 +48,42 @@ export const HomePage = () => {
   const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
+
+  // Reverse geocode the current/adjusted location to get address
+  const displayLat = adjustedLocation?.lat ?? currentLocation?.lat ?? null;
+  const displayLng = adjustedLocation?.lng ?? currentLocation?.lng ?? null;
+  const { address: currentAddress, isLoading: isAddressLoading } = useReverseGeocode(
+    displayLat,
+    displayLng,
+    null,
+    { skip: !displayLat || !displayLng }
+  );
+
+  // Fetch current location on mount for map display (for authenticated/guest users)
+  useEffect(() => {
+    // Only attempt once and only if user is authenticated or guest
+    if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
+    
+    // Try to get location if permission is granted or prompt (browser will ask)
+    if (permissionState !== 'denied' && !currentLocation) {
+      setMapLoadAttempted(true);
+      setIsLoadingLocation(true);
+      getCurrentPosition()
+        .then((pos) => {
+          setCurrentLocation({ lat: pos.lat, lng: pos.lng });
+        })
+        .catch(() => {
+          // Silently fail - user can still use the button
+        })
+        .finally(() => setIsLoadingLocation(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionState, isAuthenticated, isGuest]);
 
   // Check auth status on mount (only if not in guest mode)
   // When OAuth completes, authMode won't be 'guest' yet (it's set after hydration)
@@ -91,7 +130,7 @@ export const HomePage = () => {
   };
 
   /**
-   * Handle "Use my location" button click
+   * Handle "Save my location" button click
    * Only shows modal if permission was denied, otherwise requests permission directly
    */
   const handleSaveSpotClick = () => {
@@ -120,12 +159,24 @@ export const HomePage = () => {
     setSpotError(null);
 
     try {
-      const position = await getCurrentPosition();
+      // Use adjusted location if user moved the map, otherwise get current position
+      let position;
+      if (adjustedLocation) {
+        position = { lat: adjustedLocation.lat, lng: adjustedLocation.lng, accuracy: 0 };
+      } else {
+        position = await getCurrentPosition();
+        // Update map with fresh location
+        setCurrentLocation({ lat: position.lat, lng: position.lng });
+      }
+
       const spot = await saveSpot({
         lat: position.lat,
         lng: position.lng,
         accuracy: position.accuracy,
       });
+
+      // Reset adjusted location
+      setAdjustedLocation(null);
 
       // Navigate to confirmation page
       navigate(`/spot/${spot.id}/confirm`);
@@ -135,6 +186,13 @@ export const HomePage = () => {
     } finally {
       setIsCapturing(false);
     }
+  };
+
+  /**
+   * Handle map position change when user drags
+   */
+  const handleMapPositionChange = (lat: number, lng: number) => {
+    setAdjustedLocation({ lat, lng });
   };
 
   /**
@@ -216,43 +274,139 @@ export const HomePage = () => {
         />
       )}
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+      <main className="flex-1 flex flex-col items-center p-4 pt-3 text-center">
         {/* Options Container */}
         <div className="w-full max-w-md space-y-6">
-          {/* Option 1: Enable Location Button */}
-          <button
-            onClick={handleSaveSpotClick}
-            disabled={isBusy}
-            className="w-full px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center gap-3 justify-center"
-            data-testid="save-spot-button"
-          >
-            {isBusy ? (
-              <>
-                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
+          {/* Map Section with Save Button */}
+          {(currentLocation || isLoadingLocation) && (
+            <div className="w-full rounded-xl overflow-hidden shadow-md bg-white" data-testid="home-map-section">
+              {isLoadingLocation ? (
+                <div className="h-48 bg-gray-200 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                    <span className="text-sm">Getting your location...</span>
+                  </div>
+                </div>
+              ) : currentLocation ? (
+                <Suspense
+                  fallback={
+                    <div className="h-48 bg-gray-200 flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-2 text-gray-500">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                        <span className="text-sm">Loading map...</span>
+                      </div>
+                    </div>
+                  }
+                >
+                  <SpotMap
+                    lat={adjustedLocation?.lat ?? currentLocation.lat}
+                    lng={adjustedLocation?.lng ?? currentLocation.lng}
+                    editable={true}
+                    onPositionChange={handleMapPositionChange}
+                    heightClass="aspect-square"
+                    testId="home-spot-map"
                   />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Saving...
-              </>
-            ) : (
-              <>
-                <span className="text-2xl">📍</span>
-                Use my location
-              </>
-            )}
-          </button>
+                </Suspense>
+              ) : null}
+              
+              {/* Address display */}
+              <div className="px-4 py-3 border-b border-gray-100">
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-400" aria-hidden="true">📍</span>
+                  <div className="flex-1 text-left">
+                    {isAddressLoading ? (
+                      <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+                    ) : currentAddress ? (
+                      <p className="text-sm font-medium text-gray-800" data-testid="home-current-address">
+                        {currentAddress}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Address unavailable</p>
+                    )}
+                    {adjustedLocation && (
+                      <p className="text-xs text-indigo-600 mt-1">Position adjusted</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Hint text */}
+              <p className="px-3 py-2 text-xs text-gray-500 text-center border-b border-gray-100">
+                Drag the map to adjust your parking location
+              </p>
+
+              {/* Save button inside the card */}
+              <div className="p-4">
+                <button
+                  onClick={handleSaveSpotClick}
+                  disabled={isBusy}
+                  className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+                  data-testid="save-spot-button"
+                >
+                  {isBusy ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save my location'
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback button when no map/location */}
+          {!currentLocation && !isLoadingLocation && (
+            <button
+              onClick={handleSaveSpotClick}
+              disabled={isBusy}
+              className="w-full px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center gap-3 justify-center"
+              data-testid="save-spot-button"
+            >
+              {isBusy ? (
+                <>
+                  <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl">📍</span>
+                  Save my location
+                </>
+              )}
+            </button>
+          )}
 
           {/* Divider */}
           <div className="flex items-center gap-4">

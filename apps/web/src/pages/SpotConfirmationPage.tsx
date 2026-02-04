@@ -300,14 +300,19 @@ export const SpotConfirmationPage = () => {
       {showCamera && <CameraCapture onCapture={handlePhotoCapture} onClose={handleCameraClose} />}
 
       {/* Success Header - inline and compact */}
-      <div className="flex items-center justify-center gap-2 py-2">
-        <span
-          className={`text-lg text-green-600 transition-all duration-500 ${showSuccess ? 'animate-bounce' : ''}`}
-          aria-hidden="true"
-        >
-          ✓
-        </span>
-        <h1 className="text-base font-bold text-indigo-900">Spot Saved!</h1>
+      <div className="flex flex-col items-center justify-center py-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-lg text-green-600 transition-all duration-500 ${showSuccess ? 'animate-bounce' : ''}`}
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+          <h1 className="text-base font-bold text-indigo-900">Spot Saved!</h1>
+        </div>
+        <p className="text-sm text-gray-500 mt-1">
+          Add a photo, note, or adjust the location below
+        </p>
       </div>
 
       {/* Main Content */}
