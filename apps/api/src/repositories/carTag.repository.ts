@@ -43,6 +43,16 @@ export const carTagRepository: CarTagRepositoryInterface = {
   },
 
   /**
+   * Get a default (system) tag by name
+   */
+  async findDefaultByName(name: string): Promise<CarTag | null> {
+    const rows = await db.select().from(carTags).where(eq(carTags.name, name)).limit(1);
+    // Find the default one (isDefault = true)
+    const defaultTag = rows.find((r) => r.isDefault);
+    return defaultTag ? mapToCarTag(defaultTag) : rows[0] ? mapToCarTag(rows[0]) : null;
+  },
+
+  /**
    * Get user's custom tags
    */
   async findByUserId(userId: string): Promise<CarTag[]> {

@@ -103,7 +103,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         {
           enableHighAccuracy: true,
           timeout: GEOLOCATION_TIMEOUT,
-          maximumAge: 60000, // 1 minute cache
+          maximumAge: 0, // Always get fresh position (important for iOS Chrome accuracy)
         }
       );
     });
@@ -122,9 +122,10 @@ export const useGeolocation = (): UseGeolocationReturn => {
 const getErrorMessage = (code: number): string => {
   switch (code) {
     case 1:
+      // Provide iOS-specific instructions since Safari can't re-prompt
       return 'Location permission denied. Please enable location access in your browser settings.';
     case 2:
-      return 'Unable to determine your location. Please try again.';
+      return 'Unable to determine your location. Please check your device location settings and try again.';
     case 3:
       return 'Location request timed out. Please try again.';
     default:

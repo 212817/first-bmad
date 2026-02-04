@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { spotsService } from '../../src/routes/spots/spots.service.js';
 import { spotRepository } from '../../src/repositories/spot.repository.js';
+import { carTagRepository } from '../../src/repositories/carTag.repository.js';
 import { geocodingService } from '../../src/services/geocoding/geocoding.service.js';
 import { r2Service } from '../../src/services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
@@ -14,6 +15,13 @@ vi.mock('../../src/repositories/spot.repository.js', () => ({
     findActiveByUserId: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+  },
+}));
+
+vi.mock('../../src/repositories/carTag.repository.js', () => ({
+  carTagRepository: {
+    findDefaultByName: vi.fn(),
+    createDefault: vi.fn(),
   },
 }));
 
@@ -32,11 +40,12 @@ vi.mock('../../src/services/r2/r2.service.js', () => ({
 describe('spotsService', () => {
   const userId = 'user-123';
   const spotId = 'spot-123';
+  const mockDefaultTagId = 'tag-my-car-uuid';
 
   const mockSpot = {
     id: spotId,
     userId,
-    carTagId: null,
+    carTagId: mockDefaultTagId,
     latitude: 40.7128,
     longitude: -74.006,
     accuracyMeters: 15,
@@ -55,6 +64,15 @@ describe('spotsService', () => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Default: carTagRepository returns a default tag
+    vi.mocked(carTagRepository.findDefaultByName).mockResolvedValue({
+      id: mockDefaultTagId,
+      userId: null,
+      name: 'My Car',
+      color: '#3B82F6',
+      isDefault: true,
+      createdAt: new Date(),
+    });
     // Default: reverse geocoding succeeds
     vi.mocked(geocodingService.reverseGeocode).mockResolvedValue({
       address: '123 Main St, New York',
@@ -75,6 +93,7 @@ describe('spotsService', () => {
 
       expect(spotRepository.create).toHaveBeenCalledWith({
         userId,
+        carTagId: mockDefaultTagId,
         latitude: 40.7128,
         longitude: -74.006,
         accuracyMeters: 15,
@@ -132,6 +151,7 @@ describe('spotsService', () => {
 
       expect(spotRepository.create).toHaveBeenCalledWith({
         userId,
+        carTagId: mockDefaultTagId,
         latitude: 40.7128,
         longitude: -74.006,
         accuracyMeters: null,

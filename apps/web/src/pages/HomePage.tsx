@@ -272,7 +272,9 @@ export const HomePage = () => {
         <LocationPermissionPrompt
           onEnableLocation={handleEnableLocation}
           onEnterManually={handleEnterManually}
+          onDismiss={() => setShowLocationPrompt(false)}
           isLoading={isBusy}
+          permissionDenied={permissionState === 'denied'}
         />
       )}
 

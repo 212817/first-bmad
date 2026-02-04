@@ -23,12 +23,32 @@ spotsRoutes.post('/', async (req, res) => {
 /**
  * GET /spots
  * Get user's parking spots (paginated with cursor)
+ * Query params:
+ *   - limit: number (default 20)
+ *   - cursor: string (ISO date for pagination)
+ *   - q: string (text search across address, note)
+ *   - carTagId: string (filter by car tag ID)
+ *   - startDate: string (ISO date, filter spots saved after this)
+ *   - endDate: string (ISO date, filter spots saved before this)
  */
 spotsRoutes.get('/', async (req, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
   const cursor = req.query.cursor as string | undefined;
 
-  const result = await spotsService.getUserSpotsPaginated(req.user!.id, limit, cursor);
+  // Search/filter options
+  const searchOptions = {
+    query: req.query.q as string | undefined,
+    carTagId: req.query.carTagId as string | undefined,
+    startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+    endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+  };
+
+  const result = await spotsService.getUserSpotsPaginated(
+    req.user!.id,
+    limit,
+    cursor,
+    searchOptions
+  );
 
   res.json({
     success: true,

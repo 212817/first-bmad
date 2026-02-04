@@ -13,5 +13,8 @@ export { LocationCard } from './LocationCard';
 export { SpotPhoto } from './SpotPhoto';
 export { DeleteConfirmDialog } from './DeleteConfirmDialog';
 export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
+export { SpotSearchInput } from './SpotSearchInput';
+export { SpotFilters } from './SpotFilters';
+export { NoResultsState } from './NoResultsState';
 export * from './types';
 export * from './carTag.types';

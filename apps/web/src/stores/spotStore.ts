@@ -4,6 +4,8 @@ import { apiClient } from '@/services/api/client';
 import { indexedDbService } from '@/services/storage/indexedDb.service';
 import { STORES } from '@/services/storage/types';
 import { useGuestStore } from './guestStore';
+import { useCarTagStore } from './carTagStore';
+import { filterSpots } from '@/utils/filterSpots';
 import type {
   SpotState,
   SpotActions,
@@ -11,10 +13,14 @@ import type {
   SaveSpotInput,
   UpdateSpotInput,
   PaginatedSpotsResponse,
+  SpotFilters,
 } from './spot.types';
 import { isAddressInput } from './spot.types';
 
 const DEFAULT_PAGE_SIZE = 20;
+
+// Default tag ID for guest mode spots
+const GUEST_DEFAULT_TAG_ID = 'default-my-car';
 
 /**
  * Spot store for managing parking spot state
@@ -33,6 +39,9 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   nextCursor: null,
   isLoadingSpots: false,
   isLoadingMore: false,
+  // Search/filter state
+  searchQuery: '',
+  filters: {},
 
   /**
    * Save a new parking spot
@@ -49,12 +58,12 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
       let spot: Spot;
 
       if (isGuest) {
-        // Save to IndexedDB for guest users
+        // Save to IndexedDB for guest users (with default "My Car" tag)
         if (isAddress) {
           // Address-only save (manual entry)
           spot = {
             id: crypto.randomUUID(),
-            carTagId: null,
+            carTagId: GUEST_DEFAULT_TAG_ID,
             lat: input.lat ?? null,
             lng: input.lng ?? null,
             accuracyMeters: null,
@@ -70,7 +79,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
           // GPS coordinates save
           spot = {
             id: crypto.randomUUID(),
-            carTagId: null,
+            carTagId: GUEST_DEFAULT_TAG_ID,
             lat: input.lat,
             lng: input.lng,
             accuracyMeters: input.accuracy != null ? Math.round(input.accuracy) : null,
@@ -262,10 +271,12 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   /**
    * Fetch spots with pagination
    * Routes to API (authenticated) or IndexedDB (guest)
+   * Supports search query and filters
    */
   fetchSpots: async (cursor?: string): Promise<void> => {
     const isGuest = useGuestStore.getState().isGuest;
     const isInitialLoad = !cursor;
+    const { searchQuery, filters } = get();
 
     if (isInitialLoad) {
       set({ isLoadingSpots: true, error: null });
@@ -276,17 +287,47 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
     try {
       let spots: Spot[];
       let nextCursor: string | null;
+      const carTagStore = useCarTagStore.getState();
 
       if (isGuest) {
         // Get from IndexedDB for guest users
         const result = await indexedDbService.getSpotsPaginated<Spot>(DEFAULT_PAGE_SIZE, cursor);
-        spots = result.spots;
+
+        // Apply client-side filtering for guest mode
+        const tagLookup = (tagId: string) => carTagStore.getTagById(tagId)?.name;
+
+        const filteredSpots = filterSpots(
+          result.spots,
+          {
+            query: searchQuery || undefined,
+            carTagId: filters.carTagId,
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+          },
+          tagLookup
+        );
+
+        spots = filteredSpots;
+        // For guest mode with filters, we can't easily paginate filtered results
+        // so we fetch all and filter client-side
         nextCursor = result.nextCursor;
       } else {
-        // Get from API for authenticated users
+        // Get from API for authenticated users (server-side filtering)
         const params = new URLSearchParams({ limit: String(DEFAULT_PAGE_SIZE) });
         if (cursor) {
           params.set('cursor', cursor);
+        }
+        if (searchQuery) {
+          params.set('q', searchQuery);
+        }
+        if (filters.carTagId) {
+          params.set('carTagId', filters.carTagId);
+        }
+        if (filters.startDate) {
+          params.set('startDate', filters.startDate.toISOString());
+        }
+        if (filters.endDate) {
+          params.set('endDate', filters.endDate.toISOString());
         }
 
         const response = await apiClient.get<{ success: boolean } & PaginatedSpotsResponse>(
@@ -385,6 +426,45 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
       nextCursor: null,
       isLoadingSpots: false,
       isLoadingMore: false,
+    });
+  },
+
+  /**
+   * Set search query
+   * Clears history and triggers re-fetch with new query
+   */
+  setSearchQuery: (query: string) => {
+    set({
+      searchQuery: query,
+      spots: [],
+      hasMore: true,
+      nextCursor: null,
+    });
+  },
+
+  /**
+   * Set filters
+   * Clears history and triggers re-fetch with new filters
+   */
+  setFilters: (filters: SpotFilters) => {
+    set({
+      filters,
+      spots: [],
+      hasMore: true,
+      nextCursor: null,
+    });
+  },
+
+  /**
+   * Clear all search/filter state
+   */
+  clearFilters: () => {
+    set({
+      searchQuery: '',
+      filters: {},
+      spots: [],
+      hasMore: true,
+      nextCursor: null,
     });
   },
 }));

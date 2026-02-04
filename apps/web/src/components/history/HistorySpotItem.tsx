@@ -11,6 +11,8 @@ import type { HistorySpotItemProps } from './types';
  */
 export const HistorySpotItem = ({ spot, onClick }: HistorySpotItemProps) => {
   const { getTagById } = useCarTagStore();
+
+  // Resolve car tag from ID (all spots should have carTagId set)
   const carTag = spot.carTagId ? getTagById(spot.carTagId) : null;
 
   // Determine primary display text

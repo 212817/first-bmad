@@ -1,5 +1,6 @@
 // apps/api/src/routes/spots/spots.service.ts
 import { spotRepository } from '../../repositories/spot.repository.js';
+import { carTagRepository } from '../../repositories/carTag.repository.js';
 import { geocodingService } from '../../services/geocoding/geocoding.service.js';
 import { r2Service } from '../../services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
@@ -92,12 +93,26 @@ const validateAddress = (address: string): void => {
 };
 
 /**
+ * Get the default "My Car" tag ID for spots without explicit tag
+ * Creates the default tag if it doesn't exist
+ */
+const getDefaultCarTagId = async (): Promise<string> => {
+  let myCarTag = await carTagRepository.findDefaultByName('My Car');
+  if (!myCarTag) {
+    // Create the default tag if it doesn't exist
+    myCarTag = await carTagRepository.createDefault('My Car', '#3B82F6');
+  }
+  return myCarTag.id;
+};
+
+/**
  * Spots service - business logic for parking spots
  */
 export const spotsService = {
   /**
    * Create a new parking spot
    * Supports both GPS-based and address-only modes
+   * Assigns default "My Car" tag if no tag is specified
    */
   async createSpot(userId: string, input: CreateSpotRequest): Promise<SpotResponse> {
     if (isAddressOnlyRequest(input)) {
@@ -109,8 +124,12 @@ export const spotsService = {
         validateCoordinates(input.lat, input.lng);
       }
 
+      // Get default tag ID after validation
+      const defaultCarTagId = await getDefaultCarTagId();
+
       const spot = await spotRepository.create({
         userId,
+        carTagId: defaultCarTagId,
         latitude: input.lat ?? null,
         longitude: input.lng ?? null,
         accuracyMeters: null,
@@ -129,8 +148,12 @@ export const spotsService = {
     // GPS-based mode (normal flow)
     validateCoordinates(input.lat, input.lng);
 
+    // Get default tag ID after validation
+    const defaultCarTagId = await getDefaultCarTagId();
+
     const spot = await spotRepository.create({
       userId,
+      carTagId: defaultCarTagId,
       latitude: input.lat,
       longitude: input.lng,
       accuracyMeters: input.accuracyMeters ?? null,
@@ -186,13 +209,20 @@ export const spotsService = {
 
   /**
    * Get user's spots with cursor-based pagination
+   * Supports text search and filters
    */
   async getUserSpotsPaginated(
     userId: string,
     limit = 20,
-    cursor?: string
+    cursor?: string,
+    searchOptions?: {
+      query?: string;
+      carTagId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
   ): Promise<{ spots: SpotResponse[]; nextCursor: string | null }> {
-    const result = await spotRepository.findByUserIdPaginated(userId, limit, cursor);
+    const result = await spotRepository.findByUserIdPaginated(userId, limit, cursor, searchOptions);
     return {
       spots: result.spots.map(mapToResponse),
       nextCursor: result.nextCursor,

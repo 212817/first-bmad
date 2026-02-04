@@ -68,6 +68,9 @@ describe('HistoryPage', () => {
   const mockLoadMore = vi.fn();
   const mockClearHistory = vi.fn();
   const mockFetchTags = vi.fn();
+  const mockSetSearchQuery = vi.fn();
+  const mockSetFilters = vi.fn();
+  const mockClearFilters = vi.fn();
 
   const baseMockSpotStore = {
     spots: [] as Spot[],
@@ -90,6 +93,14 @@ describe('HistoryPage', () => {
     clearSpot: vi.fn(),
     setLoading: vi.fn(),
     setError: vi.fn(),
+    getSpotById: vi.fn(),
+    deleteSpot: vi.fn(),
+    // Search/filter state
+    searchQuery: '',
+    filters: {},
+    setSearchQuery: mockSetSearchQuery,
+    setFilters: mockSetFilters,
+    clearFilters: mockClearFilters,
   };
 
   const baseMockCarTagStore = {

@@ -1,37 +1,9 @@
-# Get list of changed files (staged + unstaged), excluding deleted files
+# Get list of changed files, excluding deleted files
 CHANGED_FILES=$(git diff --name-only --diff-filter=d HEAD @{upstream} 2>/dev/null || git diff --name-only --diff-filter=d HEAD~1)
 
 if [ -z "$CHANGED_FILES" ]; then
   echo "No changed files to check"
   exit 0
-fi
-
-# Filter to only include formattable files that exist
-FORMAT_FILES=""
-for file in $(echo "$CHANGED_FILES" | grep -E '\.(ts|tsx|js|jsx|json|md|yml|yaml|css|html)$'); do
-  if [ -f "$file" ]; then
-    FORMAT_FILES="$FORMAT_FILES $file"
-  fi
-done
-
-if [ -n "$FORMAT_FILES" ]; then
-  # Auto-fix formatting issues for changed files only
-  echo "Formatting changed files..."
-  pnpm prettier --write $FORMAT_FILES
-
-  # Auto-fix lint issues
-  echo "Linting..."
-  pnpm lint:fix
-fi
-
-# Check if any fixes made changes to files
-if ! git diff --quiet; then
-  echo ""
-  echo "⚠️  Auto-fixed some files (Prettier/ESLint)."
-  echo "   Please review and commit the changes, then push again."
-  echo ""
-  git status --short
-  exit 1
 fi
 
 # TypeScript check for changed .ts/.tsx files

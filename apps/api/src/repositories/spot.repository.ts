@@ -1,5 +1,5 @@
 // apps/api/src/repositories/spot.repository.ts
-import { eq, desc, lt, and } from 'drizzle-orm';
+import { eq, desc, lt, and, or, ilike, gte, lte, type SQL } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import { parkingSpots } from '@repo/shared/db';
 import type { ParkingSpot } from '@repo/shared/types';
@@ -8,6 +8,7 @@ import type {
   UpdateSpotInput,
   SpotRepositoryInterface,
   PaginatedSpotsResult,
+  SpotSearchOptions,
 } from './spot.types.js';
 
 /**
@@ -93,33 +94,53 @@ export const spotRepository: SpotRepositoryInterface = {
    * Find spots by user ID with cursor-based pagination
    * Returns spots ordered by savedAt descending
    * Uses cursor (ISO timestamp string) to fetch next page
+   * Supports text search and filters
    */
   async findByUserIdPaginated(
     userId: string,
     limit = 20,
-    cursor?: string
+    cursor?: string,
+    searchOptions?: SpotSearchOptions
   ): Promise<PaginatedSpotsResult> {
     // Fetch one extra to determine if there are more results
     const fetchLimit = limit + 1;
 
-    let rows;
+    // Build where conditions
+    const conditions: SQL[] = [eq(parkingSpots.userId, userId)];
+
+    // Cursor pagination
     if (cursor) {
-      // Parse cursor as ISO date string
       const cursorDate = new Date(cursor);
-      rows = await db
-        .select()
-        .from(parkingSpots)
-        .where(and(eq(parkingSpots.userId, userId), lt(parkingSpots.savedAt, cursorDate)))
-        .orderBy(desc(parkingSpots.savedAt))
-        .limit(fetchLimit);
-    } else {
-      rows = await db
-        .select()
-        .from(parkingSpots)
-        .where(eq(parkingSpots.userId, userId))
-        .orderBy(desc(parkingSpots.savedAt))
-        .limit(fetchLimit);
+      conditions.push(lt(parkingSpots.savedAt, cursorDate));
     }
+
+    // Text search (case-insensitive across address and note)
+    if (searchOptions?.query) {
+      const searchPattern = `%${searchOptions.query}%`;
+      conditions.push(
+        or(ilike(parkingSpots.address, searchPattern), ilike(parkingSpots.note, searchPattern))!
+      );
+    }
+
+    // Car tag filter - simple ID match (all spots now have carTagId set)
+    if (searchOptions?.carTagId) {
+      conditions.push(eq(parkingSpots.carTagId, searchOptions.carTagId));
+    }
+
+    // Date range filters
+    if (searchOptions?.startDate) {
+      conditions.push(gte(parkingSpots.savedAt, searchOptions.startDate));
+    }
+    if (searchOptions?.endDate) {
+      conditions.push(lte(parkingSpots.savedAt, searchOptions.endDate));
+    }
+
+    const rows = await db
+      .select()
+      .from(parkingSpots)
+      .where(and(...conditions))
+      .orderBy(desc(parkingSpots.savedAt))
+      .limit(fetchLimit);
 
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
