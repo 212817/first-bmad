@@ -289,4 +289,6 @@ When in guest mode:
 
 ## License
 
-MIT
+**Proprietary - All Rights Reserved**
+
+Copyright (c) 2026 Stoichev Kyrylo. This software is provided for viewing purposes only. No permission is granted to copy, modify, distribute, or use this software. See [LICENSE](LICENSE) for full terms.
