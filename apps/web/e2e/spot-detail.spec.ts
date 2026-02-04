@@ -251,6 +251,9 @@ test.describe('Spot Detail Page', () => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
+    // Wait for home page to load before navigating away
+    await expect(page).toHaveURL('/');
+
     // Navigate directly to a non-existent spot
     await page.goto('/spot/non-existent-id', { waitUntil: 'domcontentloaded' });
 
