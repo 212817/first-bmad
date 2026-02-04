@@ -45,10 +45,12 @@ export const HomePage = () => {
 
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [userRequestedLocation, setUserRequestedLocation] = useState(false);
   const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -67,17 +69,20 @@ export const HomePage = () => {
   );
 
   // Fetch current location on mount for map display (for authenticated/guest users)
+  // Only auto-fetch if permission is already granted (don't trigger permission prompt on load)
   useEffect(() => {
     // Only attempt once and only if user is authenticated or guest
     if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
 
-    // Try to get location if permission is granted or prompt (browser will ask)
-    if (permissionState !== 'denied' && !currentLocation) {
+    // Only auto-fetch if permission is already granted
+    // This avoids triggering permission prompts on page load (especially on Safari)
+    if (permissionState === 'granted' && !currentLocation) {
       setMapLoadAttempted(true);
       setIsLoadingLocation(true);
       getCurrentPosition()
         .then((pos) => {
           setCurrentLocation({ lat: pos.lat, lng: pos.lng });
+          setLocationAccuracy(pos.accuracy);
         })
         .catch(() => {
           // Silently fail - user can still use the button
@@ -136,20 +141,39 @@ export const HomePage = () => {
    * Only shows modal if permission was denied, otherwise requests permission directly
    */
   const handleSaveSpotClick = () => {
+    // Mark that user explicitly requested location (for error display purposes)
+    setUserRequestedLocation(true);
+
     // Check if user is authenticated or in guest mode
     if (!isAuthenticated && !isGuest) {
       navigate('/login');
       return;
     }
 
-    // Only show modal if permission was explicitly denied
-    if (permissionState === 'denied') {
-      setShowLocationPrompt(true);
-    } else {
-      // Permission granted or prompt - request location directly
-      // Browser will show its own permission dialog if needed
-      captureAndSaveLocation();
-    }
+    // Always try to get location - browser will show permission prompt if needed
+    // Only show our modal if the actual geolocation request fails
+    captureAndSaveLocation();
+  };
+
+  /**
+   * Threshold for showing low accuracy warning (1km)
+   */
+  const LOW_ACCURACY_THRESHOLD = 1000;
+
+  /**
+   * Check if current accuracy is low (IP-based location)
+   */
+  const hasLowAccuracy = locationAccuracy !== null && locationAccuracy > LOW_ACCURACY_THRESHOLD;
+
+  /**
+   * Detect if running on iOS
+   */
+  const isIOS = () => {
+    if (typeof navigator === 'undefined') return false;
+    return (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
   };
 
   /**
@@ -165,10 +189,17 @@ export const HomePage = () => {
       let position;
       if (adjustedLocation) {
         position = { lat: adjustedLocation.lat, lng: adjustedLocation.lng, accuracy: 0 };
+      } else if (currentLocation && locationAccuracy !== null) {
+        // Use current location from map
+        position = {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+          accuracy: locationAccuracy,
+        };
       } else {
         position = await getCurrentPosition();
-        // Update map with fresh location
         setCurrentLocation({ lat: position.lat, lng: position.lng });
+        setLocationAccuracy(position.accuracy);
       }
 
       const spot = await saveSpot({
@@ -182,9 +213,12 @@ export const HomePage = () => {
 
       // Navigate to confirmation page
       navigate(`/spot/${spot.id}/confirm`);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to save spot:', err);
-      // Error is already set in the store or geolocation hook
+      // If permission was denied, show the location prompt modal with instructions
+      if (err && typeof err === 'object' && 'code' in err && err.code === 1) {
+        setShowLocationPrompt(true);
+      }
     } finally {
       setIsCapturing(false);
     }
@@ -254,6 +288,7 @@ export const HomePage = () => {
   };
 
   const isBusy = isCapturing || isSaving || locationLoading;
+  const isSavingSpot = isCapturing || isSaving;
   const isAddressBusy = isGeocoding || isSaving;
 
   return (
@@ -347,6 +382,38 @@ export const HomePage = () => {
                 Drag the map to adjust your parking location
               </p>
 
+              {/* Low accuracy warning - inline */}
+              {hasLowAccuracy && (
+                <div className="mx-4 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-500 text-lg">⚠️</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-800">
+                        Low accuracy (~{(locationAccuracy! / 1000).toFixed(1)}km)
+                      </p>
+                      {isIOS() ? (
+                        <div className="text-xs text-amber-700 mt-1">
+                          <p className="mb-1">Enable Precise Location:</p>
+                          <p>
+                            <strong>Settings</strong> → <strong>Privacy</strong> →{' '}
+                            <strong>Location Services</strong> → <strong>Chrome</strong> →{' '}
+                            <strong>Precise Location ON</strong>
+                          </p>
+                          <p className="mt-1 text-gray-600">
+                            Then refresh the page, or drag the map to adjust manually.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-amber-700 mt-1">
+                          Enable GPS in device settings and refresh, or drag the map to adjust
+                          manually.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Save button inside the card */}
               <div className="p-4">
                 <button
@@ -355,7 +422,7 @@ export const HomePage = () => {
                   className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
                   data-testid="save-spot-button"
                 >
-                  {isBusy ? (
+                  {isSavingSpot ? (
                     <>
                       <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                         <circle
@@ -391,7 +458,7 @@ export const HomePage = () => {
               className="w-full px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center gap-3 justify-center"
               data-testid="save-spot-button"
             >
-              {isBusy ? (
+              {isSavingSpot ? (
                 <>
                   <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
                     <circle
@@ -494,10 +561,12 @@ export const HomePage = () => {
           </div>
         )}
 
-        {/* Error Display */}
-        {(spotError || locationError || geocodeError) && (
+        {/* Error Display - only show location error if user explicitly requested location */}
+        {(spotError || (locationError && userRequestedLocation) || geocodeError) && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md">
-            <p className="text-red-700">{spotError || locationError?.message || geocodeError}</p>
+            <p className="text-red-700">
+              {spotError || (userRequestedLocation ? locationError?.message : null) || geocodeError}
+            </p>
             <button
               onClick={() => {
                 setSpotError(null);

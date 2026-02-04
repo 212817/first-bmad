@@ -8,8 +8,7 @@ import type {
   UseGeolocationReturn,
 } from './types';
 
-const GEOLOCATION_TIMEOUT = 10000; // 10 seconds
-const ACCURACY_WARNING_THRESHOLD = 100; // meters
+const GEOLOCATION_TIMEOUT = 30000; // 30 seconds
 
 /**
  * Hook for accessing device geolocation
@@ -45,6 +44,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
 
   /**
    * Get current position from device
+   * Uses getCurrentPosition (more reliable for permission prompts on Safari)
    */
   const getCurrentPosition = (): Promise<Position> => {
     return new Promise((resolve, reject) => {
@@ -60,6 +60,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
 
       setState((s) => ({ ...s, isLoading: true, error: null }));
 
+      // Use getCurrentPosition - more reliable for triggering permission prompts
       navigator.geolocation.getCurrentPosition(
         (geoPosition) => {
           const position: Position = {
@@ -67,11 +68,6 @@ export const useGeolocation = (): UseGeolocationReturn => {
             lng: geoPosition.coords.longitude,
             accuracy: geoPosition.coords.accuracy,
           };
-
-          // Warn if accuracy is low (but still succeed)
-          if (position.accuracy > ACCURACY_WARNING_THRESHOLD) {
-            console.warn(`Location accuracy is low: ${position.accuracy}m`);
-          }
 
           setState((s) => ({
             ...s,
@@ -103,7 +99,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         {
           enableHighAccuracy: true,
           timeout: GEOLOCATION_TIMEOUT,
-          maximumAge: 0, // Always get fresh position (important for iOS Chrome accuracy)
+          maximumAge: 0,
         }
       );
     });

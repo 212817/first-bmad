@@ -1,5 +1,5 @@
 // apps/web/src/components/layout/ProfileMenu.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
 import { useAuthStore } from '@/stores/authStore';
@@ -10,7 +10,9 @@ import { useAuthStore } from '@/stores/authStore';
  */
 export const ProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const prevAvatarUrlRef = useRef<string | null | undefined>(undefined);
   const navigate = useNavigate();
 
   const { user, logout, isLoading } = useAuth();
@@ -18,6 +20,19 @@ export const ProfileMenu = () => {
 
   const isGuest = authMode === 'guest';
   const isAuthenticated = authMode === 'authenticated';
+
+  // Reset image error when avatar URL changes (using ref to avoid effect setState warning)
+  if (prevAvatarUrlRef.current !== user?.avatarUrl) {
+    prevAvatarUrlRef.current = user?.avatarUrl;
+    if (imageError) {
+      setImageError(false);
+    }
+  }
+
+  // Handle image load error (e.g., 429 Too Many Requests from Google)
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -103,11 +118,13 @@ export const ProfileMenu = () => {
         data-testid="profile-menu-button"
       >
         {/* Avatar */}
-        {user?.avatarUrl ? (
+        {user?.avatarUrl && !imageError ? (
           <img
             src={user.avatarUrl}
             alt={user.displayName ?? user.email}
             className="w-8 h-8 rounded-full"
+            onError={handleImageError}
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div
