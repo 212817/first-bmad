@@ -89,6 +89,14 @@ export interface SpotFilters {
 }
 
 /**
+ * Share link response from API
+ */
+export interface ShareLinkResponse {
+  shareUrl: string;
+  expiresAt: string;
+}
+
+/**
  * Spot store state
  */
 export interface SpotState {
@@ -129,4 +137,8 @@ export interface SpotActions {
   setSearchQuery: (query: string) => void;
   setFilters: (filters: SpotFilters) => void;
   clearFilters: () => void;
+  // Share actions
+  createShareLink: (spotId: string) => Promise<ShareLinkResponse>;
+  // Current spot management
+  setCurrentSpot: (spot: Spot | null) => void;
 }

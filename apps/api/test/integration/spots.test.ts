@@ -3,25 +3,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 
 // Use vi.hoisted to define mocks that are available when vi.mock is hoisted
-const { mockSpotRepository, mockR2Service, mockCarTagRepository } = vi.hoisted(() => ({
-  mockSpotRepository: {
-    create: vi.fn(),
-    findById: vi.fn(),
-    findByUserId: vi.fn(),
-    findByUserIdPaginated: vi.fn(),
-    findActiveByUserId: vi.fn(),
-    findLatestByUserId: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-  mockR2Service: {
-    deleteObject: vi.fn(),
-  },
-  mockCarTagRepository: {
-    findDefaultByName: vi.fn(),
-    createDefault: vi.fn(),
-  },
-}));
+const { mockSpotRepository, mockR2Service, mockCarTagRepository, mockShareTokenRepository } =
+  vi.hoisted(() => ({
+    mockSpotRepository: {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findByUserId: vi.fn(),
+      findByUserIdPaginated: vi.fn(),
+      findActiveByUserId: vi.fn(),
+      findLatestByUserId: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    mockR2Service: {
+      deleteObject: vi.fn(),
+    },
+    mockCarTagRepository: {
+      findDefaultByName: vi.fn(),
+      createDefault: vi.fn(),
+    },
+    mockShareTokenRepository: {
+      create: vi.fn(),
+    },
+  }));
 
 vi.mock('../../src/repositories/spot.repository.js', () => ({
   spotRepository: mockSpotRepository,
@@ -29,6 +33,10 @@ vi.mock('../../src/repositories/spot.repository.js', () => ({
 
 vi.mock('../../src/repositories/carTag.repository.js', () => ({
   carTagRepository: mockCarTagRepository,
+}));
+
+vi.mock('../../src/repositories/shareToken.repository.js', () => ({
+  shareTokenRepository: mockShareTokenRepository,
 }));
 
 vi.mock('../../src/services/r2/r2.service.js', () => ({
@@ -514,6 +522,62 @@ describe('Spots API', () => {
       expect(response.body.data.note).toBe('Level P2');
       expect(response.body.data.carTagId).toBe('tag-1');
       expect(response.body.data.savedAt).toBeDefined();
+    });
+  });
+
+  describe('POST /v1/spots/:id/share', () => {
+    it('should return 401 without access token', async () => {
+      const response = await request(app).post('/v1/spots/spot-123/share');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+    });
+
+    it('should create share link for owned spot', async () => {
+      mockSpotRepository.findById.mockResolvedValue(mockSpot);
+      mockShareTokenRepository.create.mockResolvedValue({
+        id: 'token-123',
+        token: 'test-mock-token-for-unit-testing',
+        spotId: 'spot-123',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+
+      const response = await request(app)
+        .post('/v1/spots/spot-123/share')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.shareUrl).toContain('/s/');
+      expect(response.body.data.expiresAt).toBeDefined();
+    });
+
+    it('should return 404 if spot not found', async () => {
+      mockSpotRepository.findById.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/v1/spots/nonexistent/share')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
+    });
+
+    it('should return 403 if spot owned by different user', async () => {
+      mockSpotRepository.findById.mockResolvedValue({
+        ...mockSpot,
+        userId: 'other-user',
+      });
+
+      const response = await request(app)
+        .post('/v1/spots/spot-123/share')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('AUTHORIZATION_ERROR');
     });
   });
 });

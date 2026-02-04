@@ -71,7 +71,7 @@ export const SpotPhoto = ({
   if (isZoomed) {
     return (
       <div
-        className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+        className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         role="button"
@@ -80,7 +80,7 @@ export const SpotPhoto = ({
         data-testid="spot-photo-zoomed"
       >
         {/* Close hint */}
-        <div className="absolute top-4 right-4 text-white/70 text-sm">Tap to close</div>
+        <div className="absolute top-4 right-4 text-white/70 text-sm z-[10000]">Tap to close</div>
         <img src={url} alt={alt} className="max-w-full max-h-full object-contain" />
       </div>
     );

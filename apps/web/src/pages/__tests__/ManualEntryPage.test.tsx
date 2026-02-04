@@ -93,7 +93,7 @@ describe('ManualEntryPage', () => {
       renderWithRouter();
 
       // Check for the GuestModeBanner (sticky banner at top)
-      expect(screen.getByText(/Data stored locally only/i)).toBeInTheDocument();
+      expect(screen.getByText(/Guest Mode - Some features are limited/i)).toBeInTheDocument();
     });
 
     it('should save address directly without geocoding for guests', async () => {

@@ -24,6 +24,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string(),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
   API_BASE_URL: z.string().url().optional(),
+  FRONTEND_URL: z.string().url().optional().default('http://localhost:5173'),
   // Google OAuth - use test defaults in test environment
   GOOGLE_CLIENT_ID: z
     .string()

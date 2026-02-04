@@ -8,8 +8,11 @@ import { LocationCard } from '@/components/spot/LocationCard';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
 import { TagBadge } from '@/components/spot/TagBadge';
 import { DeleteConfirmDialog } from '@/components/spot/DeleteConfirmDialog';
+import { ShareButton } from '@/components/spot/ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
+import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { formatDateTime } from '@/utils/formatters';
+import { useGuestStore } from '@/stores/guestStore';
 import type { Spot } from '@/stores/spot.types';
 
 /**
@@ -27,11 +30,13 @@ export const SpotDetailPage = () => {
   const navigate = useNavigate();
   const { getSpotById, deleteSpot } = useSpotStore();
   const { getTagById, fetchTags } = useCarTagStore();
+  const { isGuest } = useGuestStore();
 
   const [spot, setSpot] = useState<Spot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
+  const [isMapZoomed, setIsMapZoomed] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -75,13 +80,6 @@ export const SpotDetailPage = () => {
       address: spot.address,
     });
   }, [spot]);
-
-  /**
-   * Share button placeholder - will be implemented in Epic 4
-   */
-  const handleShare = useCallback(() => {
-    // Placeholder for Epic 4
-  }, []);
 
   /**
    * Open delete confirmation dialog
@@ -195,14 +193,16 @@ export const SpotDetailPage = () => {
           <h1 className="ml-4 font-semibold text-lg text-gray-900">Spot Details</h1>
         </div>
 
-        {/* Top Section: Map (left) + Photo (right) side by side - fixed height */}
-        <div className="grid grid-cols-2 gap-0.5 bg-gray-100 h-96 shrink-0">
-          {/* Map Preview - Left side */}
-          <div
-            className="h-full bg-gray-200 overflow-hidden relative"
-            data-testid="spot-map-preview"
-          >
-            {canNavigate ? (
+        {/* Top Section: Map and/or Photo - fixed height */}
+        <div
+          className={`flex bg-gray-100 h-96 shrink-0 ${spot.photoUrl && canNavigate ? 'gap-0.5' : ''}`}
+        >
+          {/* Map Preview (clickable to zoom) - full width if no photo */}
+          {canNavigate && (
+            <div
+              className={`h-full bg-gray-200 overflow-hidden relative group ${spot.photoUrl ? 'w-1/2' : 'w-full'}`}
+              data-testid="spot-map-preview"
+            >
               <SpotMap
                 lat={spot.lat!}
                 lng={spot.lng!}
@@ -210,18 +210,32 @@ export const SpotDetailPage = () => {
                 heightClass="h-full"
                 testId="spot-detail-map"
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-5xl" aria-hidden="true">
-                  🗺️
-                </span>
-              </div>
-            )}
-          </div>
+              {/* Map zoom button overlay */}
+              <button
+                onClick={() => setIsMapZoomed(true)}
+                className="absolute inset-0 w-full h-full cursor-zoom-in focus:outline-none"
+                aria-label="Expand map"
+              >
+                {/* Zoom indicator */}
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white p-1.5 rounded-md opacity-70 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          )}
 
-          {/* Photo - Right side */}
-          <div className="h-full bg-gray-200 overflow-hidden relative">
-            {spot.photoUrl ? (
+          {/* Photo (clickable to zoom) - full width if no map */}
+          {spot.photoUrl && (
+            <div
+              className={`h-full bg-gray-200 overflow-hidden relative group ${canNavigate ? 'w-1/2' : 'w-full'}`}
+            >
               <SpotPhoto
                 url={spot.photoUrl}
                 alt="Parking spot"
@@ -229,18 +243,69 @@ export const SpotDetailPage = () => {
                 onTap={handlePhotoTap}
                 className="!h-full"
               />
-            ) : (
-              <div
-                className="w-full h-full flex items-center justify-center"
-                data-testid="spot-photo-placeholder"
-              >
-                <span className="text-5xl" aria-hidden="true">
-                  📷
-                </span>
-              </div>
-            )}
-          </div>
+              {/* Zoom indicator (when not zoomed) */}
+              {!isPhotoZoomed && (
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white p-1.5 rounded-md opacity-70 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Fallback when neither map nor photo available */}
+          {!canNavigate && !spot.photoUrl && (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <span className="text-5xl" aria-hidden="true">
+                📍
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* Map zoom modal */}
+        {isMapZoomed && canNavigate && (
+          <div
+            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
+            onClick={() => setIsMapZoomed(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Expanded map"
+          >
+            {/* Header with close button */}
+            <div className="flex items-center justify-end p-4 shrink-0">
+              <button
+                className="bg-white/90 text-gray-800 w-10 h-10 rounded-full hover:bg-white transition-colors flex items-center justify-center text-xl font-bold"
+                onClick={() => setIsMapZoomed(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            {/* Map container */}
+            <div
+              className="flex-1 mx-4 mb-4 rounded-lg overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SpotMap
+                lat={spot.lat!}
+                lng={spot.lng!}
+                editable={false}
+                heightClass="h-full"
+                testId="spot-detail-map-zoomed"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Guest Mode Banner */}
+        {isGuest && <GuestModeBanner onSignInClick={() => navigate('/login')} />}
 
         {/* Content below */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-4">
@@ -281,16 +346,12 @@ export const SpotDetailPage = () => {
 
             {/* Share and Delete buttons */}
             <div className="flex gap-3">
-              <button
-                onClick={handleShare}
-                disabled
-                className="flex-1 h-12 bg-white border border-gray-200 rounded-lg font-medium flex items-center justify-center gap-2 text-gray-400 cursor-not-allowed"
-                title="Coming soon"
-                data-testid="share-button"
-              >
-                <span aria-hidden="true">🔗</span>
-                Share
-              </button>
+              <ShareButton
+                spotId={spot.id}
+                spotAddress={spot.address || undefined}
+                variant="secondary"
+                className="flex-1 h-12"
+              />
 
               <button
                 onClick={handleDeleteClick}

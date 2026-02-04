@@ -36,7 +36,7 @@ carTagsRoutes.post('/', async (req, res) => {
  */
 carTagsRoutes.patch('/:id', async (req, res) => {
   const input = req.body as UpdateCarTagRequest;
-  const tag = await carTagsService.updateTag(req.user!.id, req.params.id, input);
+  const tag = await carTagsService.updateTag(req.user!.id, req.params.id as string, input);
 
   res.json({ success: true, data: tag });
 });
@@ -46,7 +46,7 @@ carTagsRoutes.patch('/:id', async (req, res) => {
  * Delete a custom car tag
  */
 carTagsRoutes.delete('/:id', async (req, res) => {
-  await carTagsService.deleteTag(req.user!.id, req.params.id);
+  await carTagsService.deleteTag(req.user!.id, req.params.id as string);
 
   res.status(204).send();
 });

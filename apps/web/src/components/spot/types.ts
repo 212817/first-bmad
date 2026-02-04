@@ -143,3 +143,17 @@ export interface NoResultsStateProps {
   /** Callback when clear filters is clicked */
   onClear: () => void;
 }
+
+/**
+ * Props for ShareButton component
+ */
+export interface ShareButtonProps {
+  /** ID of the spot to share */
+  spotId: string;
+  /** Address or label to display when sharing */
+  spotAddress?: string;
+  /** Variant style */
+  variant?: 'primary' | 'secondary' | 'icon';
+  /** Additional CSS classes */
+  className?: string;
+}

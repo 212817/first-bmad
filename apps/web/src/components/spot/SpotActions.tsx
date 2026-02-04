@@ -1,4 +1,5 @@
 // apps/web/src/components/spot/SpotActions.tsx
+import { isMobile } from '@/utils/platform';
 import type { SpotActionsProps, ActionButtonProps } from './types';
 
 /**
@@ -49,18 +50,35 @@ export const SpotActions = ({
   onGalleryClick,
   onTimerClick,
 }: SpotActionsProps) => {
+  // On mobile, gallery picker already offers camera option, so hide dedicated camera button
+  const isMobileDevice = isMobile();
+  const showCameraButton = !isMobileDevice;
+
+  // On mobile, show camera icon and "Add Photo" label since gallery offers both options
+  const galleryIcon = isMobileDevice ? '📷' : '🖼️';
+  // Use unique labels to avoid duplicate test IDs
+  const cameraLabel = spot.photoUrl ? 'Retake' : 'Camera';
+  const galleryLabel = spot.photoUrl ? 'Photo ✓' : isMobileDevice ? 'Add Photo' : 'Gallery';
+
   return (
     <div className="flex gap-3 py-2 overflow-x-auto scrollbar-hide" data-testid="spot-actions">
-      {/* Camera Photo Button */}
-      <ActionButton
-        icon="📷"
-        label={spot.photoUrl ? 'Photo ✓' : 'Camera'}
-        onClick={onPhotoClick}
-        active={!!spot.photoUrl}
-      />
+      {/* Camera Photo Button - hidden on mobile (gallery has camera option) */}
+      {showCameraButton && (
+        <ActionButton
+          icon="📷"
+          label={cameraLabel}
+          onClick={onPhotoClick}
+          active={!!spot.photoUrl}
+        />
+      )}
 
       {/* Gallery Upload Button */}
-      <ActionButton icon="🖼️" label="Gallery" onClick={onGalleryClick} />
+      <ActionButton
+        icon={galleryIcon}
+        label={galleryLabel}
+        onClick={onGalleryClick}
+        active={!!spot.photoUrl}
+      />
 
       {/* Timer Button - disabled placeholder for Epic 4 */}
       <ActionButton
