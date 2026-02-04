@@ -24,11 +24,7 @@ const migrate = async () => {
   console.log('Looking up "My Car" default tag...');
 
   // Find the "My Car" default tag
-  const myCarTagRows = await db
-    .select()
-    .from(carTags)
-    .where(eq(carTags.name, 'My Car'))
-    .limit(1);
+  const myCarTagRows = await db.select().from(carTags).where(eq(carTags.name, 'My Car')).limit(1);
 
   if (myCarTagRows.length === 0) {
     console.error('Error: "My Car" default tag not found. Run seedCarTags.ts first.');
