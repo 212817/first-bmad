@@ -40,6 +40,20 @@ export interface PaginatedSpotsResult {
 }
 
 /**
+ * Search/filter options for paginated spot queries
+ */
+export interface SpotSearchOptions {
+  /** Text search query (searches address, note) */
+  query?: string;
+  /** Filter by car tag ID */
+  carTagId?: string;
+  /** Start date for date range filter */
+  startDate?: Date;
+  /** End date for date range filter */
+  endDate?: Date;
+}
+
+/**
  * Spot repository interface
  */
 export interface SpotRepositoryInterface {
@@ -49,7 +63,8 @@ export interface SpotRepositoryInterface {
   findByUserIdPaginated(
     userId: string,
     limit?: number,
-    cursor?: string
+    cursor?: string,
+    searchOptions?: SpotSearchOptions
   ): Promise<PaginatedSpotsResult>;
   findActiveByUserId(userId: string): Promise<ParkingSpot | null>;
   findLatestByUserId(userId: string): Promise<ParkingSpot | null>;

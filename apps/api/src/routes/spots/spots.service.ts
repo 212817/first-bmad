@@ -186,13 +186,20 @@ export const spotsService = {
 
   /**
    * Get user's spots with cursor-based pagination
+   * Supports text search and filters
    */
   async getUserSpotsPaginated(
     userId: string,
     limit = 20,
-    cursor?: string
+    cursor?: string,
+    searchOptions?: {
+      query?: string;
+      carTagId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
   ): Promise<{ spots: SpotResponse[]; nextCursor: string | null }> {
-    const result = await spotRepository.findByUserIdPaginated(userId, limit, cursor);
+    const result = await spotRepository.findByUserIdPaginated(userId, limit, cursor, searchOptions);
     return {
       spots: result.spots.map(mapToResponse),
       nextCursor: result.nextCursor,

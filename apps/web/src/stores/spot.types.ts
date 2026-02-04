@@ -77,6 +77,18 @@ export interface PaginatedSpotsResponse {
 }
 
 /**
+ * Search/filter options for spot history
+ */
+export interface SpotFilters {
+  /** Filter by car tag ID */
+  carTagId?: string;
+  /** Start date for date range filter */
+  startDate?: Date;
+  /** End date for date range filter */
+  endDate?: Date;
+}
+
+/**
  * Spot store state
  */
 export interface SpotState {
@@ -92,6 +104,9 @@ export interface SpotState {
   nextCursor: string | null;
   isLoadingSpots: boolean;
   isLoadingMore: boolean;
+  // Search/filter state
+  searchQuery: string;
+  filters: SpotFilters;
 }
 
 /**
@@ -110,4 +125,8 @@ export interface SpotActions {
   fetchSpots: (cursor?: string) => Promise<void>;
   loadMore: () => Promise<void>;
   clearHistory: () => void;
+  // Search/filter actions
+  setSearchQuery: (query: string) => void;
+  setFilters: (filters: SpotFilters) => void;
+  clearFilters: () => void;
 }

@@ -111,3 +111,35 @@ export interface SpotThumbnailProps {
   /** Additional CSS classes */
   className?: string;
 }
+
+/**
+ * Props for SpotSearchInput component
+ */
+export interface SpotSearchInputProps {
+  /** Current search value */
+  value: string;
+  /** Callback when search value changes (debounced) */
+  onChange: (value: string) => void;
+  /** Placeholder text */
+  placeholder?: string;
+  /** Whether to auto-focus on mount */
+  autoFocus?: boolean;
+}
+
+/**
+ * Props for SpotFilters component
+ */
+export interface SpotFiltersProps {
+  /** Currently selected car tag */
+  selectedTag?: string;
+  /** Callback when tag selection changes */
+  onTagChange: (tag: string | undefined) => void;
+}
+
+/**
+ * Props for NoResultsState component
+ */
+export interface NoResultsStateProps {
+  /** Callback when clear filters is clicked */
+  onClear: () => void;
+}
