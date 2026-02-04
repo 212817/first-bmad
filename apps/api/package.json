@@ -23,7 +23,7 @@
     "@neondatabase/serverless": "^1.0.2",
     "@repo/shared": "workspace:*",
     "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
