@@ -95,7 +95,7 @@ test.describe('Sign Out & Account Switching', () => {
       // Click it to go back to guest mode
       await page.getByRole('button', { name: /continue as guest/i }).click();
       await expect(page).toHaveURL('/');
-      await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+      await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
     });
   });
 

@@ -36,10 +36,10 @@ test.describe('Guest Mode', () => {
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
     // Should see guest mode banner
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
 
-    // Should see "Sign in to sync" button
-    await expect(page.getByRole('button', { name: /sign in to sync/i })).toBeVisible();
+    // Should see "Sign in" button
+    await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
   });
 
   test('guest state persists after page refresh (AC7)', async ({ page }) => {
@@ -48,14 +48,14 @@ test.describe('Guest Mode', () => {
 
     // Verify we're on home with banner
     await expect(page).toHaveURL('/');
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
 
     // Reload the page
     await page.reload();
 
     // Should still be on home with banner (not redirected to login)
     await expect(page).toHaveURL('/');
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
   });
 
   test('sign-in prompt appears on 3rd guest visit (AC6)', async ({ page, context }) => {
@@ -64,7 +64,7 @@ test.describe('Guest Mode', () => {
     await page.getByRole('button', { name: /continue as guest/i }).click();
     await expect(page).toHaveURL('/');
     // Wait for banner to confirm hydration is complete
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
     // Wait for IndexedDB visit count write to complete
     await page.waitForTimeout(1000);
 
@@ -72,7 +72,7 @@ test.describe('Guest Mode', () => {
     await page.close();
     const page2 = await context.newPage();
     await page2.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page2.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page2.getByText('Guest Mode - Some features are limited')).toBeVisible();
     // Wait for IndexedDB visit count write to complete
     await page2.waitForTimeout(1000);
 
@@ -81,7 +81,7 @@ test.describe('Guest Mode', () => {
     const page3 = await context.newPage();
     await page3.goto('/', { waitUntil: 'domcontentloaded' });
     // Wait for hydration and IndexedDB read
-    await expect(page3.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page3.getByText('Guest Mode - Some features are limited')).toBeVisible();
     // Wait a bit for the useSignInPrompt hook to check visit count and show prompt
     await page3.waitForTimeout(500);
 
@@ -96,7 +96,7 @@ test.describe('Guest Mode', () => {
     await expect(page).toHaveURL('/');
 
     // Wait for hydration to complete
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
 
     // Mock visit count to 2 via IndexedDB (will become 3 on next load, triggering prompt)
     await page.evaluate(async () => {
@@ -116,7 +116,7 @@ test.describe('Guest Mode', () => {
 
     // Reload to trigger prompt check (visit count goes from 2 to 3)
     await page.reload();
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
 
     // Wait for prompt to appear
     const prompt = page.getByText('Sync your spots');
@@ -132,7 +132,7 @@ test.describe('Guest Mode', () => {
 
     // Reload - prompt should not reappear (dismissal persisted)
     await page.reload();
-    await expect(page.getByText('Guest Mode - Data stored locally only')).toBeVisible();
+    await expect(page.getByText('Guest Mode - Some features are limited')).toBeVisible();
     // Wait a bit for any async prompt logic, then verify it's not visible
     await page.waitForTimeout(1000);
     await expect(page.getByText('Sync your spots')).not.toBeVisible({ timeout: 2000 });

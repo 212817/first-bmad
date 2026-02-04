@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { spotsService } from '../../src/routes/spots/spots.service.js';
 import { spotRepository } from '../../src/repositories/spot.repository.js';
 import { carTagRepository } from '../../src/repositories/carTag.repository.js';
+import { shareTokenRepository } from '../../src/repositories/shareToken.repository.js';
 import { geocodingService } from '../../src/services/geocoding/geocoding.service.js';
 import { r2Service } from '../../src/services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
@@ -22,6 +23,12 @@ vi.mock('../../src/repositories/carTag.repository.js', () => ({
   carTagRepository: {
     findDefaultByName: vi.fn(),
     createDefault: vi.fn(),
+  },
+}));
+
+vi.mock('../../src/repositories/shareToken.repository.js', () => ({
+  shareTokenRepository: {
+    create: vi.fn(),
   },
 }));
 
@@ -507,6 +514,74 @@ describe('spotsService', () => {
 
       // Should not throw even if R2 delete fails
       await expect(spotsService.deleteSpot(userId, spotId)).resolves.not.toThrow();
+    });
+  });
+
+  describe('createShareLink', () => {
+    const mockShareToken = {
+      id: 'share-token-id',
+      token: 'abc123xyz',
+      spotId,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    };
+
+    it('should create share link for owned spot', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(shareTokenRepository.create).mockResolvedValue(mockShareToken);
+
+      const result = await spotsService.createShareLink(userId, spotId);
+
+      expect(shareTokenRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spotId,
+          token: expect.any(String),
+          expiresAt: expect.any(Date),
+        })
+      );
+      expect(result.shareUrl).toContain('/s/');
+      expect(result.expiresAt).toBeDefined();
+    });
+
+    it('should generate 32-character token', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(shareTokenRepository.create).mockResolvedValue(mockShareToken);
+
+      await spotsService.createShareLink(userId, spotId);
+
+      const createCall = vi.mocked(shareTokenRepository.create).mock.calls[0][0];
+      expect(createCall.token).toHaveLength(32);
+    });
+
+    it('should set expiration to 7 days from now', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(shareTokenRepository.create).mockResolvedValue(mockShareToken);
+
+      await spotsService.createShareLink(userId, spotId);
+
+      const createCall = vi.mocked(shareTokenRepository.create).mock.calls[0][0];
+      const expiresAt = createCall.expiresAt;
+      const now = new Date();
+      const diffDays = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+      expect(diffDays).toBeGreaterThan(6.9);
+      expect(diffDays).toBeLessThan(7.1);
+    });
+
+    it('should throw NotFoundError when spot not found', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(null);
+
+      await expect(spotsService.createShareLink(userId, spotId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('should throw AuthorizationError when spot owned by different user', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue({
+        ...mockSpot,
+        userId: 'other-user',
+      });
+
+      await expect(spotsService.createShareLink(userId, spotId)).rejects.toThrow(
+        AuthorizationError
+      );
     });
   });
 });

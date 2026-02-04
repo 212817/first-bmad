@@ -9,16 +9,22 @@ vi.mock('@/utils/platform', () => ({
 }));
 
 describe('navigationService', () => {
-  const mockWindowOpen = vi.fn();
-  const originalWindowOpen = window.open;
+  const originalLocation = window.location;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    window.open = mockWindowOpen;
+    // Mock window.location.href
+    Object.defineProperty(window, 'location', {
+      value: { href: '' },
+      writable: true,
+    });
   });
 
   afterEach(() => {
-    window.open = originalWindowOpen;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   describe('getPreferredProvider', () => {
@@ -117,27 +123,22 @@ describe('navigationService', () => {
     it('should open Google Maps URL in new tab on non-iOS', () => {
       vi.mocked(platform.isIOS).mockReturnValue(false);
       navigationService.navigateTo({ lat: 40.7128, lng: -74.006 });
-      expect(mockWindowOpen).toHaveBeenCalledWith(
-        'https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=40.7128,-74.006',
-        '_blank'
+      expect(window.location.href).toBe(
+        'https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=40.7128,-74.006'
       );
     });
 
     it('should open Apple Maps URL in new tab on iOS', () => {
       vi.mocked(platform.isIOS).mockReturnValue(true);
       navigationService.navigateTo({ lat: 40.7128, lng: -74.006 });
-      expect(mockWindowOpen).toHaveBeenCalledWith(
-        'https://maps.apple.com/?dirflg=w&daddr=40.7128,-74.006',
-        '_blank'
-      );
+      expect(window.location.href).toBe('https://maps.apple.com/?dirflg=w&daddr=40.7128,-74.006');
     });
 
     it('should open with address when coordinates are null', () => {
       vi.mocked(platform.isIOS).mockReturnValue(false);
       navigationService.navigateTo({ lat: null, lng: null, address: 'Times Square' });
-      expect(mockWindowOpen).toHaveBeenCalledWith(
-        'https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=Times%20Square',
-        '_blank'
+      expect(window.location.href).toBe(
+        'https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=Times%20Square'
       );
     });
   });

@@ -66,3 +66,11 @@ export interface UpdateSpotRequest {
   floor?: string | null;
   spotIdentifier?: string | null;
 }
+
+/**
+ * Response for share link creation
+ */
+export interface CreateShareLinkResponse {
+  shareUrl: string;
+  expiresAt: string;
+}

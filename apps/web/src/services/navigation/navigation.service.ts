@@ -81,10 +81,12 @@ export const navigationService: NavigationService = {
 
   /**
    * Open the maps app with walking directions to the target
+   * Uses location.href to avoid blank tab on mobile when maps app handles the URL
    * @param target - The navigation target (coordinates and/or address)
    */
   navigateTo: (target: NavigationTarget): void => {
     const url = navigationService.getNavigationUrl(target);
-    window.open(url, '_blank');
+    // Use location.href to avoid opening a blank tab when maps app intercepts
+    window.location.href = url;
   },
 };

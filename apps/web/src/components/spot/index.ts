@@ -16,5 +16,6 @@ export type { DeleteConfirmDialogProps } from './DeleteConfirmDialog';
 export { SpotSearchInput } from './SpotSearchInput';
 export { SpotFilters } from './SpotFilters';
 export { NoResultsState } from './NoResultsState';
+export { ShareButton } from './ShareButton';
 export * from './types';
 export * from './carTag.types';

@@ -1,6 +1,7 @@
 // apps/api/src/routes/spots/spots.routes.ts
 import { Router, type Router as RouterType } from 'express';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { shareRateLimiter } from '../../middleware/rateLimit.middleware.js';
 import { spotsService } from './spots.service.js';
 import type { CreateSpotRequest, UpdateSpotRequest } from './types.js';
 
@@ -94,7 +95,7 @@ spotsRoutes.get('/latest', async (req, res) => {
  * Get a specific spot by ID
  */
 spotsRoutes.get('/:id', async (req, res) => {
-  const spot = await spotsService.getSpotById(req.user!.id, req.params.id);
+  const spot = await spotsService.getSpotById(req.user!.id, req.params.id as string);
 
   res.json({ success: true, data: spot });
 });
@@ -105,7 +106,7 @@ spotsRoutes.get('/:id', async (req, res) => {
  */
 spotsRoutes.patch('/:id', async (req, res) => {
   const input = req.body as UpdateSpotRequest;
-  const spot = await spotsService.updateSpot(req.user!.id, req.params.id, input);
+  const spot = await spotsService.updateSpot(req.user!.id, req.params.id as string, input);
 
   res.json({ success: true, data: spot });
 });
@@ -115,9 +116,20 @@ spotsRoutes.patch('/:id', async (req, res) => {
  * Mark a spot as cleared/inactive
  */
 spotsRoutes.post('/:id/clear', async (req, res) => {
-  const spot = await spotsService.clearSpot(req.user!.id, req.params.id);
+  const spot = await spotsService.clearSpot(req.user!.id, req.params.id as string);
 
   res.json({ success: true, data: spot });
+});
+
+/**
+ * POST /spots/:id/share
+ * Create a shareable link for a spot
+ * Rate limited: 10 shares per hour per user
+ */
+spotsRoutes.post('/:id/share', shareRateLimiter, async (req, res) => {
+  const result = await spotsService.createShareLink(req.user!.id, req.params.id as string);
+
+  res.status(201).json({ success: true, data: result });
 });
 
 /**
@@ -125,7 +137,7 @@ spotsRoutes.post('/:id/clear', async (req, res) => {
  * Delete a spot
  */
 spotsRoutes.delete('/:id', async (req, res) => {
-  await spotsService.deleteSpot(req.user!.id, req.params.id);
+  await spotsService.deleteSpot(req.user!.id, req.params.id as string);
 
   res.status(204).send();
 });

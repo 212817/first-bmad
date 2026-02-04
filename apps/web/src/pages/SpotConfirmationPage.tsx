@@ -8,6 +8,7 @@ import { SpotDetailCard } from '@/components/spot/SpotDetailCard';
 import { SpotActions } from '@/components/spot/SpotActions';
 import { NoteInput } from '@/components/spot/NoteInput';
 import { CarTagSelector } from '@/components/spot/CarTagSelector';
+import { ShareButton } from '@/components/spot/ShareButton';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
@@ -15,6 +16,7 @@ import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
 import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { imageProcessor } from '@/services/image/imageProcessor.service';
+import { navigationService } from '@/services/navigation/navigation.service';
 
 /** Large file threshold (5MB) for gallery uploads */
 const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
@@ -29,7 +31,7 @@ const LARGE_IMAGE_MAX_DIMENSION = 2000;
 export const SpotConfirmationPage = () => {
   const { spotId } = useParams<{ spotId: string }>();
   const navigate = useNavigate();
-  const { currentSpot, updateSpot, isSaving } = useSpotStore();
+  const { currentSpot, updateSpot, isSaving, getSpotById, setCurrentSpot } = useSpotStore();
   const { fetchTags, isHydrated: tagsHydrated } = useCarTagStore();
   const { isGuest } = useGuestStore();
   const [showSuccess, setShowSuccess] = useState(true);
@@ -37,6 +39,7 @@ export const SpotConfirmationPage = () => {
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
   const [pendingRetryBlob, setPendingRetryBlob] = useState<Blob | null>(null);
   const [isProcessingGallery, setIsProcessingGallery] = useState(false);
+  const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const { pickImage } = useFilePicker();
   const {
     uploadPhoto,
@@ -62,12 +65,38 @@ export const SpotConfirmationPage = () => {
       }
     : null;
 
-  // If no spot data, redirect to home
+  // If no spot data, try to fetch by ID or redirect to home
   useEffect(() => {
-    if (!currentSpot && !spotId) {
-      navigate('/', { replace: true });
-    }
-  }, [currentSpot, spotId, navigate]);
+    const loadSpot = async () => {
+      // No spotId at all - redirect
+      if (!spotId) {
+        navigate('/', { replace: true });
+        return;
+      }
+
+      // Already have the spot loaded
+      if (currentSpot?.id === spotId) {
+        return;
+      }
+
+      // Try to fetch the spot by ID
+      try {
+        const spot = await getSpotById(spotId);
+        if (spot) {
+          setCurrentSpot(spot);
+          setNoteValue(spot.note ?? '');
+        } else {
+          // Spot not found - redirect
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error('Failed to load spot:', error);
+        navigate('/', { replace: true });
+      }
+    };
+
+    loadSpot();
+  }, [spotId, currentSpot?.id, navigate, getSpotById, setCurrentSpot]);
 
   // Fetch car tags on mount
   useEffect(() => {
@@ -90,12 +119,17 @@ export const SpotConfirmationPage = () => {
   };
 
   /**
-   * Handle Navigate Now button - placeholder for Epic 3
+   * Handle Navigate Now button - open maps navigation
    */
-  const handleNavigate = () => {
-    // TODO: Epic 3 - Open maps navigation
-    console.log('Navigate - Coming in Epic 3');
-  };
+  const handleNavigate = useCallback(() => {
+    if (!currentSpot) return;
+
+    navigationService.navigateTo({
+      lat: currentSpot.lat,
+      lng: currentSpot.lng,
+      address: currentSpot.address,
+    });
+  }, [currentSpot]);
 
   /**
    * Handle Photo action button click - open camera
@@ -359,14 +393,36 @@ export const SpotConfirmationPage = () => {
                 data-testid="photo-section"
               >
                 <div className="flex items-start gap-3">
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                  <button
+                    onClick={() => setIsPhotoZoomed(true)}
+                    className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-zoom-in group"
+                    aria-label="Zoom photo"
+                  >
                     <img
                       src={currentSpot.photoUrl!}
                       alt="Parking spot photo"
                       className="w-full h-full object-cover"
                       data-testid="photo-thumbnail"
                     />
-                  </div>
+                    {/* Zoom indicator */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 bg-black/50 text-white p-1 rounded-md transition-opacity">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
                   <div className="flex-1 flex flex-col gap-2">
                     <span className="text-sm text-gray-600">Photo attached</span>
                     <div className="flex gap-2">
@@ -388,6 +444,31 @@ export const SpotConfirmationPage = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Photo zoom modal */}
+            {isPhotoZoomed && currentSpot.photoUrl && (
+              <div
+                className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+                onClick={() => setIsPhotoZoomed(false)}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Zoomed photo"
+              >
+                <button
+                  className="absolute top-4 right-4 bg-white/90 text-gray-800 w-10 h-10 rounded-full hover:bg-white transition-colors flex items-center justify-center text-xl font-bold z-[10000]"
+                  onClick={() => setIsPhotoZoomed(false)}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+                <img
+                  src={currentSpot.photoUrl}
+                  alt="Parking spot zoomed"
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
             )}
 
@@ -432,13 +513,23 @@ export const SpotConfirmationPage = () => {
               >
                 Navigate Now
               </button>
-              <button
-                onClick={handleDone}
-                className="w-full h-12 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                data-testid="done-button"
-              >
-                Done
-              </button>
+              <div className="flex gap-3">
+                {!isGuest && (
+                  <ShareButton
+                    spotId={currentSpot.id}
+                    spotAddress={displaySpot?.address || undefined}
+                    variant="secondary"
+                    className="flex-1 h-12"
+                  />
+                )}
+                <button
+                  onClick={handleDone}
+                  className={`h-12 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors ${isGuest ? 'w-full' : 'flex-1'}`}
+                  data-testid="done-button"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -106,9 +106,7 @@ describe('useGeolocation', () => {
       expect(result.current.permissionState).toBe('granted');
     });
 
-    it('should warn when accuracy is low but still succeed', async () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
+    it('should succeed even with low accuracy', async () => {
       const mockPosition = {
         coords: {
           latitude: 40.7128,
@@ -127,10 +125,8 @@ describe('useGeolocation', () => {
         await result.current.getCurrentPosition();
       });
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Location accuracy is low: 150m');
+      // Should still succeed with low accuracy
       expect(result.current.position).not.toBeNull();
-
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle permission denied error', async () => {

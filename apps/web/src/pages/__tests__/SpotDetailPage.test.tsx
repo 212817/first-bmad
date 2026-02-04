@@ -181,14 +181,15 @@ describe('SpotDetailPage', () => {
   });
 
   describe('Render with missing photo', () => {
-    it('should show placeholder when no photo', async () => {
+    it('should show map full width when no photo', async () => {
       const spot = createMockSpot({ photoUrl: null });
       mockGetSpotById.mockResolvedValue(spot);
 
       renderWithRouter();
 
       await waitFor(() => {
-        expect(screen.getByTestId('spot-photo-placeholder')).toBeInTheDocument();
+        // Map should still be visible and take full width when no photo
+        expect(screen.getByTestId('spot-map-preview')).toBeInTheDocument();
       });
     });
   });
@@ -262,7 +263,7 @@ describe('SpotDetailPage', () => {
   });
 
   describe('Share button', () => {
-    it('should be disabled (placeholder for Epic 4)', async () => {
+    it('should render share button and be enabled', async () => {
       const spot = createMockSpot();
       mockGetSpotById.mockResolvedValue(spot);
 
@@ -272,7 +273,8 @@ describe('SpotDetailPage', () => {
         expect(screen.getByTestId('share-button')).toBeInTheDocument();
       });
 
-      expect(screen.getByTestId('share-button')).toBeDisabled();
+      // Share button should now be enabled (no longer a placeholder)
+      expect(screen.getByTestId('share-button')).not.toBeDisabled();
     });
   });
 
