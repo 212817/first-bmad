@@ -60,7 +60,7 @@ export const HistoryPage = () => {
     if (!isLoadingSpots && spots.length === 0) {
       return (
         <div className="p-4">
-          <EmptySpotState />
+          <EmptySpotState testId="history-empty-state" />
         </div>
       );
     }

@@ -150,8 +150,9 @@ test.describe('Spot Delete Functionality', () => {
     await page.getByTestId('save-spot-button').click();
     await expect(page).toHaveURL(/\/spot\/.*\/confirm/);
 
-    // Verify spot exists in history
+    // Verify spot exists in history (wait for it to appear)
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('history-spot-item')).toBeVisible();
     const spotCount = await page.getByTestId('history-spot-item').count();
     expect(spotCount).toBe(1);
 

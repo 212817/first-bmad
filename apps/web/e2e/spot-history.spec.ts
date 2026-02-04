@@ -54,7 +54,7 @@ test.describe('Spot History', () => {
 
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByTestId('empty-spot-state')).toBeVisible();
+    await expect(page.getByTestId('history-empty-state')).toBeVisible();
   });
 
   test('should navigate back to home when clicking back button', async ({ page }) => {

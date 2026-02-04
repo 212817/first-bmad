@@ -5,11 +5,14 @@ import type { EmptySpotStateProps } from './types';
  * Empty state component when no parking spot is saved
  * Shows message and prompt to save first spot
  */
-export const EmptySpotState = ({ className = '' }: EmptySpotStateProps) => {
+export const EmptySpotState = ({
+  className = '',
+  testId = 'empty-spot-state',
+}: EmptySpotStateProps) => {
   return (
     <div
       className={`bg-white rounded-xl shadow-md p-6 text-center ${className}`}
-      data-testid="empty-spot-state"
+      data-testid={testId}
     >
       {/* Illustration/icon */}
       <div className="mb-4">
