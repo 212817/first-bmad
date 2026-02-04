@@ -54,6 +54,7 @@ describe('SpotDetailPage', () => {
   const mockFetchTags = vi.fn();
   const mockGetTagById = vi.fn();
   const mockNavigateTo = vi.fn();
+  const mockDeleteSpot = vi.fn();
 
   const baseMockSpotStore = {
     spots: [] as Spot[],
@@ -77,6 +78,7 @@ describe('SpotDetailPage', () => {
     setLoading: vi.fn(),
     setError: vi.fn(),
     getSpotById: mockGetSpotById,
+    deleteSpot: mockDeleteSpot,
   };
 
   const baseMockCarTagStore = {
@@ -97,6 +99,7 @@ describe('SpotDetailPage', () => {
     vi.mocked(navigationService.navigateTo).mockImplementation(mockNavigateTo);
     mockFetchTags.mockResolvedValue(undefined);
     mockGetTagById.mockReturnValue(null);
+    mockDeleteSpot.mockResolvedValue(true);
   });
 
   describe('Loading state', () => {
@@ -240,7 +243,7 @@ describe('SpotDetailPage', () => {
   });
 
   describe('Delete button', () => {
-    it('should navigate to delete confirmation when clicking Delete', async () => {
+    it('should open delete confirmation dialog when clicking Delete', async () => {
       const spot = createMockSpot();
       mockGetSpotById.mockResolvedValue(spot);
 
@@ -252,7 +255,9 @@ describe('SpotDetailPage', () => {
 
       fireEvent.click(screen.getByTestId('delete-button'));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/spot/test-spot-id/delete');
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
+      });
     });
   });
 
@@ -379,6 +384,117 @@ describe('SpotDetailPage', () => {
         expect(screen.getByTestId('spot-detail-not-found')).toBeInTheDocument();
       });
       expect(screen.getByText('Failed to load spot')).toBeInTheDocument();
+    });
+  });
+
+  describe('Delete functionality', () => {
+    it('should open delete dialog when delete button clicked', async () => {
+      const spot = createMockSpot();
+      mockGetSpotById.mockResolvedValue(spot);
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
+      });
+    });
+
+    it('should close dialog when cancel clicked', async () => {
+      const spot = createMockSpot();
+      mockGetSpotById.mockResolvedValue(spot);
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-cancel-button'));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('delete-confirm-dialog')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should call deleteSpot and navigate on confirm', async () => {
+      const spot = createMockSpot();
+      mockGetSpotById.mockResolvedValue(spot);
+      mockDeleteSpot.mockResolvedValue(true);
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-confirm-button'));
+
+      await waitFor(() => {
+        expect(mockDeleteSpot).toHaveBeenCalledWith('test-spot-id');
+        expect(mockNavigate).toHaveBeenCalledWith('/history');
+      });
+    });
+
+    it('should not navigate if delete fails', async () => {
+      const spot = createMockSpot();
+      mockGetSpotById.mockResolvedValue(spot);
+      mockDeleteSpot.mockResolvedValue(false);
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-confirm-button'));
+
+      await waitFor(() => {
+        expect(mockDeleteSpot).toHaveBeenCalledWith('test-spot-id');
+      });
+
+      // Should NOT navigate
+      expect(mockNavigate).not.toHaveBeenCalledWith('/history');
+    });
+
+    it('should show spot address in delete dialog', async () => {
+      const spot = createMockSpot({ address: 'Central Park' });
+      mockGetSpotById.mockResolvedValue(spot);
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-dialog-address')).toHaveTextContent('Central Park');
+      });
     });
   });
 });

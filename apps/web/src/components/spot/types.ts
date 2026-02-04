@@ -96,6 +96,8 @@ export interface LatestSpotCardProps {
 export interface EmptySpotStateProps {
   /** Additional CSS classes */
   className?: string;
+  /** Custom test ID for E2E testing */
+  testId?: string;
 }
 
 /**

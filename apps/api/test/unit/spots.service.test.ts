@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { spotsService } from '../../src/routes/spots/spots.service.js';
 import { spotRepository } from '../../src/repositories/spot.repository.js';
 import { geocodingService } from '../../src/services/geocoding/geocoding.service.js';
+import { r2Service } from '../../src/services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 
 vi.mock('../../src/repositories/spot.repository.js', () => ({
@@ -19,6 +20,12 @@ vi.mock('../../src/repositories/spot.repository.js', () => ({
 vi.mock('../../src/services/geocoding/geocoding.service.js', () => ({
   geocodingService: {
     reverseGeocode: vi.fn(),
+  },
+}));
+
+vi.mock('../../src/services/r2/r2.service.js', () => ({
+  r2Service: {
+    deleteObject: vi.fn(),
   },
 }));
 
@@ -444,6 +451,42 @@ describe('spotsService', () => {
       });
 
       await expect(spotsService.deleteSpot(userId, spotId)).rejects.toThrow(AuthorizationError);
+    });
+
+    it('should delete photo from R2 when spot has photoUrl', async () => {
+      const spotWithPhoto = {
+        ...mockSpot,
+        photoUrl: 'https://r2.example.com/photos/user-123/1234567890-abc123.jpg',
+      };
+      vi.mocked(spotRepository.findById).mockResolvedValue(spotWithPhoto);
+      vi.mocked(spotRepository.delete).mockResolvedValue(true);
+      vi.mocked(r2Service.deleteObject).mockResolvedValue(undefined);
+
+      await spotsService.deleteSpot(userId, spotId);
+
+      expect(r2Service.deleteObject).toHaveBeenCalledWith('photos/user-123/1234567890-abc123.jpg');
+    });
+
+    it('should not call R2 delete when spot has no photo', async () => {
+      vi.mocked(spotRepository.findById).mockResolvedValue(mockSpot);
+      vi.mocked(spotRepository.delete).mockResolvedValue(true);
+
+      await spotsService.deleteSpot(userId, spotId);
+
+      expect(r2Service.deleteObject).not.toHaveBeenCalled();
+    });
+
+    it('should not fail if R2 delete fails', async () => {
+      const spotWithPhoto = {
+        ...mockSpot,
+        photoUrl: 'https://r2.example.com/photos/user-123/1234567890-abc123.jpg',
+      };
+      vi.mocked(spotRepository.findById).mockResolvedValue(spotWithPhoto);
+      vi.mocked(spotRepository.delete).mockResolvedValue(true);
+      vi.mocked(r2Service.deleteObject).mockRejectedValue(new Error('R2 error'));
+
+      // Should not throw even if R2 delete fails
+      await expect(spotsService.deleteSpot(userId, spotId)).resolves.not.toThrow();
     });
   });
 });

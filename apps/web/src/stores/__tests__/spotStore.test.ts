@@ -11,6 +11,7 @@ vi.mock('@/services/api/client', () => ({
     post: vi.fn(),
     patch: vi.fn(),
     get: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -20,6 +21,7 @@ vi.mock('@/services/storage/indexedDb.service', () => ({
     getItem: vi.fn(),
     getLatestSpot: vi.fn(),
     getSpotsPaginated: vi.fn(),
+    deleteItem: vi.fn(),
   },
 }));
 
@@ -670,6 +672,147 @@ describe('spotStore', () => {
       expect(useSpotStore.getState().nextCursor).toBeNull();
       expect(useSpotStore.getState().isLoadingSpots).toBe(false);
       expect(useSpotStore.getState().isLoadingMore).toBe(false);
+    });
+  });
+
+  describe('deleteSpot - authenticated user', () => {
+    const mockSpot = {
+      id: 'spot-123',
+      carTagId: null,
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 10,
+      address: '123 Main St',
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2026-01-15T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: false } as any);
+    });
+
+    it('should delete spot via API', async () => {
+      vi.mocked(apiClient.delete).mockResolvedValue({ status: 204 });
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+        latestSpot: mockSpot,
+      });
+
+      const result = await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(result).toBe(true);
+      expect(apiClient.delete).toHaveBeenCalledWith('/v1/spots/spot-123');
+      expect(useSpotStore.getState().spots).toEqual([]);
+    });
+
+    it('should update latestSpot when deleted spot was latest', async () => {
+      const anotherSpot = { ...mockSpot, id: 'spot-456' };
+      vi.mocked(apiClient.delete).mockResolvedValue({ status: 204 });
+
+      useSpotStore.setState({
+        spots: [mockSpot, anotherSpot],
+        latestSpot: mockSpot,
+      });
+
+      await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(useSpotStore.getState().latestSpot).toEqual(anotherSpot);
+    });
+
+    it('should clear latestSpot when last spot deleted', async () => {
+      vi.mocked(apiClient.delete).mockResolvedValue({ status: 204 });
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+        latestSpot: mockSpot,
+      });
+
+      await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(useSpotStore.getState().latestSpot).toBeNull();
+    });
+
+    it('should clear currentSpot if deleted spot was current', async () => {
+      vi.mocked(apiClient.delete).mockResolvedValue({ status: 204 });
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+        currentSpot: mockSpot,
+      });
+
+      await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(useSpotStore.getState().currentSpot).toBeNull();
+    });
+
+    it('should return false and set error on API failure', async () => {
+      vi.mocked(apiClient.delete).mockRejectedValue(new Error('Network error'));
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+      });
+
+      const result = await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(result).toBe(false);
+      expect(useSpotStore.getState().error).toBe('Network error');
+      // Spots should not be modified on failure
+      expect(useSpotStore.getState().spots).toHaveLength(1);
+    });
+  });
+
+  describe('deleteSpot - guest user', () => {
+    const mockSpot = {
+      id: 'spot-123',
+      carTagId: null,
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 10,
+      address: '123 Main St',
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      isActive: true,
+      savedAt: '2026-01-15T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: true } as any);
+    });
+
+    it('should delete spot from IndexedDB', async () => {
+      vi.mocked(indexedDbService.deleteItem).mockResolvedValue(undefined);
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+        latestSpot: mockSpot,
+      });
+
+      const result = await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(result).toBe(true);
+      expect(indexedDbService.deleteItem).toHaveBeenCalledWith('spots', 'spot-123');
+      expect(useSpotStore.getState().spots).toEqual([]);
+      expect(useSpotStore.getState().latestSpot).toBeNull();
+    });
+
+    it('should return false on IndexedDB failure', async () => {
+      vi.mocked(indexedDbService.deleteItem).mockRejectedValue(new Error('IndexedDB error'));
+
+      useSpotStore.setState({
+        spots: [mockSpot],
+      });
+
+      const result = await useSpotStore.getState().deleteSpot('spot-123');
+
+      expect(result).toBe(false);
+      expect(useSpotStore.getState().error).toBe('IndexedDB error');
     });
   });
 });

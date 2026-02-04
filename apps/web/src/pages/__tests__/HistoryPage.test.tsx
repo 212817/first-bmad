@@ -136,7 +136,7 @@ describe('HistoryPage', () => {
     it('should show empty state when no spots', () => {
       renderPage();
 
-      expect(screen.getByTestId('empty-spot-state')).toBeInTheDocument();
+      expect(screen.getByTestId('history-empty-state')).toBeInTheDocument();
     });
   });
 

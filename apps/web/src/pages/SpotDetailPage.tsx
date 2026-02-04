@@ -7,6 +7,7 @@ import { navigationService } from '@/services/navigation/navigation.service';
 import { LocationCard } from '@/components/spot/LocationCard';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
 import { TagBadge } from '@/components/spot/TagBadge';
+import { DeleteConfirmDialog } from '@/components/spot/DeleteConfirmDialog';
 import { SpotMap } from '@/components/map/SpotMap';
 import { formatDateTime } from '@/utils/formatters';
 import type { Spot } from '@/stores/spot.types';
@@ -24,13 +25,15 @@ const DEFAULT_TAG_COLOR = '#3B82F6';
 export const SpotDetailPage = () => {
   const { spotId } = useParams<{ spotId: string }>();
   const navigate = useNavigate();
-  const { getSpotById } = useSpotStore();
+  const { getSpotById, deleteSpot } = useSpotStore();
   const { getTagById, fetchTags } = useCarTagStore();
 
   const [spot, setSpot] = useState<Spot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch spot data on mount
   useEffect(() => {
@@ -81,13 +84,28 @@ export const SpotDetailPage = () => {
   }, []);
 
   /**
-   * Navigate to delete confirmation
+   * Open delete confirmation dialog
    */
-  const handleDelete = useCallback(() => {
-    if (spotId) {
-      navigate(`/spot/${spotId}/delete`);
+  const handleDeleteClick = useCallback(() => {
+    setDeleteDialogOpen(true);
+  }, []);
+
+  /**
+   * Handle delete confirmation
+   */
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!spotId) return;
+
+    setIsDeleting(true);
+    const success = await deleteSpot(spotId);
+    setIsDeleting(false);
+
+    if (success) {
+      setDeleteDialogOpen(false);
+      // Navigate to history after successful deletion
+      navigate('/history');
     }
-  }, [spotId, navigate]);
+  }, [spotId, deleteSpot, navigate]);
 
   /**
    * Navigate back to previous page
@@ -275,7 +293,7 @@ export const SpotDetailPage = () => {
               </button>
 
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 className="w-12 h-12 bg-white border border-red-200 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50 transition-colors"
                 aria-label="Delete spot"
                 data-testid="delete-button"
@@ -286,6 +304,15 @@ export const SpotDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        spotAddress={spot.address}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

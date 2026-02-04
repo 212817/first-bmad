@@ -17,17 +17,17 @@ test.describe('Save Spot', () => {
     });
   });
 
-  test('home page displays "Use my location" button and address input (AC1)', async ({ page }) => {
+  test('home page displays "Save my location" button and address input (AC1)', async ({ page }) => {
     // Enter guest mode first
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
     await expect(page).toHaveURL('/');
 
-    // Should see the Use my location button
+    // Should see the Save my location button
     const saveButton = page.getByTestId('save-spot-button');
     await expect(saveButton).toBeVisible();
-    await expect(saveButton).toContainText('Use my location');
+    await expect(saveButton).toContainText('Save my location');
 
     // Should also see address input form
     await expect(page.getByTestId('address-input')).toBeVisible();

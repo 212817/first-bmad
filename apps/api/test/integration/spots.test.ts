@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 
 // Use vi.hoisted to define mocks that are available when vi.mock is hoisted
-const { mockSpotRepository } = vi.hoisted(() => ({
+const { mockSpotRepository, mockR2Service } = vi.hoisted(() => ({
   mockSpotRepository: {
     create: vi.fn(),
     findById: vi.fn(),
@@ -14,10 +14,17 @@ const { mockSpotRepository } = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
+  mockR2Service: {
+    deleteObject: vi.fn(),
+  },
 }));
 
 vi.mock('../../src/repositories/spot.repository.js', () => ({
   spotRepository: mockSpotRepository,
+}));
+
+vi.mock('../../src/services/r2/r2.service.js', () => ({
+  r2Service: mockR2Service,
 }));
 
 // Mock the database module
@@ -377,6 +384,54 @@ describe('Spots API', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(response.status).toBe(204);
+    });
+
+    it('should return 401 without access token', async () => {
+      const response = await request(app).delete('/v1/spots/spot-123');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+    });
+
+    it('should return 404 for non-existent spot', async () => {
+      mockSpotRepository.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .delete('/v1/spots/non-existent')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 for spot owned by different user', async () => {
+      mockSpotRepository.findById.mockResolvedValueOnce({
+        ...mockSpot,
+        userId: 'other-user',
+      });
+
+      const response = await request(app)
+        .delete('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should delete photo from R2 when spot has photoUrl', async () => {
+      const spotWithPhoto = {
+        ...mockSpot,
+        photoUrl: 'https://r2.example.com/photos/user-123/abc.jpg',
+      };
+      mockSpotRepository.findById.mockResolvedValueOnce(spotWithPhoto);
+      mockSpotRepository.delete.mockResolvedValue(true);
+      mockR2Service.deleteObject.mockResolvedValue(undefined);
+
+      const response = await request(app)
+        .delete('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`);
+
+      expect(response.status).toBe(204);
+      expect(mockR2Service.deleteObject).toHaveBeenCalledWith('photos/user-123/abc.jpg');
     });
   });
 

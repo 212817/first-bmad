@@ -336,6 +336,46 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   },
 
   /**
+   * Delete a spot by ID
+   * Uses API for authenticated users, IndexedDB for guests
+   * Returns true if deletion was successful
+   */
+  deleteSpot: async (spotId: string): Promise<boolean> => {
+    const isGuest = useGuestStore.getState().isGuest;
+
+    try {
+      if (isGuest) {
+        // Delete from IndexedDB for guest users
+        await indexedDbService.deleteItem(STORES.spots, spotId);
+      } else {
+        // Delete via API for authenticated users
+        await apiClient.delete(`/v1/spots/${spotId}`);
+      }
+
+      // Remove from local state
+      set((state) => {
+        const newSpots = state.spots.filter((s) => s.id !== spotId);
+        // Update latestSpot if the deleted spot was the latest
+        const newLatest =
+          state.latestSpot?.id === spotId ? (newSpots[0] ?? null) : state.latestSpot;
+
+        return {
+          spots: newSpots,
+          latestSpot: newLatest,
+          // Also clear currentSpot if it was the deleted spot
+          currentSpot: state.currentSpot?.id === spotId ? null : state.currentSpot,
+        };
+      });
+
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete spot';
+      set({ error: message });
+      return false;
+    }
+  },
+
+  /**
    * Clear history state
    */
   clearHistory: () => {
