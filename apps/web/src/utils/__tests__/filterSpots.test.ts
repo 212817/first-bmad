@@ -96,24 +96,31 @@ describe('filterSpots', () => {
   });
 
   describe('car tag filter', () => {
-    it('should filter by car tag name with lookup', () => {
+    it('should filter by car tag ID', () => {
       const spots = [
         createMockSpot({ carTagId: 'tag-1' }),
         createMockSpot({ carTagId: 'tag-2' }),
         createMockSpot({ carTagId: 'tag-1' }),
       ];
 
-      const tagLookup = (id: string) => (id === 'tag-1' ? 'Work' : 'Personal');
-      const result = filterSpots(spots, { carTag: 'Work' }, tagLookup);
+      const result = filterSpots(spots, { carTagId: 'tag-1' });
 
       expect(result).toHaveLength(2);
     });
 
-    it('should exclude spots without car tag when filtering', () => {
+    it('should exclude spots with different car tag', () => {
+      const spots = [createMockSpot({ carTagId: 'tag-1' }), createMockSpot({ carTagId: 'tag-2' })];
+
+      const result = filterSpots(spots, { carTagId: 'tag-1' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.carTagId).toBe('tag-1');
+    });
+
+    it('should exclude spots without car tag when filtering by ID', () => {
       const spots = [createMockSpot({ carTagId: 'tag-1' }), createMockSpot({ carTagId: null })];
 
-      const tagLookup = (id: string) => (id === 'tag-1' ? 'Work' : undefined);
-      const result = filterSpots(spots, { carTag: 'Work' }, tagLookup);
+      const result = filterSpots(spots, { carTagId: 'tag-1' });
 
       expect(result).toHaveLength(1);
     });
@@ -165,8 +172,7 @@ describe('filterSpots', () => {
         createMockSpot({ address: 'Downtown Mall', carTagId: 'tag-1' }),
       ];
 
-      const tagLookup = (id: string) => (id === 'tag-1' ? 'Work' : 'Personal');
-      const result = filterSpots(spots, { query: 'downtown', carTag: 'Work' }, tagLookup);
+      const result = filterSpots(spots, { query: 'downtown', carTagId: 'tag-1' });
 
       expect(result).toHaveLength(2);
     });
@@ -177,8 +183,7 @@ describe('filterSpots', () => {
         createMockSpot({ address: 'Airport', carTagId: 'tag-2' }),
       ];
 
-      const tagLookup = (id: string) => (id === 'tag-1' ? 'Work' : 'Personal');
-      const result = filterSpots(spots, { query: 'downtown', carTag: 'Personal' }, tagLookup);
+      const result = filterSpots(spots, { query: 'downtown', carTagId: 'tag-2' });
 
       expect(result).toHaveLength(0);
     });

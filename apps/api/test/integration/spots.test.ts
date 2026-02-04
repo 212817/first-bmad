@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 
 // Use vi.hoisted to define mocks that are available when vi.mock is hoisted
-const { mockSpotRepository, mockR2Service } = vi.hoisted(() => ({
+const { mockSpotRepository, mockR2Service, mockCarTagRepository } = vi.hoisted(() => ({
   mockSpotRepository: {
     create: vi.fn(),
     findById: vi.fn(),
@@ -17,10 +17,18 @@ const { mockSpotRepository, mockR2Service } = vi.hoisted(() => ({
   mockR2Service: {
     deleteObject: vi.fn(),
   },
+  mockCarTagRepository: {
+    findDefaultByName: vi.fn(),
+    createDefault: vi.fn(),
+  },
 }));
 
 vi.mock('../../src/repositories/spot.repository.js', () => ({
   spotRepository: mockSpotRepository,
+}));
+
+vi.mock('../../src/repositories/carTag.repository.js', () => ({
+  carTagRepository: mockCarTagRepository,
 }));
 
 vi.mock('../../src/services/r2/r2.service.js', () => ({
@@ -70,9 +78,12 @@ describe('Spots API', () => {
   const userId = 'user-123';
   const userEmail = 'test@example.com';
 
+  const mockDefaultTagId = 'tag-my-car-uuid';
+
   const mockSpot = {
     id: 'spot-123',
     userId: userId,
+    carTagId: mockDefaultTagId,
     latitude: 40.7128,
     longitude: -74.006,
     accuracyMeters: 15,
@@ -91,6 +102,15 @@ describe('Spots API', () => {
     vi.resetAllMocks();
     // Generate a valid JWT for testing
     validToken = jwtService.generateAccessToken(userId, userEmail);
+    // Default: carTagRepository returns a default tag
+    mockCarTagRepository.findDefaultByName.mockResolvedValue({
+      id: mockDefaultTagId,
+      userId: null,
+      name: 'My Car',
+      color: '#3B82F6',
+      isDefault: true,
+      createdAt: new Date(),
+    });
   });
 
   describe('POST /v1/spots', () => {
@@ -143,6 +163,7 @@ describe('Spots API', () => {
       const addressOnlySpot = {
         id: 'spot-456',
         userId: userId,
+        carTagId: mockDefaultTagId,
         latitude: null,
         longitude: null,
         accuracyMeters: null,
@@ -175,6 +196,7 @@ describe('Spots API', () => {
       const geocodedSpot = {
         id: 'spot-789',
         userId: userId,
+        carTagId: mockDefaultTagId,
         latitude: 40.7128,
         longitude: -74.006,
         accuracyMeters: null,

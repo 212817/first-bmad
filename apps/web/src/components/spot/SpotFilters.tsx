@@ -8,7 +8,7 @@ import type { SpotFiltersProps } from './types';
  * Filter dropdown for spot history
  * Allows filtering by car tag
  */
-export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
+export const SpotFilters = ({ selectedTagId, onTagChange }: SpotFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { tags } = useCarTagStore();
@@ -30,12 +30,13 @@ export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
     };
   }, [isOpen]);
 
-  const handleTagSelect = (tagName: string | undefined) => {
-    onTagChange(tagName);
+  const handleTagSelect = (tagId: string | undefined) => {
+    onTagChange(tagId);
     setIsOpen(false);
   };
 
-  const selectedTagData = selectedTag ? tags.find((t) => t.name === selectedTag) : null;
+  // Find the selected tag by ID to display its name
+  const selectedTag = selectedTagId ? tags.find((t) => t.id === selectedTagId) : null;
 
   return (
     <div className="relative" ref={dropdownRef} data-testid="spot-filters">
@@ -52,7 +53,7 @@ export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
         data-testid="filter-button"
       >
         <span aria-hidden="true">🏷️</span>
-        <span className="text-sm">{selectedTag || 'All tags'}</span>
+        <span className="text-sm">{selectedTag?.name || 'All tags'}</span>
         <span aria-hidden="true" className="text-gray-400">
           ▼
         </span>
@@ -71,10 +72,10 @@ export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
             type="button"
             onClick={() => handleTagSelect(undefined)}
             className={`w-full px-4 py-2 text-left hover:bg-gray-50 text-sm ${
-              !selectedTag ? 'bg-gray-100 font-medium' : ''
+              !selectedTagId ? 'bg-gray-100 font-medium' : ''
             }`}
             role="option"
-            aria-selected={!selectedTag}
+            aria-selected={!selectedTagId}
             data-testid="filter-option-all"
           >
             All tags
@@ -85,12 +86,12 @@ export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
             <button
               key={tag.id}
               type="button"
-              onClick={() => handleTagSelect(tag.name)}
+              onClick={() => handleTagSelect(tag.id)}
               className={`w-full px-4 py-2 text-left hover:bg-gray-50 text-sm flex items-center gap-2 ${
-                selectedTag === tag.name ? 'bg-gray-100 font-medium' : ''
+                selectedTagId === tag.id ? 'bg-gray-100 font-medium' : ''
               }`}
               role="option"
-              aria-selected={selectedTag === tag.name}
+              aria-selected={selectedTagId === tag.id}
               data-testid={`filter-option-${tag.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <span
@@ -105,10 +106,10 @@ export const SpotFilters = ({ selectedTag, onTagChange }: SpotFiltersProps) => {
       )}
 
       {/* Active filter indicator */}
-      {selectedTagData && (
+      {selectedTag && (
         <span
           className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
-          style={{ backgroundColor: selectedTagData.color }}
+          style={{ backgroundColor: selectedTag.color }}
           aria-hidden="true"
         />
       )}

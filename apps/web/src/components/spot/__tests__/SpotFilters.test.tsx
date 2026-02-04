@@ -32,22 +32,23 @@ describe('SpotFilters', () => {
   });
 
   it('should render filter button', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
     expect(screen.getByTestId('filter-button')).toBeInTheDocument();
   });
 
   it('should show "All tags" when no tag selected', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
     expect(screen.getByText('All tags')).toBeInTheDocument();
   });
 
   it('should show selected tag name when tag is selected', () => {
-    render(<SpotFilters selectedTag="Work" onTagChange={mockOnTagChange} />);
+    // Pass ID 'tag-1' for 'Work'
+    render(<SpotFilters selectedTagId="tag-1" onTagChange={mockOnTagChange} />);
     expect(screen.getByText('Work')).toBeInTheDocument();
   });
 
   it('should open dropdown on click', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
 
     fireEvent.click(screen.getByTestId('filter-button'));
 
@@ -56,7 +57,7 @@ describe('SpotFilters', () => {
   });
 
   it('should show all tags in dropdown', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
 
     fireEvent.click(screen.getByTestId('filter-button'));
 
@@ -65,17 +66,17 @@ describe('SpotFilters', () => {
     expect(screen.getByTestId('filter-option-rental')).toBeInTheDocument();
   });
 
-  it('should call onTagChange with tag name when tag selected', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+  it('should call onTagChange with tag ID when tag selected', () => {
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
 
     fireEvent.click(screen.getByTestId('filter-button'));
     fireEvent.click(screen.getByTestId('filter-option-work'));
 
-    expect(mockOnTagChange).toHaveBeenCalledWith('Work');
+    expect(mockOnTagChange).toHaveBeenCalledWith('tag-1');
   });
 
   it('should call onTagChange with undefined when "All tags" selected', () => {
-    render(<SpotFilters selectedTag="Work" onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId="tag-1" onTagChange={mockOnTagChange} />);
 
     fireEvent.click(screen.getByTestId('filter-button'));
     fireEvent.click(screen.getByTestId('filter-option-all'));
@@ -84,7 +85,7 @@ describe('SpotFilters', () => {
   });
 
   it('should close dropdown after selection', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
 
     fireEvent.click(screen.getByTestId('filter-button'));
     expect(screen.getByTestId('filter-dropdown')).toBeInTheDocument();
@@ -94,14 +95,14 @@ describe('SpotFilters', () => {
   });
 
   it('should have highlighted style when tag is selected', () => {
-    render(<SpotFilters selectedTag="Work" onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId="tag-1" onTagChange={mockOnTagChange} />);
 
     const button = screen.getByTestId('filter-button');
     expect(button.className).toContain('border-indigo-500');
   });
 
   it('should be accessible with aria attributes', () => {
-    render(<SpotFilters selectedTag={undefined} onTagChange={mockOnTagChange} />);
+    render(<SpotFilters selectedTagId={undefined} onTagChange={mockOnTagChange} />);
 
     const button = screen.getByTestId('filter-button');
     expect(button).toHaveAttribute('aria-haspopup', 'listbox');

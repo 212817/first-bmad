@@ -122,7 +122,7 @@ export const spotRepository: SpotRepositoryInterface = {
       );
     }
 
-    // Car tag filter
+    // Car tag filter - simple ID match (all spots now have carTagId set)
     if (searchOptions?.carTagId) {
       conditions.push(eq(parkingSpots.carTagId, searchOptions.carTagId));
     }

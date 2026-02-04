@@ -178,7 +178,8 @@ describe('useGeolocation', () => {
 
       expect(result.current.error).toEqual({
         code: 2,
-        message: 'Unable to determine your location. Please try again.',
+        message:
+          'Unable to determine your location. Please check your device location settings and try again.',
       });
       expect(result.current.permissionState).toBe('prompt');
     });

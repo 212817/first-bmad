@@ -7,8 +7,8 @@ import type { Spot } from '@/stores/spot.types';
 export interface SpotFilterOptions {
   /** Text query to search in address, note, and tag */
   query?: string;
-  /** Filter by car tag name */
-  carTag?: string;
+  /** Filter by car tag ID */
+  carTagId?: string;
   /** Start date for date range filter */
   startDate?: Date;
   /** End date for date range filter */
@@ -29,10 +29,10 @@ export const filterSpots = (
   options: SpotFilterOptions,
   carTagNameLookup?: (tagId: string) => string | undefined
 ): Spot[] => {
-  const { query, carTag, startDate, endDate } = options;
+  const { query, carTagId, startDate, endDate } = options;
 
   // No filters, return all
-  if (!query && !carTag && !startDate && !endDate) {
+  if (!query && !carTagId && !startDate && !endDate) {
     return spots;
   }
 
@@ -57,18 +57,9 @@ export const filterSpots = (
       }
     }
 
-    // Car tag filter
-    if (carTag) {
-      if (!spot.carTagId) return false;
-
-      // If lookup function exists, compare by name
-      if (carTagNameLookup) {
-        const tagName = carTagNameLookup(spot.carTagId);
-        if (tagName !== carTag) return false;
-      } else {
-        // Fallback: direct ID comparison
-        if (spot.carTagId !== carTag) return false;
-      }
+    // Car tag filter by ID (simple match - all spots now have carTagId)
+    if (carTagId && spot.carTagId !== carTagId) {
+      return false;
     }
 
     // Date range filter

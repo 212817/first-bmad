@@ -19,6 +19,9 @@ import { isAddressInput } from './spot.types';
 
 const DEFAULT_PAGE_SIZE = 20;
 
+// Default tag ID for guest mode spots
+const GUEST_DEFAULT_TAG_ID = 'default-my-car';
+
 /**
  * Spot store for managing parking spot state
  * Routes to API (authenticated) or IndexedDB (guest) based on auth mode
@@ -55,12 +58,12 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
       let spot: Spot;
 
       if (isGuest) {
-        // Save to IndexedDB for guest users
+        // Save to IndexedDB for guest users (with default "My Car" tag)
         if (isAddress) {
           // Address-only save (manual entry)
           spot = {
             id: crypto.randomUUID(),
-            carTagId: null,
+            carTagId: GUEST_DEFAULT_TAG_ID,
             lat: input.lat ?? null,
             lng: input.lng ?? null,
             accuracyMeters: null,
@@ -76,7 +79,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
           // GPS coordinates save
           spot = {
             id: crypto.randomUUID(),
-            carTagId: null,
+            carTagId: GUEST_DEFAULT_TAG_ID,
             lat: input.lat,
             lng: input.lng,
             accuracyMeters: input.accuracy != null ? Math.round(input.accuracy) : null,
@@ -284,20 +287,20 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
     try {
       let spots: Spot[];
       let nextCursor: string | null;
+      const carTagStore = useCarTagStore.getState();
 
       if (isGuest) {
         // Get from IndexedDB for guest users
         const result = await indexedDbService.getSpotsPaginated<Spot>(DEFAULT_PAGE_SIZE, cursor);
 
         // Apply client-side filtering for guest mode
-        const carTagStore = useCarTagStore.getState();
         const tagLookup = (tagId: string) => carTagStore.getTagById(tagId)?.name;
 
         const filteredSpots = filterSpots(
           result.spots,
           {
             query: searchQuery || undefined,
-            carTag: filters.carTagId ? carTagStore.getTagById(filters.carTagId)?.name : undefined,
+            carTagId: filters.carTagId,
             startDate: filters.startDate,
             endDate: filters.endDate,
           },

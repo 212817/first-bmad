@@ -105,6 +105,23 @@ describe('HistorySpotItem', () => {
     expect(screen.getByTestId('tag-badge')).toHaveTextContent('My Car');
   });
 
+  it('should not show tag badge when carTagId is null and tag not found', () => {
+    vi.mocked(useCarTagStore).mockReturnValue({
+      tags: [],
+      isLoading: false,
+      error: null,
+      fetchTags: vi.fn(),
+      createTag: vi.fn(),
+      updateTag: vi.fn(),
+      deleteTag: vi.fn(),
+      getTagById: vi.fn().mockReturnValue(null),
+    });
+
+    render(<HistorySpotItem spot={{ ...mockSpot, carTagId: null }} onClick={() => {}} />);
+
+    expect(screen.queryByTestId('tag-badge')).not.toBeInTheDocument();
+  });
+
   it('should show active indicator when spot is active', () => {
     const activeSpot: Spot = {
       ...mockSpot,

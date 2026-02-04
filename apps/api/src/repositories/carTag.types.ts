@@ -25,6 +25,9 @@ export interface CarTagRepositoryInterface {
   /** Get all default (system) tags */
   getDefaults(): Promise<CarTag[]>;
 
+  /** Get a default tag by name */
+  findDefaultByName(name: string): Promise<CarTag | null>;
+
   /** Get user's custom tags */
   findByUserId(userId: string): Promise<CarTag[]>;
 

@@ -100,7 +100,7 @@ const LocateControl = ({ onLocate }: { onLocate: (lat: number, lng: number) => v
       () => {
         setIsLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 

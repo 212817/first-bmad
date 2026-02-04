@@ -171,7 +171,7 @@ export const HistoryPage = () => {
               onChange={handleSearchChange}
               placeholder="Search by address, note..."
             />
-            <SpotFilters selectedTag={filters.carTagId} onTagChange={handleTagChange} />
+            <SpotFilters selectedTagId={filters.carTagId} onTagChange={handleTagChange} />
           </div>
         </header>
 

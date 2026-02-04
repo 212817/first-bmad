@@ -130,10 +130,10 @@ export interface SpotSearchInputProps {
  * Props for SpotFilters component
  */
 export interface SpotFiltersProps {
-  /** Currently selected car tag */
-  selectedTag?: string;
-  /** Callback when tag selection changes */
-  onTagChange: (tag: string | undefined) => void;
+  /** Currently selected car tag ID */
+  selectedTagId?: string;
+  /** Callback when tag selection changes (passes tag ID) */
+  onTagChange: (tagId: string | undefined) => void;
 }
 
 /**

@@ -119,4 +119,43 @@ describe('LocationPermissionPrompt', () => {
       expect(modal).toBeInTheDocument();
     });
   });
+
+  describe('permission denied state', () => {
+    it('should show different title when permissionDenied is true', () => {
+      renderPrompt({ permissionDenied: true });
+
+      expect(screen.getByRole('heading', { name: 'Location Access Blocked' })).toBeInTheDocument();
+    });
+
+    it('should not show Enable Location button when permissionDenied is true', () => {
+      renderPrompt({ permissionDenied: true });
+
+      expect(screen.queryByRole('button', { name: /Enable Location/i })).not.toBeInTheDocument();
+    });
+
+    it('should show Enter address manually as primary button when permissionDenied is true', () => {
+      renderPrompt({ permissionDenied: true });
+
+      const button = screen.getByRole('button', { name: /Enter address manually/i });
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveClass('bg-indigo-600');
+    });
+
+    it('should show Dismiss button when permissionDenied is true and onDismiss is provided', () => {
+      const mockOnDismiss = vi.fn();
+      renderPrompt({ permissionDenied: true, onDismiss: mockOnDismiss });
+
+      const dismissButton = screen.getByRole('button', { name: /Dismiss/i });
+      expect(dismissButton).toBeInTheDocument();
+
+      fireEvent.click(dismissButton);
+      expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show instructions text when permissionDenied is true', () => {
+      renderPrompt({ permissionDenied: true });
+
+      expect(screen.getByText(/Location permission was denied/i)).toBeInTheDocument();
+    });
+  });
 });
