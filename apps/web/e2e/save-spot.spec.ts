@@ -159,8 +159,10 @@ test.describe('Save Spot', () => {
     // Click save button - since permission will fail, should show error
     await page.getByTestId('save-spot-button').click();
 
-    // Should show error message (permission denied)
-    await expect(page.getByText(/denied|blocked|permission/i)).toBeVisible({ timeout: 5000 });
+    // Should show the "Location Access Blocked" modal (permission denied state)
+    await expect(page.getByRole('heading', { name: 'Location Access Blocked' })).toBeVisible({
+      timeout: 5000,
+    });
 
     // User can still use the address input form as alternative
     await expect(page.getByTestId('address-input')).toBeVisible();
