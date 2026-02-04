@@ -54,7 +54,7 @@ describe('spotsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Suppress expected console output during tests
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     // Default: reverse geocoding succeeds
     vi.mocked(geocodingService.reverseGeocode).mockResolvedValue({
       address: '123 Main St, New York',
@@ -464,9 +464,7 @@ describe('spotsService', () => {
 
       await spotsService.deleteSpot(userId, spotId);
 
-      expect(r2Service.deleteObject).toHaveBeenCalledWith(
-        'photos/user-123/1234567890-abc123.jpg'
-      );
+      expect(r2Service.deleteObject).toHaveBeenCalledWith('photos/user-123/1234567890-abc123.jpg');
     });
 
     it('should not call R2 delete when spot has no photo', async () => {

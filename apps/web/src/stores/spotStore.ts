@@ -357,7 +357,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
         const newSpots = state.spots.filter((s) => s.id !== spotId);
         // Update latestSpot if the deleted spot was the latest
         const newLatest =
-          state.latestSpot?.id === spotId ? newSpots[0] ?? null : state.latestSpot;
+          state.latestSpot?.id === spotId ? (newSpots[0] ?? null) : state.latestSpot;
 
         return {
           spots: newSpots,

@@ -49,7 +49,9 @@ export const HomePage = () => {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +70,7 @@ export const HomePage = () => {
   useEffect(() => {
     // Only attempt once and only if user is authenticated or guest
     if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
-    
+
     // Try to get location if permission is granted or prompt (browser will ask)
     if (permissionState !== 'denied' && !currentLocation) {
       setMapLoadAttempted(true);
@@ -279,7 +281,10 @@ export const HomePage = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Map Section with Save Button */}
           {(currentLocation || isLoadingLocation) && (
-            <div className="w-full rounded-xl overflow-hidden shadow-md bg-white" data-testid="home-map-section">
+            <div
+              className="w-full rounded-xl overflow-hidden shadow-md bg-white"
+              data-testid="home-map-section"
+            >
               {isLoadingLocation ? (
                 <div className="h-48 bg-gray-200 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -308,16 +313,21 @@ export const HomePage = () => {
                   />
                 </Suspense>
               ) : null}
-              
+
               {/* Address display */}
               <div className="px-4 py-3 border-b border-gray-100">
                 <div className="flex items-start gap-2">
-                  <span className="text-gray-400" aria-hidden="true">📍</span>
+                  <span className="text-gray-400" aria-hidden="true">
+                    📍
+                  </span>
                   <div className="flex-1 text-left">
                     {isAddressLoading ? (
                       <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
                     ) : currentAddress ? (
-                      <p className="text-sm font-medium text-gray-800" data-testid="home-current-address">
+                      <p
+                        className="text-sm font-medium text-gray-800"
+                        data-testid="home-current-address"
+                      >
                         {currentAddress}
                       </p>
                     ) : (

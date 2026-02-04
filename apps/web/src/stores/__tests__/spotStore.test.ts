@@ -101,7 +101,7 @@ describe('spotStore', () => {
     });
 
     it('should set isSaving to true while saving', async () => {
-      vi.mocked(apiClient.post).mockImplementation(() => new Promise(() => { })); // Never resolves
+      vi.mocked(apiClient.post).mockImplementation(() => new Promise(() => {})); // Never resolves
 
       void useSpotStore.getState().saveSpot(mockPosition);
 
@@ -390,7 +390,7 @@ describe('spotStore', () => {
     });
 
     it('should set isLoadingLatest to true while fetching', async () => {
-      vi.mocked(apiClient.get).mockImplementation(() => new Promise(() => { })); // Never resolves
+      vi.mocked(apiClient.get).mockImplementation(() => new Promise(() => {})); // Never resolves
 
       void useSpotStore.getState().fetchLatestSpot();
 
