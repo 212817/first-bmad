@@ -18,7 +18,7 @@
     "db:seed:cartags": "tsx src/scripts/seedCarTags.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/client-s3": "^3.982.0",
     "@aws-sdk/s3-request-presigner": "^3.980.0",
     "@neondatabase/serverless": "^1.0.2",
     "@repo/shared": "workspace:*",
