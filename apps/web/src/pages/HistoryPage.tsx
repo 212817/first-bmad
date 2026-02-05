@@ -176,7 +176,7 @@ export const HistoryPage = () => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1">{renderContent()}</main>
+        <main className="flex-1 pb-24">{renderContent()}</main>
       </div>
     </div>
   );

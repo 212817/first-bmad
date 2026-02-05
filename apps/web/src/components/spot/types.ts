@@ -14,6 +14,8 @@ export interface SpotDetailCardProps {
   editable?: boolean;
   /** Callback when marker position changes on the map */
   onPositionChange?: (lat: number, lng: number, accuracy: number) => void;
+  /** Optional car tag selector component to render inline */
+  tagSelector?: React.ReactNode;
 }
 
 /**

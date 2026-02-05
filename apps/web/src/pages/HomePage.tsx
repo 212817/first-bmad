@@ -57,6 +57,7 @@ export const HomePage = () => {
   );
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Reverse geocode the current/adjusted location to get address
@@ -313,7 +314,7 @@ export const HomePage = () => {
         />
       )}
 
-      <main className="flex-1 flex flex-col items-center p-4 pt-3 text-center">
+      <main className="flex-1 flex flex-col items-center p-4 pt-3 pb-24 text-center">
         {/* Options Container */}
         <div className="w-full max-w-md space-y-6">
           {/* Map Section with Save Button */}
@@ -370,6 +371,35 @@ export const HomePage = () => {
                     ) : (
                       <p className="text-sm text-gray-500">Address unavailable</p>
                     )}
+                    {/* Always show coordinates */}
+                    {displayLat && displayLng && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const coords = `${displayLat.toFixed(6)}, ${displayLng.toFixed(6)}`;
+                          navigator.clipboard.writeText(coords);
+                        }}
+                        className="text-xs text-gray-500 hover:text-indigo-600 mt-1 flex items-center gap-1 transition-colors"
+                        title="Tap to copy coordinates"
+                      >
+                        <span>
+                          {displayLat.toFixed(4)}°N, {displayLng.toFixed(4)}°E
+                        </span>
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </button>
+                    )}
                     {adjustedLocation && (
                       <p className="text-xs text-indigo-600 mt-1">Position adjusted</p>
                     )}
@@ -378,7 +408,7 @@ export const HomePage = () => {
               </div>
 
               {/* Hint text */}
-              <p className="px-3 py-2 text-xs text-gray-500 text-center border-b border-gray-100">
+              <p className="px-3 py-0.5 text-xs text-gray-500 text-center border-b border-gray-100">
                 Drag the map to adjust your parking location
               </p>
 
@@ -487,67 +517,112 @@ export const HomePage = () => {
             </button>
           )}
 
-          {/* Divider */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-gray-500 font-medium">or</span>
-            <div className="flex-1 h-px bg-gray-300" />
-          </div>
-
-          {/* Option 2: Enter Address */}
-          <form onSubmit={handleAddressSubmit} className="space-y-3">
-            <label htmlFor="address-input" className="block text-left text-gray-700 font-medium">
-              Enter parking address
-            </label>
-            <input
-              ref={addressInputRef}
-              id="address-input"
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g., 123 Main St, City"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg text-gray-900 placeholder-gray-400"
-              data-testid="address-input"
-            />
+          {/* Manual address entry - collapsed by default */}
+          {!showAddressForm ? (
             <button
-              type="submit"
-              disabled={!address.trim() || isAddressBusy}
-              className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white text-lg font-semibold rounded-lg transition-colors flex items-center gap-2 justify-center"
-              data-testid="save-address-button"
+              type="button"
+              onClick={() => setShowAddressForm(true)}
+              className="w-full flex items-center justify-center gap-3 text-gray-500 hover:text-gray-700 transition-colors"
+              data-testid="show-address-form-button"
             >
-              {isAddressBusy ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <span>🚗</span>
-                  Save spot
-                </>
-              )}
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              <div className="flex-1 h-px bg-gray-300" />
+              <span className="text-base whitespace-nowrap px-3">or Enter address manually ✏️</span>
+              <div className="flex-1 h-px bg-gray-300" />
             </button>
-          </form>
+          ) : (
+            <>
+              {/* Divider */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-300" />
+                <span className="text-gray-500 font-medium">or</span>
+                <div className="flex-1 h-px bg-gray-300" />
+              </div>
+
+              {/* Address form */}
+              <form onSubmit={handleAddressSubmit} className="space-y-3">
+                <label
+                  htmlFor="address-input"
+                  className="block text-left text-gray-700 font-medium"
+                >
+                  Enter parking address
+                </label>
+                <input
+                  ref={addressInputRef}
+                  id="address-input"
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g., 123 Main St, City"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg text-gray-900 placeholder-gray-400"
+                  data-testid="address-input"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddressForm(false);
+                      setAddress('');
+                    }}
+                    className="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!address.trim() || isAddressBusy}
+                    className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white text-lg font-semibold rounded-lg transition-colors flex items-center gap-2 justify-center"
+                    data-testid="save-address-button"
+                  >
+                    {isAddressBusy ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <span>🚗</span>
+                        Save spot
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Latest Spot Card - shown when authenticated or in guest mode */}
         {(isAuthenticated || isGuest) && (
-          <div className="w-full max-w-md mt-10">
+          <div className="w-full max-w-md mt-4">
             <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">
               Last parked spot
             </h2>

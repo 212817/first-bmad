@@ -7,28 +7,31 @@ import { LayerSwitcher } from './LayerSwitcher';
 import type { SpotMapProps, MapViewType } from './types';
 import { TILE_LAYERS, MAP_LAYER_STORAGE_KEY, DEFAULT_ZOOM } from './types';
 
-// Custom SVG marker icon - cyan/blue pin style
+// Custom SVG marker icon - outline style with blue-to-cyan gradient (matching Flaticon design)
 const customMarkerSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 64" width="48" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 84" width="64" height="84">
   <defs>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+    <linearGradient id="pinGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0066FF"/>
+      <stop offset="100%" stop-color="#00D4FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-10%" width="140%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
     </filter>
   </defs>
-  <path d="M24 0C10.745 0 0 10.745 0 24c0 18 24 40 24 40s24-22 24-40C48 10.745 37.255 0 24 0z" 
-        fill="#0EA5E9" filter="url(#shadow)"/>
-  <circle cx="24" cy="22" r="10" fill="white" opacity="0.9"/>
-  <circle cx="24" cy="22" r="5" fill="#0EA5E9"/>
+  <path d="M32 4C17.64 4 6 15.64 6 30c0 6.5 2.2 12.5 6 17.3L32 78l20-30.7c3.8-4.8 6-10.8 6-17.3C58 15.64 46.36 4 32 4z" 
+        fill="none" stroke="url(#pinGradient)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  <circle cx="32" cy="30" r="11" fill="none" stroke="url(#pinGradient)" stroke-width="4"/>
 </svg>`;
 
 const customMarkerUrl = `data:image/svg+xml;base64,${btoa(customMarkerSvg)}`;
 
-// Configure custom icon for all markers
+// Configure custom icon for all markers - smaller size
 const customIcon = L.icon({
   iconUrl: customMarkerUrl,
-  iconSize: [36, 48],
-  iconAnchor: [18, 48],
-  popupAnchor: [0, -48],
+  iconSize: [28, 36],
+  iconAnchor: [14, 36],
+  popupAnchor: [0, -36],
 });
 
 L.Marker.prototype.options.icon = customIcon;
@@ -116,7 +119,7 @@ const LocateControl = ({ onLocate }: { onLocate: (lat: number, lng: number) => v
     <button
       onClick={handleLocate}
       disabled={isLocating}
-      className="absolute bottom-16 right-2 z-[1000] w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 disabled:opacity-50"
+      className="absolute bottom-16 right-2 z-[400] w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 disabled:opacity-50"
       data-testid="map-locate-button"
       aria-label="Find my location"
     >
@@ -255,8 +258,8 @@ export const SpotMap = ({
           <TileLayer key={`overlay-${activeLayer}`} url={tileConfig.overlay} attribution="" />
         )}
 
-        {/* Marker only shown in non-editable mode */}
-        {!editable && <Marker position={displayPosition} />}
+        {/* Marker only shown in non-editable mode - low z-index to avoid overlapping UI */}
+        {!editable && <Marker position={displayPosition} zIndexOffset={-1000} />}
 
         {/* Locate me button - only show when editable (must be inside MapContainer for useMap) */}
         {editable && (
@@ -277,14 +280,27 @@ export const SpotMap = ({
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-[500] pointer-events-none"
           data-testid="map-center-marker"
         >
-          <svg width="30" height="46" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+          <svg width="28" height="36" viewBox="0 0 50 65" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="editPinGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#00D4FF" />
+                <stop offset="100%" stopColor="#0066FF" />
+              </linearGradient>
+            </defs>
             <path
-              d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5s12.5-19.1 12.5-28.5C25 5.6 19.4 0 12.5 0z"
+              d="M25 1C11.745 1 1 11.745 1 25c0 11.255 24 39 24 39s24-27.745 24-39C49 11.745 38.255 1 25 1z"
               fill="none"
-              stroke="#ef4444"
+              stroke="url(#editPinGradient)"
               strokeWidth="3"
             />
-            <circle cx="12.5" cy="12.5" r="4" fill="none" stroke="#ef4444" strokeWidth="3" />
+            <circle
+              cx="25"
+              cy="25"
+              r="10"
+              fill="none"
+              stroke="url(#editPinGradient)"
+              strokeWidth="3"
+            />
           </svg>
         </div>
       )}
@@ -292,7 +308,7 @@ export const SpotMap = ({
       {/* Confirm/Cancel buttons when marker moved */}
       {isDirty && editable && (
         <div
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-[1000]"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-[400]"
           data-testid="map-confirm-controls"
         >
           <button
@@ -315,7 +331,7 @@ export const SpotMap = ({
       {/* Drag hint when editable */}
       {editable && !isDirty && (
         <div
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 text-white text-xs rounded-full z-[1000]"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 text-white text-xs rounded-full z-[400]"
           data-testid="map-drag-hint"
         >
           Drag map to adjust location

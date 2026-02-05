@@ -253,8 +253,7 @@ describe('SpotConfirmationPage', () => {
     it('should show CarTagSelector always visible', () => {
       renderWithRouter();
 
-      // CarTagSelector should be visible immediately (no toggle needed)
-      expect(screen.getByTestId('car-tag-section')).toBeInTheDocument();
+      // CarTagSelector is now rendered inside SpotDetailCard
       expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
     });
 

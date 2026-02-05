@@ -70,8 +70,10 @@ describe('CarTagSelector', () => {
       fireEvent.click(screen.getByTestId('car-tag-selector'));
 
       expect(screen.getByTestId('car-tag-dropdown')).toBeInTheDocument();
-      expect(screen.getByTestId('car-tag-option-tag-1')).toBeInTheDocument();
+      // Selected tag (tag-1) is hidden from dropdown, only other tags shown
+      expect(screen.queryByTestId('car-tag-option-tag-1')).not.toBeInTheDocument();
       expect(screen.getByTestId('car-tag-option-tag-2')).toBeInTheDocument();
+      expect(screen.getByTestId('car-tag-option-tag-3')).toBeInTheDocument();
     });
 
     it('should select a tag when clicked', async () => {
@@ -122,7 +124,7 @@ describe('CarTagSelector', () => {
       const addButton = screen.getByTestId('add-tag-disabled');
       expect(addButton).toBeInTheDocument();
       expect(addButton).toBeDisabled();
-      expect(addButton).toHaveAttribute('title', 'Sign in to add custom tags');
+      expect(addButton).toHaveAttribute('title', 'Sign in to add tags');
     });
 
     it('should not show add form for guest users', async () => {
@@ -151,7 +153,7 @@ describe('CarTagSelector', () => {
       const addButton = screen.getByTestId('add-tag-button');
       expect(addButton).toBeInTheDocument();
       expect(addButton).not.toBeDisabled();
-      expect(addButton).toHaveTextContent('+ Add custom tag');
+      expect(addButton).toHaveTextContent('+ Add tag');
     });
 
     it('should show add form when add button is clicked', async () => {

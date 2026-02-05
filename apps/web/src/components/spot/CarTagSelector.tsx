@@ -17,7 +17,7 @@ const COLOR_OPTIONS = [
 
 /**
  * Dropdown selector for car tags
- * Shows default tags first, then user's custom tags
+ * Shows custom tags first, then default tags
  * Authenticated users can add custom tags
  */
 export const CarTagSelector = ({
@@ -35,8 +35,29 @@ export const CarTagSelector = ({
   const { tags, isLoading, createTag } = useCarTagStore();
   const isGuest = useGuestStore((state) => state.isGuest);
 
-  // Find the currently selected tag, fallback to first tag (My Car)
-  const currentTag = tags.find((t) => t.id === selectedTagId) || tags[0];
+  // Sort tags: custom tags first, then default tags
+  const sortedTags = [...tags].sort((a, b) => {
+    if (a.isDefault === b.isDefault) return 0;
+    return a.isDefault ? 1 : -1; // Custom (isDefault: false) first
+  });
+
+  // Get preferred default tag (first custom tag, or first default)
+  const preferredTag = sortedTags[0];
+
+  // Find the currently selected tag, fallback to preferred tag
+  const currentTag = sortedTags.find((t) => t.id === selectedTagId) || preferredTag;
+
+  // Auto-select preferred tag if current selection is a default tag but custom tags exist
+  useEffect(() => {
+    if (!isLoading && preferredTag && !preferredTag.isDefault) {
+      // User has custom tags - check if we should auto-select
+      const currentSelected = tags.find((t) => t.id === selectedTagId);
+      if (!currentSelected || currentSelected.isDefault) {
+        // Current selection is default or not found - auto-select first custom tag
+        onSelect(preferredTag.id);
+      }
+    }
+  }, [isLoading, preferredTag, selectedTagId, tags, onSelect]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -147,61 +168,36 @@ export const CarTagSelector = ({
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden"
+          className="absolute top-full left-0 mt-1 w-max bg-white border border-gray-200 rounded-lg shadow-lg z-[500] overflow-hidden"
           role="listbox"
           data-testid="car-tag-dropdown"
         >
           <div className="max-h-60 overflow-y-auto">
-            {tags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => {
-                  onSelect(tag.id);
-                  setIsOpen(false);
-                }}
-                className={`
-                  w-full flex items-center gap-2 px-3 py-2.5 text-left
-                  transition-colors duration-150
-                  ${
-                    tag.id === selectedTagId
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }
-                `}
-                role="option"
-                aria-selected={tag.id === selectedTagId}
-                data-testid={`car-tag-option-${tag.id}`}
-              >
-                <span
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: tag.color }}
-                  aria-hidden="true"
-                />
-                <span className="text-sm flex-1">{tag.name}</span>
-                {tag.id === selectedTagId && (
-                  <svg
-                    className="w-4 h-4 text-indigo-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            {sortedTags
+              .filter((tag) => tag.id !== selectedTagId)
+              .map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(tag.id);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors duration-150 hover:bg-gray-50 text-gray-700"
+                  role="option"
+                  aria-selected={false}
+                  data-testid={`car-tag-option-${tag.id}`}
+                >
+                  {/* Color circle */}
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: tag.color }}
                     aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-                {tag.isDefault && (
-                  <span className="text-xs text-gray-400 ml-auto">
-                    {tag.id === selectedTagId ? '' : ''}
-                  </span>
-                )}
-              </button>
-            ))}
+                  />
+                  {/* Name */}
+                  <span className="text-sm whitespace-nowrap">{tag.name}</span>
+                </button>
+              ))}
           </div>
 
           {/* Add custom tag section */}
@@ -212,10 +208,10 @@ export const CarTagSelector = ({
                 type="button"
                 className="w-full px-3 py-2.5 text-left text-sm text-gray-400 cursor-not-allowed"
                 disabled
-                title="Sign in to add custom tags"
+                title="Sign in to add tags"
                 data-testid="add-tag-disabled"
               >
-                + Add custom tag
+                + Add tag
               </button>
             ) : showAddForm ? (
               // Authenticated: show add form
@@ -284,7 +280,7 @@ export const CarTagSelector = ({
                 className="w-full px-3 py-2.5 text-left text-sm text-indigo-600 hover:bg-indigo-50 transition-colors"
                 data-testid="add-tag-button"
               >
-                + Add custom tag
+                + Add tag
               </button>
             )}
           </div>

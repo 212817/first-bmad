@@ -295,7 +295,7 @@ export const SharedSpotPage = () => {
         )}
 
         {/* Content below */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-4">
+        <div className="p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24 space-y-4">
           {/* Address */}
           {spot.address && (
             <p className="text-gray-700 font-medium" data-testid="shared-spot-address">

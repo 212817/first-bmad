@@ -24,6 +24,12 @@ describe('LocationCard', () => {
       expect(screen.getByTestId('location-address')).toHaveTextContent('123 Main St');
     });
 
+    it('should show "Address unavailable" when no address', () => {
+      render(<LocationCard address={null} lat={40.7128} lng={-74.006} />);
+
+      expect(screen.getByTestId('location-address')).toHaveTextContent('Address unavailable');
+    });
+
     it('should show coordinates below address', () => {
       render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
 
@@ -31,100 +37,51 @@ describe('LocationCard', () => {
     });
   });
 
-  describe('Coordinates only display', () => {
-    it('should show coordinates when no address', () => {
+  describe('Coordinates display', () => {
+    it('should format coordinates correctly', () => {
       render(<LocationCard address={null} lat={40.7128} lng={-74.006} />);
 
-      expect(screen.getByTestId('location-coordinates-only')).toBeInTheDocument();
-      expect(screen.getByTestId('location-coordinates-only')).toHaveTextContent(
-        '40.712800, -74.006000'
-      );
+      expect(screen.getByTestId('location-coordinates')).toHaveTextContent('40.7128°N');
+    });
+
+    it('should not show coordinates when not available', () => {
+      render(<LocationCard address="123 Main St" lat={null} lng={null} />);
+
+      expect(screen.queryByTestId('location-coordinates')).not.toBeInTheDocument();
     });
   });
 
-  describe('No location display', () => {
-    it('should show unavailable message when no address or coordinates', () => {
-      render(<LocationCard address={null} lat={null} lng={null} />);
-
-      expect(screen.getByTestId('location-unavailable')).toHaveTextContent(
-        'Location not available'
-      );
-    });
-  });
-
-  describe('Copy to clipboard', () => {
-    it('should copy address to clipboard when clicked', async () => {
+  describe('Copy coordinates', () => {
+    it('should copy coordinates to clipboard when clicked', async () => {
       render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
 
-      fireEvent.click(screen.getByTestId('location-card'));
-
-      await waitFor(() => {
-        expect(mockWriteText).toHaveBeenCalledWith('123 Main St');
-      });
-    });
-
-    it('should copy coordinates when no address', async () => {
-      render(<LocationCard address={null} lat={40.7128} lng={-74.006} />);
-
-      fireEvent.click(screen.getByTestId('location-card'));
+      fireEvent.click(screen.getByTestId('location-coordinates'));
 
       await waitFor(() => {
         expect(mockWriteText).toHaveBeenCalledWith('40.712800, -74.006000');
       });
     });
-
-    it('should show "Copied!" feedback after copying', async () => {
-      render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
-
-      expect(screen.getByTestId('copy-hint')).toHaveTextContent('Tap to copy');
-
-      fireEvent.click(screen.getByTestId('location-card'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('copy-hint')).toHaveTextContent('Copied!');
-      });
-    });
-
-    it('should initially show tap to copy hint', () => {
-      render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
-
-      expect(screen.getByTestId('copy-hint')).toHaveTextContent('Tap to copy');
-    });
-
-    it('should handle clipboard API failure gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      mockWriteText.mockRejectedValue(new Error('Clipboard not available'));
-
-      render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
-
-      fireEvent.click(screen.getByTestId('location-card'));
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to copy to clipboard');
-      });
-
-      // Should not show "Copied!" on failure
-      expect(screen.getByTestId('copy-hint')).toHaveTextContent('Tap to copy');
-
-      consoleSpy.mockRestore();
-    });
-
-    it('should copy "Location not available" when no address or coordinates', async () => {
-      render(<LocationCard address={null} lat={null} lng={null} />);
-
-      fireEvent.click(screen.getByTestId('location-card'));
-
-      await waitFor(() => {
-        expect(mockWriteText).toHaveBeenCalledWith('Location not available');
-      });
-    });
   });
 
-  describe('Accessibility', () => {
-    it('should have accessible label', () => {
+  describe('Tag display', () => {
+    it('should show tag when provided', () => {
+      render(
+        <LocationCard
+          address="123 Main St"
+          lat={40.7128}
+          lng={-74.006}
+          tagName="My Car"
+          tagColor="#3B82F6"
+        />
+      );
+
+      expect(screen.getByTestId('tag-badge')).toHaveTextContent('My Car');
+    });
+
+    it('should not show tag when not provided', () => {
       render(<LocationCard address="123 Main St" lat={40.7128} lng={-74.006} />);
 
-      expect(screen.getByLabelText(/Copy.*to clipboard/)).toBeInTheDocument();
+      expect(screen.queryByTestId('tag-badge')).not.toBeInTheDocument();
     });
   });
 });

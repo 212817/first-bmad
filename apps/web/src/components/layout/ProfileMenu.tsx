@@ -155,7 +155,7 @@ export const ProfileMenu = () => {
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[60]"
+          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[1100]"
           role="menu"
           aria-orientation="vertical"
         >

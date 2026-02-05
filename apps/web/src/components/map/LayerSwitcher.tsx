@@ -23,7 +23,7 @@ export const LayerSwitcher = ({ activeLayer, onLayerChange }: LayerSwitcherProps
   };
 
   return (
-    <div className="absolute top-2 right-2 z-[1000]" data-testid="layer-switcher">
+    <div className="absolute top-2 right-2 z-[400]" data-testid="layer-switcher">
       {/* Toggle button */}
       <button
         onClick={() => setIsOpen(!isOpen)}

@@ -5,7 +5,7 @@ import { SpotThumbnail } from './SpotThumbnail';
 import { EmptySpotState } from './EmptySpotState';
 import { ShareButton } from './ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
-import { formatRelativeTime, formatCoordinates } from '@/utils/formatters';
+import { formatRelativeTime } from '@/utils/formatters';
 import type { LatestSpotCardProps } from './types';
 
 /**
@@ -62,11 +62,6 @@ export const LatestSpotCard = ({
   // Determine display values
   const tagName = carTagName ?? DEFAULT_TAG_NAME;
   const tagColor = carTagColor ?? DEFAULT_TAG_COLOR;
-  const locationDisplay =
-    spot.address ??
-    (spot.lat !== null && spot.lng !== null
-      ? formatCoordinates(spot.lat, spot.lng)
-      : 'Location not available');
   const timeDisplay = formatRelativeTime(spot.savedAt);
 
   return (
@@ -202,16 +197,48 @@ export const LatestSpotCard = ({
         </div>
       )}
 
-      {/* Content: Address and note below map/photo */}
+      {/* Content: Address, coordinates and note below map/photo */}
       <div className="px-4 py-3">
-        <p className="font-medium text-gray-900 truncate" data-testid="spot-location">
-          {locationDisplay}
-        </p>
-        {spot.note && (
-          <p className="text-sm text-gray-500 truncate mt-1" data-testid="spot-note">
-            {spot.note}
-          </p>
-        )}
+        <div className="flex items-start gap-2">
+          <span className="text-gray-400 shrink-0" aria-hidden="true">
+            📍
+          </span>
+          <div className="flex-1 text-left min-w-0">
+            {/* Address or fallback */}
+            <p className="text-sm font-medium text-gray-800 truncate" data-testid="spot-location">
+              {spot.address ?? 'Address unavailable'}
+            </p>
+            {/* Coordinates - always show with copy button */}
+            {spot.lat !== null && spot.lng !== null && (
+              <button
+                type="button"
+                onClick={() => {
+                  const coords = `${spot.lat!.toFixed(6)}, ${spot.lng!.toFixed(6)}`;
+                  navigator.clipboard.writeText(coords);
+                }}
+                className="text-xs text-gray-500 hover:text-indigo-600 mt-0.5 flex items-center gap-1 transition-colors"
+                title="Tap to copy coordinates"
+              >
+                <span>
+                  {spot.lat.toFixed(4)}°N, {spot.lng.toFixed(4)}°E
+                </span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+            )}
+            {spot.note && (
+              <p className="text-sm text-gray-500 truncate mt-1" data-testid="spot-note">
+                {spot.note}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Action buttons: Navigate and Share */}

@@ -4,9 +4,6 @@ import type { NoteInputProps } from './types';
 /** Maximum note length */
 const MAX_LENGTH = 500;
 
-/** Character threshold for showing warning color */
-const WARNING_THRESHOLD = 450;
-
 /** Placeholder examples */
 const PLACEHOLDER = 'Add Note: P2, near elevator • Blue pillar • Row G';
 
@@ -16,7 +13,6 @@ const PLACEHOLDER = 'Add Note: P2, near elevator • Blue pillar • Row G';
  */
 export const NoteInput = ({ value, onChange, onSave, disabled = false }: NoteInputProps) => {
   const remaining = MAX_LENGTH - value.length;
-  const isNearLimit = remaining < MAX_LENGTH - WARNING_THRESHOLD;
   const isAtLimit = remaining <= 0;
 
   /**
@@ -37,7 +33,7 @@ export const NoteInput = ({ value, onChange, onSave, disabled = false }: NoteInp
   };
 
   return (
-    <div className="space-y-1" data-testid="note-input">
+    <div data-testid="note-input">
       <textarea
         value={value}
         onChange={handleChange}
@@ -55,14 +51,12 @@ export const NoteInput = ({ value, onChange, onSave, disabled = false }: NoteInp
         `}
         data-testid="note-input-textarea"
       />
-      <div
-        className={`text-xs text-right ${
-          isAtLimit ? 'text-red-500' : isNearLimit ? 'text-amber-500' : 'text-gray-400'
-        }`}
-        data-testid="note-input-counter"
-      >
-        {value.length}/{MAX_LENGTH}
-      </div>
+      {/* Show counter only when at limit */}
+      {isAtLimit && (
+        <div className="text-xs text-right text-red-500 mt-0.5" data-testid="note-input-counter">
+          {value.length}/{MAX_LENGTH}
+        </div>
+      )}
     </div>
   );
 };

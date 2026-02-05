@@ -61,7 +61,7 @@ export const SpotActions = ({
   const galleryLabel = spot.photoUrl ? 'Photo ✓' : isMobileDevice ? 'Add Photo' : 'Gallery';
 
   return (
-    <div className="flex gap-3 py-2 overflow-x-auto scrollbar-hide" data-testid="spot-actions">
+    <div className="flex gap-3 pt-0 pb-2 overflow-x-auto scrollbar-hide" data-testid="spot-actions">
       {/* Camera Photo Button - hidden on mobile (gallery has camera option) */}
       {showCameraButton && (
         <ActionButton
