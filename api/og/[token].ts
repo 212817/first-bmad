@@ -1,5 +1,20 @@
 // api/og/[token].ts - Vercel Serverless Function for Open Graph previews
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'http';
+
+// Vercel request/response types (inline to avoid @vercel/node dependency)
+interface VercelRequest extends IncomingMessage {
+  query: Record<string, string | string[]>;
+  cookies: Record<string, string>;
+  body: unknown;
+}
+
+interface VercelResponse extends ServerResponse {
+  status(code: number): VercelResponse;
+  send(body: string): VercelResponse;
+  json(data: unknown): VercelResponse;
+  redirect(statusOrUrl: number | string, url?: string): VercelResponse;
+  setHeader(name: string, value: string | number | readonly string[]): this;
+}
 
 // Bot user agents that need OG meta tags
 const BOT_USER_AGENTS = [
