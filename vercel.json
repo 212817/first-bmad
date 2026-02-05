@@ -9,7 +9,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|Pinterest|Googlebot|bingbot).*"
+          "value": ".*(bot|crawl|spider|facebook|twitter|linkedin|whatsapp|telegram|viber|slack|discord|pinterest|google|bing|preview|fetch|curl|wget).*"
         }
       ],
       "dest": "/api/og/$1"
