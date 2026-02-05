@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useGuestStore } from '@/stores/guestStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -69,8 +70,14 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        // Redirect to login if refresh also fails
-        if (window.location.pathname !== '/login') {
+        // Only redirect to login if:
+        // 1. NOT in guest mode (guests don't have tokens)
+        // 2. NOT on login page already
+        // 3. NOT on shared spot page (public, no auth required)
+        const isGuest = useGuestStore.getState().isGuest;
+        const isPublicPath =
+          window.location.pathname === '/login' || window.location.pathname.startsWith('/s/');
+        if (!isGuest && !isPublicPath) {
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);
