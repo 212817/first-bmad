@@ -16,24 +16,32 @@ interface VercelResponse extends ServerResponse {
   setHeader(name: string, value: string | number | readonly string[]): this;
 }
 
-// Bot user agents that need OG meta tags
-const BOT_USER_AGENTS = [
-  'facebookexternalhit',
-  'Facebot',
-  'Twitterbot',
-  'LinkedInBot',
-  'WhatsApp',
-  'TelegramBot',
-  'Slackbot',
-  'Discordbot',
-  'Pinterest',
-  'Googlebot',
-  'bingbot',
+// Bot user agents that need OG meta tags - use permissive patterns
+const BOT_PATTERNS = [
+  'bot',
+  'crawl',
+  'spider',
+  'facebook',
+  'twitter',
+  'linkedin',
+  'whatsapp',
+  'telegram',
+  'viber',
+  'slack',
+  'discord',
+  'pinterest',
+  'google',
+  'bing',
+  'preview',
+  'fetch',
+  'curl',
+  'wget',
 ];
 
 function isBot(userAgent: string | undefined): boolean {
   if (!userAgent) return false;
-  return BOT_USER_AGENTS.some((bot) => userAgent.toLowerCase().includes(bot.toLowerCase()));
+  const ua = userAgent.toLowerCase();
+  return BOT_PATTERNS.some((pattern) => ua.includes(pattern));
 }
 
 function escapeHtml(str: string): string {
