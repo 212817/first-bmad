@@ -69,14 +69,13 @@ export const HomePage = () => {
   );
 
   // Fetch current location on mount for map display (for authenticated/guest users)
-  // Only auto-fetch if permission is already granted (don't trigger permission prompt on load)
+  // Auto-fetch location to show map immediately
   useEffect(() => {
     // Only attempt once and only if user is authenticated or guest
     if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
 
-    // Only auto-fetch if permission is already granted
-    // This avoids triggering permission prompts on page load (especially on Safari)
-    if (permissionState === 'granted' && !currentLocation) {
+    // Auto-fetch location on page load to show map
+    if (!currentLocation) {
       setMapLoadAttempted(true);
       setIsLoadingLocation(true);
       getCurrentPosition()
@@ -90,7 +89,7 @@ export const HomePage = () => {
         .finally(() => setIsLoadingLocation(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissionState, isAuthenticated, isGuest]);
+  }, [isAuthenticated, isGuest]);
 
   // Check auth status on mount (only if not in guest mode)
   // When OAuth completes, authMode won't be 'guest' yet (it's set after hydration)

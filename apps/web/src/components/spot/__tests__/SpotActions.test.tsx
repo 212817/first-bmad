@@ -58,8 +58,12 @@ describe('SpotActions', () => {
       const spot = createMockSpot({ photoUrl: 'https://example.com/photo.jpg' });
       render(<SpotActions spot={spot} />);
 
+      // Gallery button shows "Photo ✓" when photo exists
       const photoButton = screen.getByTestId('action-button-photo-✓');
       expect(photoButton).toBeInTheDocument();
+      // Camera button shows "Retake" when photo exists
+      const retakeButton = screen.getByTestId('action-button-retake');
+      expect(retakeButton).toBeInTheDocument();
     });
 
     it('should show Camera button without checkmark when no photo', () => {

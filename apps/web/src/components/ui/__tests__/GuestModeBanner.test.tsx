@@ -25,13 +25,13 @@ describe('GuestModeBanner', () => {
     it('should render the guest mode message', () => {
       render(<GuestModeBanner />);
 
-      expect(screen.getByText('Guest Mode - Data stored locally only')).toBeInTheDocument();
+      expect(screen.getByText('Guest Mode - Some features are limited')).toBeInTheDocument();
     });
 
     it('should render the sign in link', () => {
       render(<GuestModeBanner />);
 
-      expect(screen.getByRole('button', { name: /sign in to sync/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('should have sticky positioning', () => {
@@ -47,7 +47,7 @@ describe('GuestModeBanner', () => {
       const onSignInClick = vi.fn();
       render(<GuestModeBanner onSignInClick={onSignInClick} />);
 
-      const button = screen.getByRole('button', { name: /sign in to sync/i });
+      const button = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(button);
 
       expect(onSignInClick).toHaveBeenCalledTimes(1);
@@ -56,7 +56,7 @@ describe('GuestModeBanner', () => {
     it('should redirect to /login when onSignInClick is not provided', () => {
       render(<GuestModeBanner />);
 
-      const button = screen.getByRole('button', { name: /sign in to sync/i });
+      const button = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(button);
 
       expect(window.location.href).toBe('/login');

@@ -175,7 +175,7 @@ test.describe('Spot Detail Page', () => {
     await expect(deleteButton).toBeEnabled();
   });
 
-  test('should show placeholder when no photo (AC1)', async ({ page, context }) => {
+  test('should show full-width map when no photo (AC1)', async ({ page, context }) => {
     // Grant geolocation permission
     await context.grantPermissions(['geolocation']);
     await context.setGeolocation({ latitude: 40.7128, longitude: -74.006 });
@@ -192,8 +192,8 @@ test.describe('Spot Detail Page', () => {
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('history-spot-item').first().click();
 
-    // Check photo placeholder is visible
-    await expect(page.getByTestId('spot-photo-placeholder')).toBeVisible();
+    // Check that the map is visible (when no photo, map takes full width)
+    await expect(page.locator('.leaflet-container')).toBeVisible();
   });
 
   test('should copy to clipboard when tapping location card (AC2)', async ({ page, context }) => {

@@ -1,12 +1,19 @@
 // apps/api/src/routes/spots/spots.service.ts
 import { spotRepository } from '../../repositories/spot.repository.js';
+import { shareTokenRepository } from '../../repositories/shareToken.repository.js';
 import { carTagRepository } from '../../repositories/carTag.repository.js';
 import { geocodingService } from '../../services/geocoding/geocoding.service.js';
 import { r2Service } from '../../services/r2/r2.service.js';
 import { NotFoundError, AuthorizationError, ValidationError } from '@repo/shared/errors';
 import type { ParkingSpot } from '@repo/shared/types';
-import type { CreateSpotRequest, UpdateSpotRequest, SpotResponse } from './types.js';
+import type {
+  CreateSpotRequest,
+  UpdateSpotRequest,
+  SpotResponse,
+  CreateShareLinkResponse,
+} from './types.js';
 import { isAddressOnlyRequest } from './types.js';
+import { env } from '../../config/env.js';
 
 /**
  * Map internal ParkingSpot to API response
@@ -333,6 +340,46 @@ export const spotsService = {
         });
       }
     }
+  },
+
+  /**
+   * Create a shareable link for a parking spot
+   * Generates a unique token valid for 7 days
+   */
+  async createShareLink(userId: string, spotId: string): Promise<CreateShareLinkResponse> {
+    // Verify spot exists and user owns it
+    const spot = await spotRepository.findById(spotId);
+
+    if (!spot) {
+      throw new NotFoundError('Parking spot');
+    }
+
+    if (spot.userId !== userId) {
+      throw new AuthorizationError('Not authorized to share this spot');
+    }
+
+    // Generate unique token (use crypto for secure random string)
+    const token = crypto.randomUUID().replace(/-/g, '').slice(0, 32);
+
+    // Set expiration to 7 days from now
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    // Store the share token
+    await shareTokenRepository.create({
+      spotId,
+      token,
+      expiresAt,
+    });
+
+    // Build share URL
+    const frontendUrl = env.FRONTEND_URL || 'http://localhost:5173';
+    const shareUrl = `${frontendUrl}/s/${token}`;
+
+    return {
+      shareUrl,
+      expiresAt: expiresAt.toISOString(),
+    };
   },
 };
 

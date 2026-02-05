@@ -14,6 +14,7 @@ import type {
   UpdateSpotInput,
   PaginatedSpotsResponse,
   SpotFilters,
+  ShareLinkResponse,
 } from './spot.types';
 import { isAddressInput } from './spot.types';
 
@@ -177,7 +178,12 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
   clearSpot: () => {
     set({ currentSpot: null, error: null });
   },
-
+  /**
+   * Set current spot (used for page refresh scenarios)
+   */
+  setCurrentSpot: (spot: Spot | null) => {
+    set({ currentSpot: spot });
+  },
   /**
    * Get a single spot by ID
    * Routes to API (authenticated) or IndexedDB (guest)
@@ -466,5 +472,23 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
       hasMore: true,
       nextCursor: null,
     });
+  },
+
+  /**
+   * Create a shareable link for a spot
+   * Only available for authenticated users
+   */
+  createShareLink: async (spotId: string): Promise<ShareLinkResponse> => {
+    const isGuest = useGuestStore.getState().isGuest;
+
+    if (isGuest) {
+      throw new Error('Sharing is not available in guest mode. Please sign in to share spots.');
+    }
+
+    const response = await apiClient.post<{ success: boolean; data: ShareLinkResponse }>(
+      `/v1/spots/${spotId}/share`
+    );
+
+    return response.data.data;
   },
 }));

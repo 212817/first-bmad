@@ -90,3 +90,11 @@ export const geocodingRateLimiter: RequestHandler = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute
   max: 10,
 });
+
+/**
+ * Share link rate limiter - 10 shares per hour per user
+ */
+export const shareRateLimiter: RequestHandler = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+});
