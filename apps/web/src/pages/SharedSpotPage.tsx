@@ -303,15 +303,15 @@ export const SharedSpotPage = () => {
             </p>
           )}
 
-          {/* Coordinates with tap to copy */}
-          {canNavigate && (
+          {/* Coordinates with tap to copy - always show if available */}
+          {spot.lat != null && spot.lng != null && (
             <button
               onClick={handleCopyCoordinates}
               className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
               data-testid="shared-spot-coordinates"
             >
               <span>
-                {spot.lat!.toFixed(4)}°N, {spot.lng!.toFixed(4)}°E
+                {spot.lat.toFixed(6)}°N, {spot.lng.toFixed(6)}°E
               </span>
               <span
                 className={`transition-colors ${copiedCoords ? 'text-green-600' : 'text-gray-400'}`}

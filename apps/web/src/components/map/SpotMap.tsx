@@ -7,23 +7,31 @@ import { LayerSwitcher } from './LayerSwitcher';
 import type { SpotMapProps, MapViewType } from './types';
 import { TILE_LAYERS, MAP_LAYER_STORAGE_KEY, DEFAULT_ZOOM } from './types';
 
-// Fix Leaflet default marker icon issue in bundlers
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+// Custom SVG marker icon - cyan/blue pin style
+const customMarkerSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 64" width="48" height="64">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <path d="M24 0C10.745 0 0 10.745 0 24c0 18 24 40 24 40s24-22 24-40C48 10.745 37.255 0 24 0z" 
+        fill="#0EA5E9" filter="url(#shadow)"/>
+  <circle cx="24" cy="22" r="10" fill="white" opacity="0.9"/>
+  <circle cx="24" cy="22" r="5" fill="#0EA5E9"/>
+</svg>`;
 
-// Configure default icon
-const defaultIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const customMarkerUrl = `data:image/svg+xml;base64,${btoa(customMarkerSvg)}`;
+
+// Configure custom icon for all markers
+const customIcon = L.icon({
+  iconUrl: customMarkerUrl,
+  iconSize: [36, 48],
+  iconAnchor: [18, 48],
+  popupAnchor: [0, -48],
 });
 
-L.Marker.prototype.options.icon = defaultIcon;
+L.Marker.prototype.options.icon = customIcon;
 
 /**
  * Component to update map center when coordinates change (only for external prop changes)
