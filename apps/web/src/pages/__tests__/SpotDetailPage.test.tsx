@@ -222,11 +222,22 @@ describe('SpotDetailPage', () => {
 
       fireEvent.click(screen.getByTestId('navigate-button'));
 
-      expect(mockNavigateTo).toHaveBeenCalledWith({
-        lat: spot.lat,
-        lng: spot.lng,
-        address: spot.address,
+      // Clicking navigate now opens the map picker modal
+      await waitFor(() => {
+        expect(screen.getByTestId('map-picker-modal')).toBeInTheDocument();
       });
+
+      // Click Google Maps option
+      fireEvent.click(screen.getByTestId('map-picker-google'));
+
+      expect(mockNavigateTo).toHaveBeenCalledWith(
+        {
+          lat: spot.lat,
+          lng: spot.lng,
+          address: spot.address,
+        },
+        'google'
+      );
     });
 
     it('should disable navigate button when no coordinates', async () => {

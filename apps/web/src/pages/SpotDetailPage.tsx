@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpotStore } from '@/stores/spotStore';
 import { useCarTagStore } from '@/stores/carTagStore';
-import { navigationService } from '@/services/navigation/navigation.service';
+import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { LocationCard } from '@/components/spot/LocationCard';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
 import { TagBadge } from '@/components/spot/TagBadge';
@@ -11,6 +11,7 @@ import { DeleteConfirmDialog } from '@/components/spot/DeleteConfirmDialog';
 import { ShareButton } from '@/components/spot/ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
+import { MapPickerModal } from '@/components/navigation';
 import { formatDateTime } from '@/utils/formatters';
 import { useGuestStore } from '@/stores/guestStore';
 import type { Spot } from '@/stores/spot.types';
@@ -31,6 +32,7 @@ export const SpotDetailPage = () => {
   const { getSpotById, deleteSpot } = useSpotStore();
   const { getTagById, fetchTags } = useCarTagStore();
   const { isGuest } = useGuestStore();
+  const { openPicker, closePicker, isPickerOpen, pendingSpot, navigateToSpot } = useNavigation();
 
   const [spot, setSpot] = useState<Spot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,17 +71,12 @@ export const SpotDetailPage = () => {
   }, [spotId, getSpotById, fetchTags]);
 
   /**
-   * Navigate to the spot using the navigation service
+   * Navigate to the spot - opens map picker
    */
   const handleNavigate = useCallback(() => {
     if (!spot) return;
-
-    navigationService.navigateTo({
-      lat: spot.lat,
-      lng: spot.lng,
-      address: spot.address,
-    });
-  }, [spot]);
+    openPicker(spot);
+  }, [spot, openPicker]);
 
   /**
    * Open delete confirmation dialog
@@ -373,6 +370,13 @@ export const SpotDetailPage = () => {
         spotAddress={spot.address}
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
+      />
+
+      {/* Map Picker Modal */}
+      <MapPickerModal
+        isOpen={isPickerOpen}
+        onClose={closePicker}
+        onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
       />
     </div>
   );

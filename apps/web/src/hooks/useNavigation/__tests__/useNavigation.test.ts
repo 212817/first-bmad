@@ -1,6 +1,6 @@
 // apps/web/src/hooks/useNavigation/__tests__/useNavigation.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useNavigation } from '../useNavigation';
 import { navigationService } from '@/services/navigation/navigation.service';
 import type { Spot } from '@/stores/spot.types';
@@ -10,7 +10,6 @@ vi.mock('@/services/navigation/navigation.service', () => ({
   navigationService: {
     navigateTo: vi.fn(),
     getNavigationUrl: vi.fn(),
-    getPreferredProvider: vi.fn(() => 'google'),
   },
 }));
 
@@ -77,41 +76,75 @@ describe('useNavigation', () => {
   });
 
   describe('navigateToSpot', () => {
-    it('should call navigationService.navigateTo with spot coordinates', () => {
+    it('should call navigationService.navigateTo with spot coordinates and provider', () => {
       const { result } = renderHook(() => useNavigation());
       const spot = createMockSpot();
-      result.current.navigateToSpot(spot);
-      expect(navigationService.navigateTo).toHaveBeenCalledWith({
-        lat: spot.lat,
-        lng: spot.lng,
-        address: spot.address,
-      });
+      result.current.navigateToSpot(spot, 'google');
+      expect(navigationService.navigateTo).toHaveBeenCalledWith(
+        {
+          lat: spot.lat,
+          lng: spot.lng,
+          address: spot.address,
+        },
+        'google'
+      );
     });
 
     it('should call navigationService.navigateTo with address when no coordinates', () => {
       const { result } = renderHook(() => useNavigation());
       const spot = createMockSpot({ lat: null, lng: null });
-      result.current.navigateToSpot(spot);
-      expect(navigationService.navigateTo).toHaveBeenCalledWith({
-        lat: null,
-        lng: null,
-        address: spot.address,
-      });
+      result.current.navigateToSpot(spot, 'apple');
+      expect(navigationService.navigateTo).toHaveBeenCalledWith(
+        {
+          lat: null,
+          lng: null,
+          address: spot.address,
+        },
+        'apple'
+      );
     });
 
     it('should not call navigationService.navigateTo when canNavigate is false', () => {
       const { result } = renderHook(() => useNavigation());
       const spot = createMockSpot({ lat: null, lng: null, address: null });
-      result.current.navigateToSpot(spot);
+      result.current.navigateToSpot(spot, 'google');
       expect(navigationService.navigateTo).not.toHaveBeenCalled();
     });
   });
 
-  describe('preferredProvider', () => {
-    it('should return the preferred provider from navigation service', () => {
-      vi.mocked(navigationService.getPreferredProvider).mockReturnValue('apple');
+  describe('map picker state', () => {
+    it('should initially have picker closed with no pending spot', () => {
       const { result } = renderHook(() => useNavigation());
-      expect(result.current.preferredProvider).toBe('apple');
+      expect(result.current.isPickerOpen).toBe(false);
+      expect(result.current.pendingSpot).toBeNull();
+    });
+
+    it('should open picker and set pending spot', () => {
+      const { result } = renderHook(() => useNavigation());
+      const spot = createMockSpot();
+
+      act(() => {
+        result.current.openPicker(spot);
+      });
+
+      expect(result.current.isPickerOpen).toBe(true);
+      expect(result.current.pendingSpot).toBe(spot);
+    });
+
+    it('should close picker and clear pending spot', () => {
+      const { result } = renderHook(() => useNavigation());
+      const spot = createMockSpot();
+
+      act(() => {
+        result.current.openPicker(spot);
+      });
+
+      act(() => {
+        result.current.closePicker();
+      });
+
+      expect(result.current.isPickerOpen).toBe(false);
+      expect(result.current.pendingSpot).toBeNull();
     });
   });
 });

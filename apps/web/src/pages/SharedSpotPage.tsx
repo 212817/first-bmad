@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { shareApi, type SharedSpot } from '@/services/api/shareApi';
 import { navigationService } from '@/services/navigation/navigation.service';
+import type { MapProvider } from '@/services/navigation/types';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
 import { SpotMap } from '@/components/map/SpotMap';
+import { MapPickerModal } from '@/components/navigation';
 import { formatDateTime } from '@/utils/formatters';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -24,6 +26,7 @@ export const SharedSpotPage = () => {
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const [isMapZoomed, setIsMapZoomed] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
 
   // Fetch shared spot data on mount
   useEffect(() => {
@@ -54,17 +57,31 @@ export const SharedSpotPage = () => {
   }, [token]);
 
   /**
-   * Navigate to the spot using the navigation service
+   * Open map picker for navigation
    */
   const handleNavigate = useCallback(() => {
     if (!spot) return;
-
-    navigationService.navigateTo({
-      lat: spot.lat,
-      lng: spot.lng,
-      address: spot.address,
-    });
+    setIsMapPickerOpen(true);
   }, [spot]);
+
+  /**
+   * Navigate with selected provider
+   */
+  const handleMapSelect = useCallback(
+    (provider: MapProvider) => {
+      if (!spot) return;
+      navigationService.navigateTo(
+        {
+          lat: spot.lat,
+          lng: spot.lng,
+          address: spot.address,
+        },
+        provider
+      );
+      setIsMapPickerOpen(false);
+    },
+    [spot]
+  );
 
   /**
    * Toggle photo zoom state
@@ -359,6 +376,13 @@ export const SharedSpotPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Map Picker Modal */}
+      <MapPickerModal
+        isOpen={isMapPickerOpen}
+        onClose={() => setIsMapPickerOpen(false)}
+        onSelect={handleMapSelect}
+      />
     </div>
   );
 };

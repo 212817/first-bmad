@@ -12,11 +12,12 @@ import { ShareButton } from '@/components/spot/ShareButton';
 import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
+import { MapPickerModal } from '@/components/navigation';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
 import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
+import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { imageProcessor } from '@/services/image/imageProcessor.service';
-import { navigationService } from '@/services/navigation/navigation.service';
 
 /** Large file threshold (5MB) for gallery uploads */
 const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
@@ -34,6 +35,7 @@ export const SpotConfirmationPage = () => {
   const { currentSpot, updateSpot, isSaving, getSpotById, setCurrentSpot } = useSpotStore();
   const { fetchTags, isHydrated: tagsHydrated } = useCarTagStore();
   const { isGuest } = useGuestStore();
+  const { openPicker, closePicker, isPickerOpen, pendingSpot, navigateToSpot } = useNavigation();
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
@@ -119,17 +121,12 @@ export const SpotConfirmationPage = () => {
   };
 
   /**
-   * Handle Navigate Now button - open maps navigation
+   * Handle Navigate Now button - open map picker
    */
   const handleNavigate = useCallback(() => {
     if (!currentSpot) return;
-
-    navigationService.navigateTo({
-      lat: currentSpot.lat,
-      lng: currentSpot.lng,
-      address: currentSpot.address,
-    });
-  }, [currentSpot]);
+    openPicker(currentSpot);
+  }, [currentSpot, openPicker]);
 
   /**
    * Handle Photo action button click - open camera
@@ -534,6 +531,13 @@ export const SpotConfirmationPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Map Picker Modal */}
+      <MapPickerModal
+        isOpen={isPickerOpen}
+        onClose={closePicker}
+        onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
+      />
     </div>
   );
 };

@@ -21,10 +21,8 @@ export type MapProvider = 'google' | 'apple';
  * Navigation service interface
  */
 export interface NavigationService {
-  /** Get the navigation URL for a target */
-  getNavigationUrl: (target: NavigationTarget) => string;
-  /** Navigate to a target (opens map app) */
-  navigateTo: (target: NavigationTarget) => void;
-  /** Get the preferred map provider for the current platform */
-  getPreferredProvider: () => MapProvider;
+  /** Get the navigation URL for a target with explicit provider */
+  getNavigationUrl: (target: NavigationTarget, provider?: MapProvider) => string;
+  /** Navigate to a target using specified provider (opens map app) */
+  navigateTo: (target: NavigationTarget, provider?: MapProvider) => void;
 }
