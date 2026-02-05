@@ -1,12 +1,12 @@
 // apps/web/src/pages/SharedSpotPage.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { shareApi, type SharedSpot } from '@/services/api/shareApi';
 import { navigationService } from '@/services/navigation/navigation.service';
-import { LocationCard } from '@/components/spot/LocationCard';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
 import { SpotMap } from '@/components/map/SpotMap';
 import { formatDateTime } from '@/utils/formatters';
+import { useAuthStore } from '@/stores/authStore';
 
 /**
  * Public page for viewing a shared parking spot
@@ -14,12 +14,16 @@ import { formatDateTime } from '@/utils/formatters';
  */
 export const SharedSpotPage = () => {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+  const { authMode } = useAuthStore();
+  const isAppUser = authMode === 'authenticated' || authMode === 'guest';
 
   const [spot, setSpot] = useState<SharedSpot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const [isMapZoomed, setIsMapZoomed] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
 
   // Fetch shared spot data on mount
   useEffect(() => {
@@ -68,6 +72,21 @@ export const SharedSpotPage = () => {
   const handlePhotoTap = useCallback(() => {
     setIsPhotoZoomed((prev) => !prev);
   }, []);
+
+  /**
+   * Copy coordinates to clipboard
+   */
+  const handleCopyCoordinates = useCallback(async () => {
+    if (!spot?.lat || !spot?.lng) return;
+    const coords = `${spot.lat.toFixed(6)}, ${spot.lng.toFixed(6)}`;
+    try {
+      await navigator.clipboard.writeText(coords);
+      setCopiedCoords(true);
+      setTimeout(() => setCopiedCoords(false), 2000);
+    } catch {
+      console.error('Failed to copy coordinates');
+    }
+  }, [spot]);
 
   // Loading state
   if (isLoading) {
@@ -126,14 +145,23 @@ export const SharedSpotPage = () => {
             </span>
             <h1 className="font-semibold text-lg text-gray-900">Shared Parking Spot</h1>
           </div>
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-            Get the App
-          </Link>
+          {isAppUser ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            >
+              ← Back
+            </button>
+          ) : (
+            <Link to="/" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+              Get the App
+            </Link>
+          )}
         </div>
 
-        {/* Top Section: Map and/or Photo - fixed height */}
+        {/* Top Section: Map and/or Photo - reduced height for mobile */}
         <div
-          className={`flex bg-gray-100 h-96 shrink-0 ${spot.photoUrl && canNavigate ? 'gap-0.5' : ''}`}
+          className={`flex bg-gray-100 h-56 sm:h-72 shrink-0 ${spot.photoUrl && canNavigate ? 'gap-0.5' : ''}`}
         >
           {/* Map Preview (clickable to zoom) - full width if no photo */}
           {canNavigate && (
@@ -244,14 +272,51 @@ export const SharedSpotPage = () => {
 
         {/* Content below */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-          {/* Location */}
-          <LocationCard address={spot.address} lat={spot.lat} lng={spot.lng} />
+          {/* Address */}
+          {spot.address && (
+            <p className="text-gray-700 font-medium" data-testid="shared-spot-address">
+              {spot.address}
+            </p>
+          )}
 
-          {/* Metadata: Timestamp */}
-          <div className="flex items-center justify-between">
-            <time className="text-sm text-gray-500" data-testid="shared-spot-timestamp">
-              Saved {formatDateTime(spot.savedAt)}
-            </time>
+          {/* Coordinates with tap to copy */}
+          {canNavigate && (
+            <button
+              onClick={handleCopyCoordinates}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              data-testid="shared-spot-coordinates"
+            >
+              <span>
+                {spot.lat!.toFixed(4)}°N, {spot.lng!.toFixed(4)}°E
+              </span>
+              <span
+                className={`transition-colors ${copiedCoords ? 'text-green-600' : 'text-gray-400'}`}
+              >
+                {copiedCoords ? 'Copied!' : 'Tap to copy'}
+              </span>
+            </button>
+          )}
+
+          {/* Navigate button - moved up for visibility */}
+          <div className="pt-2">
+            <button
+              onClick={handleNavigate}
+              disabled={!canNavigate}
+              className={`w-full h-14 rounded-lg font-medium flex items-center justify-center gap-2 text-lg transition-colors ${
+                canNavigate
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+              data-testid="shared-spot-navigate-button"
+            >
+              <span aria-hidden="true">🧭</span>
+              Navigate to Spot
+            </button>
+          </div>
+
+          {/* Metadata: Timestamp - moved below navigate button */}
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <time data-testid="shared-spot-timestamp">Saved {formatDateTime(spot.savedAt)}</time>
             <span className="text-xs text-gray-400">Expires {formatDateTime(spot.expiresAt)}</span>
           </div>
 
@@ -282,23 +347,6 @@ export const SharedSpotPage = () => {
               )}
             </div>
           )}
-
-          {/* Navigate button */}
-          <div className="pt-4">
-            <button
-              onClick={handleNavigate}
-              disabled={!canNavigate}
-              className={`w-full h-14 rounded-lg font-medium flex items-center justify-center gap-2 text-lg transition-colors ${
-                canNavigate
-                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-              data-testid="shared-spot-navigate-button"
-            >
-              <span aria-hidden="true">🧭</span>
-              Navigate to Spot
-            </button>
-          </div>
 
           {/* App promo */}
           <div className="text-center pt-4 text-sm text-gray-500">
