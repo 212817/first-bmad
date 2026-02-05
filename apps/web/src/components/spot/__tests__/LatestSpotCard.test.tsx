@@ -116,11 +116,11 @@ describe('LatestSpotCard', () => {
   });
 
   describe('with coordinates only', () => {
-    it('should display formatted coordinates when no address', () => {
+    it('should display Address unavailable when no address', () => {
       const spotWithCoords = { ...mockSpot, address: null };
       render(<LatestSpotCard spot={spotWithCoords} onNavigate={mockOnNavigate} />);
 
-      expect(screen.getByTestId('spot-location')).toHaveTextContent('40.7128°N, 74.0060°W');
+      expect(screen.getByTestId('spot-location')).toHaveTextContent('Address unavailable');
     });
   });
 

@@ -64,7 +64,7 @@ export const formatCoordinates = (lat: number, lng: number): string => {
 
 /**
  * Format a date/timestamp to human-readable date and time
- * Example: "Jan 15, 2026 at 3:45 PM"
+ * Example: "Jan 15, 2026 at 15:45"
  */
 export const formatDateTime = (date: Date | string): string => {
   const target = typeof date === 'string' ? new Date(date) : date;
@@ -77,8 +77,9 @@ export const formatDateTime = (date: Date | string): string => {
     }) +
     ' at ' +
     target.toLocaleTimeString(undefined, {
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     })
   );
 };

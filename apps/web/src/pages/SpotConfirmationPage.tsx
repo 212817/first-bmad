@@ -324,11 +324,28 @@ export const SpotConfirmationPage = () => {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col"
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col relative"
       data-testid="spot-confirmation-page"
     >
       {/* Camera Capture Modal */}
       {showCamera && <CameraCapture onCapture={handlePhotoCapture} onClose={handleCameraClose} />}
+
+      {/* Close button - top right */}
+      <button
+        onClick={handleDone}
+        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white text-gray-600 hover:text-gray-900 shadow-sm transition-colors z-10"
+        aria-label="Close"
+        data-testid="close-button"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
 
       {/* Success Header - inline and compact */}
       <div className="flex flex-col items-center justify-center py-2">
@@ -347,7 +364,7 @@ export const SpotConfirmationPage = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 pb-4 max-w-5xl mx-auto w-full">
+      <main className="flex-1 px-4 pb-24 max-w-5xl mx-auto w-full">
         {/* Two-column layout on large screens */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-6">
           {/* Left Column: Map Card */}
@@ -358,6 +375,13 @@ export const SpotConfirmationPage = () => {
               isAddressLoading={isAddressLoading}
               editable={true}
               onPositionChange={handlePositionChange}
+              tagSelector={
+                <CarTagSelector
+                  selectedTagId={currentSpot.carTagId}
+                  onSelect={handleTagSelect}
+                  disabled={isSaving}
+                />
+              }
             />
           </div>
 
@@ -470,7 +494,7 @@ export const SpotConfirmationPage = () => {
             )}
 
             {/* Note Input Section */}
-            <div className="mt-4 lg:mt-4" data-testid="note-section">
+            <div className="mt-2" data-testid="note-section">
               <NoteInput
                 value={noteValue}
                 onChange={handleNoteChange}
@@ -480,7 +504,7 @@ export const SpotConfirmationPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-4">
+            <div className="mt-2">
               <SpotActions
                 spot={currentSpot}
                 onPhotoClick={handlePhotoClick}
@@ -489,20 +513,8 @@ export const SpotConfirmationPage = () => {
               />
             </div>
 
-            {/* Car Tag Selector */}
-            <div className="mt-4" data-testid="car-tag-section">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Car Tag:</span>
-                <CarTagSelector
-                  selectedTagId={currentSpot.carTagId}
-                  onSelect={handleTagSelect}
-                  disabled={isSaving}
-                />
-              </div>
-            </div>
-
             {/* Navigation Buttons */}
-            <div className="mt-auto pt-6 space-y-3">
+            <div className="mt-2 space-y-3">
               <button
                 onClick={handleNavigate}
                 className="w-full h-12 border-2 border-indigo-500 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition-colors"

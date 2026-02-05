@@ -24,6 +24,17 @@ const DEFAULT_PAGE_SIZE = 20;
 const GUEST_DEFAULT_TAG_ID = 'default-my-car';
 
 /**
+ * Get the default tag ID for new spots
+ * Returns first custom tag if available, otherwise default "My Car"
+ */
+const getDefaultTagId = (): string => {
+  const tags = useCarTagStore.getState().tags;
+  // Find first custom tag (non-default)
+  const customTag = tags.find((t) => !t.isDefault);
+  return customTag?.id ?? GUEST_DEFAULT_TAG_ID;
+};
+
+/**
  * Spot store for managing parking spot state
  * Routes to API (authenticated) or IndexedDB (guest) based on auth mode
  */
@@ -59,12 +70,13 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
       let spot: Spot;
 
       if (isGuest) {
-        // Save to IndexedDB for guest users (with default "My Car" tag)
+        // Save to IndexedDB for guest users (with preferred default tag)
+        const defaultTagId = getDefaultTagId();
         if (isAddress) {
           // Address-only save (manual entry)
           spot = {
             id: crypto.randomUUID(),
-            carTagId: GUEST_DEFAULT_TAG_ID,
+            carTagId: defaultTagId,
             lat: input.lat ?? null,
             lng: input.lng ?? null,
             accuracyMeters: null,
@@ -80,7 +92,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
           // GPS coordinates save
           spot = {
             id: crypto.randomUUID(),
-            carTagId: GUEST_DEFAULT_TAG_ID,
+            carTagId: defaultTagId,
             lat: input.lat,
             lng: input.lng,
             accuracyMeters: input.accuracy != null ? Math.round(input.accuracy) : null,

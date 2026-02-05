@@ -1,9 +1,7 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
 import { Suspense, lazy } from 'react';
 
-import { useCarTagStore } from '@/stores/carTagStore';
 import { SpotAddress } from './SpotAddress';
-import { TagBadge } from './TagBadge';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { SpotDetailCardProps } from './types';
 
@@ -32,15 +30,14 @@ export const SpotDetailCard = ({
   isAddressLoading = false,
   editable = false,
   onPositionChange,
+  tagSelector,
 }: SpotDetailCardProps) => {
-  const { getTagById } = useCarTagStore();
-  const carTag = spot.carTagId ? getTagById(spot.carTagId) : null;
   const hasCoordinates = spot.lat !== null && spot.lng !== null;
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="spot-detail-card">
+    <div className="bg-white rounded-xl shadow-md overflow-visible" data-testid="spot-detail-card">
       {/* Map or Placeholder */}
-      <div>
+      <div className="overflow-hidden rounded-t-xl">
         {hasCoordinates ? (
           <Suspense
             fallback={
@@ -73,7 +70,7 @@ export const SpotDetailCard = ({
       </div>
 
       {/* Spot Details */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-1">
         {/* Address/Coordinates - unified display */}
         <SpotAddress
           lat={spot.lat}
@@ -82,31 +79,33 @@ export const SpotDetailCard = ({
           isLoading={isAddressLoading}
         />
 
-        {/* Accuracy (when available and has coords) */}
-        {spot.accuracyMeters !== null && spot.lat !== null && spot.lng !== null && (
-          <p className="text-xs text-gray-500 ml-7">±{spot.accuracyMeters}m accuracy</p>
-        )}
-
-        {/* Car Tag (when set) */}
-        {carTag && (
-          <div className="flex items-center gap-2" data-testid="spot-car-tag">
-            <span className="text-gray-400" aria-hidden="true">
-              🚗
-            </span>
-            <TagBadge name={carTag.name} color={carTag.color} />
-          </div>
-        )}
+        {/* Accuracy and Tag in same row */}
+        <div className="flex items-center justify-between ml-7">
+          {/* Accuracy (when available and has coords) */}
+          {spot.accuracyMeters !== null && spot.lat !== null && spot.lng !== null ? (
+            <p className="text-xs text-gray-500">±{spot.accuracyMeters}m accuracy</p>
+          ) : (
+            <span />
+          )}
+          {/* Car Tag Selector (inline) */}
+          {tagSelector && (
+            <div className="flex items-center gap-1" data-testid="spot-car-tag">
+              <span className="text-gray-400 text-xs" aria-hidden="true">
+                🚗
+              </span>
+              {tagSelector}
+            </div>
+          )}
+        </div>
 
         {/* Timestamp */}
-        <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-          <span className="text-gray-400" aria-hidden="true">
+        <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100">
+          <span className="text-gray-400 text-xs" aria-hidden="true">
             🕐
           </span>
-          <div className="text-sm">
-            <span className="text-gray-700" data-testid="spot-relative-time">
-              Saved {formatRelativeTime(spot.savedAt)}
-            </span>
-            <span className="text-gray-400 ml-2" data-testid="spot-timestamp">
+          <div className="text-xs text-gray-500">
+            <span data-testid="spot-relative-time">Saved {formatRelativeTime(spot.savedAt)}</span>
+            <span className="text-gray-400 ml-1" data-testid="spot-timestamp">
               ({formatTimestamp(spot.savedAt)})
             </span>
           </div>

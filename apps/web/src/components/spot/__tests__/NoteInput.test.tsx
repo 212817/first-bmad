@@ -32,10 +32,10 @@ describe('NoteInput', () => {
       );
     });
 
-    it('should show character counter', () => {
+    it('should not show character counter when not at limit', () => {
       render(<NoteInput {...defaultProps} />);
 
-      expect(screen.getByTestId('note-input-counter')).toHaveTextContent('0/500');
+      expect(screen.queryByTestId('note-input-counter')).not.toBeInTheDocument();
     });
 
     it('should display existing value', () => {
@@ -57,10 +57,10 @@ describe('NoteInput', () => {
       expect(onChange).toHaveBeenCalledWith('Test note');
     });
 
-    it('should update character counter on input', () => {
+    it('should not show character counter when not at limit', () => {
       render(<NoteInput {...defaultProps} value="Hello" />);
 
-      expect(screen.getByTestId('note-input-counter')).toHaveTextContent('5/500');
+      expect(screen.queryByTestId('note-input-counter')).not.toBeInTheDocument();
     });
 
     it('should call onSave on blur when value exists', () => {
@@ -106,12 +106,11 @@ describe('NoteInput', () => {
       expect(onChange).toHaveBeenCalledWith('a'.repeat(500));
     });
 
-    it('should show warning color when near limit (>450)', () => {
+    it('should not show counter when not at limit', () => {
       const nearLimitText = 'a'.repeat(455);
       render(<NoteInput {...defaultProps} value={nearLimitText} />);
 
-      const counter = screen.getByTestId('note-input-counter');
-      expect(counter).toHaveClass('text-amber-500');
+      expect(screen.queryByTestId('note-input-counter')).not.toBeInTheDocument();
     });
 
     it('should show error color when at limit (500)', () => {
@@ -122,12 +121,11 @@ describe('NoteInput', () => {
       expect(counter).toHaveClass('text-red-500');
     });
 
-    it('should show normal color when under 450', () => {
+    it('should not show counter when under limit', () => {
       const shortText = 'Short note';
       render(<NoteInput {...defaultProps} value={shortText} />);
 
-      const counter = screen.getByTestId('note-input-counter');
-      expect(counter).toHaveClass('text-gray-400');
+      expect(screen.queryByTestId('note-input-counter')).not.toBeInTheDocument();
     });
   });
 

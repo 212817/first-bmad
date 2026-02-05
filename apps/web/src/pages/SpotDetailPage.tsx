@@ -6,7 +6,6 @@ import { useCarTagStore } from '@/stores/carTagStore';
 import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { LocationCard } from '@/components/spot/LocationCard';
 import { SpotPhoto } from '@/components/spot/SpotPhoto';
-import { TagBadge } from '@/components/spot/TagBadge';
 import { DeleteConfirmDialog } from '@/components/spot/DeleteConfirmDialog';
 import { ShareButton } from '@/components/spot/ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
@@ -176,7 +175,7 @@ export const SpotDetailPage = () => {
     <div className="min-h-screen bg-gray-50 flex justify-center" data-testid="spot-detail-page">
       <div className="w-full max-w-7xl bg-white min-h-screen relative shadow-xl flex flex-col">
         {/* Header - Sticky top */}
-        <div className="h-16 px-4 sm:px-6 lg:px-8 border-b border-gray-200 flex items-center bg-white sticky top-0 z-30">
+        <div className="h-16 px-4 sm:px-6 lg:px-8 border-b border-gray-200 flex items-center bg-white sticky top-0 z-[500]">
           <button
             onClick={handleBack}
             className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700 flex items-center gap-2"
@@ -305,17 +304,15 @@ export const SpotDetailPage = () => {
         {isGuest && <GuestModeBanner onSignInClick={() => navigate('/login')} />}
 
         {/* Content below */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-          {/* Location */}
-          <LocationCard address={spot.address} lat={spot.lat} lng={spot.lng} />
-
-          {/* Metadata: Timestamp and Tag */}
-          <div className="flex items-center justify-between">
-            <time className="text-sm text-gray-500" data-testid="spot-timestamp">
-              Saved {formatDateTime(spot.savedAt)}
-            </time>
-            <TagBadge name={tagName} color={tagColor} />
-          </div>
+        <div className="p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24 space-y-4">
+          {/* Location with tag */}
+          <LocationCard
+            address={spot.address}
+            lat={spot.lat}
+            lng={spot.lng}
+            tagName={tagName}
+            tagColor={tagColor}
+          />
 
           {/* Note */}
           {spot.note && (
@@ -359,6 +356,11 @@ export const SpotDetailPage = () => {
                 <span aria-hidden="true">🗑️</span>
               </button>
             </div>
+
+            {/* Timestamp - less important, shown at bottom */}
+            <time className="block text-xs text-gray-400" data-testid="spot-timestamp">
+              Saved {formatDateTime(spot.savedAt)}
+            </time>
           </div>
         </div>
       </div>
