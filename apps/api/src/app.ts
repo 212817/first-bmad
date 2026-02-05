@@ -10,6 +10,7 @@ import { spotsRoutes } from './routes/spots/spots.routes.js';
 import { photosRoutes } from './routes/photos/photos.routes.js';
 import { geocodeRoutes } from './routes/geocode/geocode.routes.js';
 import { carTagsRoutes } from './routes/car-tags/carTags.routes.js';
+import { shareRoutes } from './routes/share/share.routes.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
 
 export function createApp(): Express {
@@ -31,6 +32,7 @@ export function createApp(): Express {
   app.use('/v1/photos', photosRoutes);
   app.use('/v1/geocode', geocodeRoutes);
   app.use('/v1/car-tags', carTagsRoutes);
+  app.use('/v1/share', shareRoutes); // Public - no auth required
 
   // Error handling
   app.use(notFoundMiddleware);

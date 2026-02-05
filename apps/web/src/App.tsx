@@ -7,6 +7,7 @@ import { SpotConfirmationPage } from '@/pages/SpotConfirmationPage';
 import { ManualEntryPage } from '@/pages/ManualEntryPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { SpotDetailPage } from '@/pages/SpotDetailPage';
+import { SharedSpotPage } from '@/pages/SharedSpotPage';
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -86,6 +87,7 @@ const App = () => {
         <Route path="/spot/:spotId" element={<SpotDetailPage />} />
         <Route path="/spots/manual" element={<ManualEntryPage />} />
         <Route path="/spot/:spotId/confirm" element={<SpotConfirmationPage />} />
+        <Route path="/s/:token" element={<SharedSpotPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
