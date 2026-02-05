@@ -20,6 +20,7 @@ Never forget where you parked again. A PWA for saving and finding your parking s
 | Testing  | Vitest       | 3.x               |
 | Tooling  | pnpm         | 9.x               |
 |          | ESLint       | 9.x (flat config) |
+|          | ESLint       | 9.x (flat config) |
 
 ## Project Structure
 
