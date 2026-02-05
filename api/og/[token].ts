@@ -107,7 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const apiUrl = process.env.VITE_API_URL || 'https://first-bmad-api.vercel.app';
+    const apiUrl = process.env.API_URL || 'https://first-bmad-production.up.railway.app';
     const response = await fetch(`${apiUrl}/v1/share/${token}`);
 
     let ogData: OgData;
