@@ -13,6 +13,7 @@ import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { SignInPrompt } from '@/components/prompts/SignInPrompt';
 import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
+import { MapPickerModal } from '@/components/navigation';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { Header } from '@/components/layout/Header';
@@ -41,7 +42,7 @@ export const HomePage = () => {
     permissionState,
     error: locationError,
   } = useGeolocation();
-  const { navigateToSpot } = useNavigation();
+  const { openPicker, closePicker, isPickerOpen, pendingSpot, navigateToSpot } = useNavigation();
 
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -124,11 +125,11 @@ export const HomePage = () => {
   };
 
   /**
-   * Handle navigation to the latest spot
+   * Handle navigation to the latest spot - opens map picker
    */
   const handleNavigateToSpot = () => {
     if (!latestSpot) return;
-    navigateToSpot(latestSpot);
+    openPicker(latestSpot);
   };
 
   const handleSignInFromPrompt = () => {
@@ -578,6 +579,13 @@ export const HomePage = () => {
           </div>
         )}
       </main>
+
+      {/* Map Picker Modal */}
+      <MapPickerModal
+        isOpen={isPickerOpen}
+        onClose={closePicker}
+        onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
+      />
     </div>
   );
 };

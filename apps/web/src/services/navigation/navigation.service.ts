@@ -1,5 +1,4 @@
 // apps/web/src/services/navigation/navigation.service.ts
-import { isIOS } from '@/utils/platform';
 import type { NavigationTarget, MapProvider, NavigationService } from './types';
 
 /**
@@ -51,26 +50,17 @@ const getDestinationString = (target: NavigationTarget): string => {
 
 /**
  * Navigation service for opening map apps with walking directions
- * On iOS, opens Apple Maps; on other platforms, opens Google Maps
  */
 export const navigationService: NavigationService = {
   /**
-   * Get the preferred map provider for the current platform
-   * iOS devices use Apple Maps, all others use Google Maps
-   */
-  getPreferredProvider: (): MapProvider => {
-    return isIOS() ? 'apple' : 'google';
-  },
-
-  /**
-   * Generate the navigation URL for a target
+   * Generate the navigation URL for a target with explicit provider
    * @param target - The navigation target (coordinates and/or address)
-   * @returns The deep link URL for the appropriate maps app
+   * @param provider - The map provider to use
+   * @returns The deep link URL for the specified maps app
    * @throws Error if target has no coordinates or address
    */
-  getNavigationUrl: (target: NavigationTarget): string => {
+  getNavigationUrl: (target: NavigationTarget, provider: MapProvider = 'google'): string => {
     const destination = getDestinationString(target);
-    const provider = navigationService.getPreferredProvider();
 
     if (provider === 'apple') {
       return buildAppleMapsUrl(destination);
@@ -81,11 +71,11 @@ export const navigationService: NavigationService = {
 
   /**
    * Open the maps app with walking directions to the target
-   * Uses location.href to avoid blank tab on mobile when maps app handles the URL
    * @param target - The navigation target (coordinates and/or address)
+   * @param provider - The map provider to use
    */
-  navigateTo: (target: NavigationTarget): void => {
-    const url = navigationService.getNavigationUrl(target);
+  navigateTo: (target: NavigationTarget, provider: MapProvider = 'google'): void => {
+    const url = navigationService.getNavigationUrl(target, provider);
     // Use location.href to avoid opening a blank tab when maps app intercepts
     window.location.href = url;
   },
