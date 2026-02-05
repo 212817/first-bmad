@@ -19,7 +19,7 @@
     "format:check": "prettier --check .",
     "test": "pnpm -r run test",
     "clean": "pnpm -r run clean && rimraf node_modules",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
