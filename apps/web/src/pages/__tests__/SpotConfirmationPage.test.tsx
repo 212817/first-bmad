@@ -91,6 +91,7 @@ const mockSpot: Spot = {
   note: null,
   floor: null,
   spotIdentifier: null,
+  meterExpiresAt: null,
   isActive: true,
   savedAt: new Date().toISOString(),
 };
@@ -306,6 +307,7 @@ describe('SpotConfirmationPage', () => {
         note: null,
         floor: null,
         spotIdentifier: null,
+        meterExpiresAt: null,
         isActive: true,
         savedAt: new Date().toISOString(),
       };
@@ -342,6 +344,7 @@ describe('SpotConfirmationPage', () => {
         note: null,
         floor: null,
         spotIdentifier: null,
+        meterExpiresAt: null,
         isActive: true,
         savedAt: new Date().toISOString(),
       };

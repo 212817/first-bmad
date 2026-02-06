@@ -13,6 +13,7 @@ import { CameraCapture } from '@/components/camera/CameraCapture';
 import { UploadProgress } from '@/components/ui/UploadProgress';
 import { NoCoordinatesWarning } from '@/components/ui/NoCoordinatesWarning';
 import { MapPickerModal } from '@/components/navigation';
+import { MeterTimerInput } from '@/components/timer';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload/usePhotoUpload';
 import { useFilePicker } from '@/hooks/useFilePicker/useFilePicker';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
@@ -38,6 +39,7 @@ export const SpotConfirmationPage = () => {
   const { openPicker, closePicker, isPickerOpen, pendingSpot, navigateToSpot } = useNavigation();
   const [showSuccess, setShowSuccess] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
+  const [showMeterTimer, setShowMeterTimer] = useState(false);
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
   const [pendingRetryBlob, setPendingRetryBlob] = useState<Blob | null>(null);
   const [isProcessingGallery, setIsProcessingGallery] = useState(false);
@@ -296,12 +298,27 @@ export const SpotConfirmationPage = () => {
   );
 
   /**
-   * Handle Timer action button click
+   * Handle Timer action button click - toggle meter timer section
    */
   const handleTimerClick = () => {
-    // TODO: Epic 4 - Timer functionality
-    console.log('Set Timer - Coming in Epic 4');
+    setShowMeterTimer((prev) => !prev);
   };
+
+  /**
+   * Handle meter timer change - update spot with new expiry time
+   */
+  const handleMeterTimerChange = useCallback(
+    async (expiresAt: string | null) => {
+      if (!currentSpot) return;
+
+      try {
+        await updateSpot(currentSpot.id, { meterExpiresAt: expiresAt });
+      } catch (error) {
+        console.error('Failed to update meter timer:', error);
+      }
+    },
+    [currentSpot, updateSpot]
+  );
 
   // Show loading if no spot available
   if (!currentSpot) {
@@ -502,6 +519,20 @@ export const SpotConfirmationPage = () => {
                 disabled={isSaving}
               />
             </div>
+
+            {/* Meter Timer Section - shown when timer button is clicked */}
+            {showMeterTimer && (
+              <div
+                className="mt-2 bg-white rounded-xl p-4 shadow-sm"
+                data-testid="meter-timer-section"
+              >
+                <MeterTimerInput
+                  value={currentSpot.meterExpiresAt}
+                  onChange={handleMeterTimerChange}
+                  disabled={isSaving}
+                />
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="mt-2">

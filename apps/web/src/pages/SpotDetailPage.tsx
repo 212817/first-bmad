@@ -11,6 +11,7 @@ import { ShareButton } from '@/components/spot/ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
 import { MapPickerModal } from '@/components/navigation';
+import { MeterTimerDisplay } from '@/components/timer';
 import { formatDateTime } from '@/utils/formatters';
 import { useGuestStore } from '@/stores/guestStore';
 import type { Spot } from '@/stores/spot.types';
@@ -313,6 +314,17 @@ export const SpotDetailPage = () => {
             tagName={tagName}
             tagColor={tagColor}
           />
+
+          {/* Meter Timer Display - only shown when set */}
+          {spot.meterExpiresAt && (
+            <div
+              className="flex items-center gap-2 bg-white p-3 rounded-lg border border-gray-200"
+              data-testid="spot-meter-timer"
+            >
+              <span className="text-gray-600 text-sm">Meter expires:</span>
+              <MeterTimerDisplay expiresAt={spot.meterExpiresAt} />
+            </div>
+          )}
 
           {/* Note */}
           {spot.note && (

@@ -48,6 +48,7 @@ export interface SpotResponse {
   note: string | null;
   floor: string | null;
   spotIdentifier: string | null;
+  meterExpiresAt: string | null;
   isActive: boolean;
   savedAt: string;
 }
@@ -65,6 +66,7 @@ export interface UpdateSpotRequest {
   note?: string | null;
   floor?: string | null;
   spotIdentifier?: string | null;
+  meterExpiresAt?: string | null;
 }
 
 /**

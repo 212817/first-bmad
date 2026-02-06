@@ -37,6 +37,7 @@ export interface ParkingSpot {
   note: string | null;
   floor: string | null;
   spotIdentifier: string | null;
+  meterExpiresAt: Date | null;
   isActive: boolean;
   savedAt: Date;
   createdAt: Date;

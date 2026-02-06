@@ -31,6 +31,7 @@ const mapToResponse = (spot: ParkingSpot): SpotResponse => {
     note: spot.note,
     floor: spot.floor,
     spotIdentifier: spot.spotIdentifier,
+    meterExpiresAt: spot.meterExpiresAt ? spot.meterExpiresAt.toISOString() : null,
     isActive: spot.isActive,
     savedAt: savedAtDate.toISOString(),
   };
@@ -251,6 +252,21 @@ export const spotsService = {
       });
     }
 
+    // Validate meterExpiresAt if provided (must be in the future)
+    if (input.meterExpiresAt !== undefined && input.meterExpiresAt !== null) {
+      const meterDate = new Date(input.meterExpiresAt);
+      if (isNaN(meterDate.getTime())) {
+        throw new ValidationError('Invalid meter expiry date format', {
+          meterExpiresAt: 'Invalid date format',
+        });
+      }
+      if (meterDate.getTime() <= Date.now()) {
+        throw new ValidationError('Meter expiry must be in the future', {
+          meterExpiresAt: 'Meter expiry must be in the future',
+        });
+      }
+    }
+
     // Validate coordinates if provided
     const hasLatLng = input.lat !== undefined && input.lng !== undefined;
     if (hasLatLng) {
@@ -282,6 +298,11 @@ export const spotsService = {
     if (input.accuracy !== undefined) {
       updateData.accuracyMeters = input.accuracy;
       delete updateData.accuracy;
+    }
+
+    // Convert meterExpiresAt string to Date (or null to clear)
+    if (input.meterExpiresAt !== undefined) {
+      updateData.meterExpiresAt = input.meterExpiresAt ? new Date(input.meterExpiresAt) : null;
     }
 
     const updated = await spotRepository.update(spotId, updateData);

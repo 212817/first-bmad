@@ -196,7 +196,10 @@ test.describe('Spot Detail Page', () => {
     await expect(page.locator('.leaflet-container')).toBeVisible();
   });
 
-  test('should copy to clipboard when tapping location card (AC2)', async ({ page, context }) => {
+  test('should copy coordinates when tapping coordinates button (AC2)', async ({
+    page,
+    context,
+  }) => {
     // Grant geolocation permission
     await context.grantPermissions(['geolocation', 'clipboard-read', 'clipboard-write']);
     await context.setGeolocation({ latitude: 40.7128, longitude: -74.006 });
@@ -213,11 +216,12 @@ test.describe('Spot Detail Page', () => {
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('history-spot-item').first().click();
 
-    // Click location card to copy
-    await page.getByTestId('location-card').click();
+    // Click location coordinates button to copy (not the card itself)
+    await page.getByTestId('location-coordinates').click();
 
-    // Check for "Copied!" feedback
-    await expect(page.getByTestId('copy-hint')).toContainText('Copied!');
+    // Verify clipboard contains coordinates
+    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toMatch(/\d+\.\d+, -?\d+\.\d+/);
   });
 
   test('should navigate back when clicking back button', async ({ page, context }) => {

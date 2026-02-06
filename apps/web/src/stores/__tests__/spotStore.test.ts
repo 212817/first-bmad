@@ -90,6 +90,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-01-15T12:00:00Z',
     };
@@ -257,6 +258,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2024-01-15T12:00:00Z',
     };
@@ -324,6 +326,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2024-01-15T12:00:00Z',
     };
@@ -379,6 +382,7 @@ describe('spotStore', () => {
       note: 'Level P2',
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-02-03T10:00:00Z',
     };
@@ -446,6 +450,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-02-03T10:00:00Z',
     };
@@ -494,6 +499,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-02-03T12:00:00Z',
     };
@@ -687,6 +693,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-01-15T12:00:00Z',
     };
@@ -778,6 +785,7 @@ describe('spotStore', () => {
       note: null,
       floor: null,
       spotIdentifier: null,
+      meterExpiresAt: null,
       isActive: true,
       savedAt: '2026-01-15T12:00:00Z',
     };
@@ -813,6 +821,106 @@ describe('spotStore', () => {
 
       expect(result).toBe(false);
       expect(useSpotStore.getState().error).toBe('IndexedDB error');
+    });
+  });
+
+  describe('meterExpiresAt - guest mode timer', () => {
+    const mockGuestSpot = {
+      id: 'guest-spot-123',
+      carTagId: 'default-tag',
+      lat: 40.7128,
+      lng: -74.006,
+      accuracyMeters: 15,
+      address: null,
+      photoUrl: null,
+      note: null,
+      floor: null,
+      spotIdentifier: null,
+      meterExpiresAt: null,
+      isActive: true,
+      savedAt: '2024-01-15T12:00:00Z',
+    };
+
+    beforeEach(() => {
+      vi.mocked(useGuestStore.getState).mockReturnValue({ isGuest: true } as ReturnType<
+        typeof useGuestStore.getState
+      >);
+    });
+
+    it('should save spot with meterExpiresAt: null in guest mode', async () => {
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const result = await useSpotStore.getState().saveSpot({
+        lat: 40.7128,
+        lng: -74.006,
+        accuracy: 15,
+      });
+
+      expect(indexedDbService.setItem).toHaveBeenCalledWith(
+        'spots',
+        mockUUID,
+        expect.objectContaining({
+          meterExpiresAt: null,
+        })
+      );
+      expect(result.meterExpiresAt).toBeNull();
+    });
+
+    it('should set meter timer in IndexedDB for guest users', async () => {
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(mockGuestSpot);
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const expiresAt = '2024-01-15T13:00:00Z';
+      const result = await useSpotStore.getState().setMeterTimer('guest-spot-123', expiresAt);
+
+      expect(indexedDbService.getItem).toHaveBeenCalledWith('spots', 'guest-spot-123');
+      expect(indexedDbService.setItem).toHaveBeenCalledWith(
+        'spots',
+        'guest-spot-123',
+        expect.objectContaining({
+          meterExpiresAt: expiresAt,
+        })
+      );
+      expect(result.meterExpiresAt).toBe(expiresAt);
+    });
+
+    it('should clear meter timer in IndexedDB for guest users', async () => {
+      const spotWithTimer = { ...mockGuestSpot, meterExpiresAt: '2024-01-15T13:00:00Z' };
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(spotWithTimer);
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const result = await useSpotStore.getState().clearMeterTimer('guest-spot-123');
+
+      expect(indexedDbService.setItem).toHaveBeenCalledWith(
+        'spots',
+        'guest-spot-123',
+        expect.objectContaining({
+          meterExpiresAt: null,
+        })
+      );
+      expect(result.meterExpiresAt).toBeNull();
+    });
+
+    it('should update latestSpot when setting timer on latest spot', async () => {
+      useSpotStore.setState({ latestSpot: mockGuestSpot });
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(mockGuestSpot);
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const expiresAt = '2024-01-15T14:00:00Z';
+      await useSpotStore.getState().setMeterTimer('guest-spot-123', expiresAt);
+
+      expect(useSpotStore.getState().latestSpot?.meterExpiresAt).toBe(expiresAt);
+    });
+
+    it('should update currentSpot when setting timer on current spot', async () => {
+      useSpotStore.setState({ currentSpot: mockGuestSpot });
+      vi.mocked(indexedDbService.getItem).mockResolvedValue(mockGuestSpot);
+      vi.mocked(indexedDbService.setItem).mockResolvedValue(undefined);
+
+      const expiresAt = '2024-01-15T14:00:00Z';
+      await useSpotStore.getState().setMeterTimer('guest-spot-123', expiresAt);
+
+      expect(useSpotStore.getState().currentSpot?.meterExpiresAt).toBe(expiresAt);
     });
   });
 });

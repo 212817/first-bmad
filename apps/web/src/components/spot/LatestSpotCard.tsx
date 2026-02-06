@@ -5,6 +5,7 @@ import { SpotThumbnail } from './SpotThumbnail';
 import { EmptySpotState } from './EmptySpotState';
 import { ShareButton } from './ShareButton';
 import { SpotMap } from '@/components/map/SpotMap';
+import { MeterTimerDisplay } from '@/components/timer';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { LatestSpotCardProps } from './types';
 
@@ -68,7 +69,10 @@ export const LatestSpotCard = ({
     <div className="bg-white rounded-xl shadow-md overflow-hidden" data-testid="latest-spot-card">
       {/* Header: Tag badge and timestamp */}
       <div className="flex justify-between items-center px-4 pt-4 pb-2">
-        <TagBadge name={tagName} color={tagColor} />
+        <div className="flex items-center gap-2">
+          <TagBadge name={tagName} color={tagColor} />
+          {spot.meterExpiresAt && <MeterTimerDisplay expiresAt={spot.meterExpiresAt} size="sm" />}
+        </div>
         <span className="text-sm text-gray-500" data-testid="spot-timestamp">
           {timeDisplay}
         </span>

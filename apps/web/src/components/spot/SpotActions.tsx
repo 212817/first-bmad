@@ -12,7 +12,8 @@ const ActionButton = ({
   active = false,
   disabled = false,
   tooltip,
-}: ActionButtonProps) => {
+  testId,
+}: ActionButtonProps & { testId?: string }) => {
   return (
     <button
       onClick={onClick}
@@ -30,7 +31,7 @@ const ActionButton = ({
               : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
         }
       `}
-      data-testid={`action-button-${label.toLowerCase().replace(/\s+/g, '-')}`}
+      data-testid={testId ?? `action-button-${label.toLowerCase().replace(/\s+/g, '-')}`}
     >
       <span className="text-2xl mb-1" aria-hidden="true">
         {icon}
@@ -80,13 +81,13 @@ export const SpotActions = ({
         active={!!spot.photoUrl}
       />
 
-      {/* Timer Button - disabled placeholder for Epic 4 */}
+      {/* Timer Button */}
       <ActionButton
         icon="⏱️"
-        label="Timer"
+        label={spot.meterExpiresAt ? 'Timer ✓' : 'Timer'}
         onClick={onTimerClick}
-        disabled={true}
-        tooltip="Coming soon"
+        active={!!spot.meterExpiresAt}
+        testId="action-button-timer"
       />
     </div>
   );

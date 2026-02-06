@@ -36,6 +36,13 @@
       "when": 1770219927539,
       "tag": "0004_woozy_queen_noir",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770388705111,
+      "tag": "0005_typical_riptide",
+      "breakpoints": true
     }
   ]
 }
