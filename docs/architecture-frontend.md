@@ -854,7 +854,7 @@ export function App() {
 
 ### 10.1 Performance Best Practices
 
-1. **Lazy load routes** - `React.lazy()` for code splitting
+1. **NO lazy loading** - Do NOT use `React.lazy()` - causes memory leaks in jsdom tests and adds complexity without meaningful benefit for small bundles
 2. **Optimize images** - Compress before upload, use WebP
 3. **Avoid memoization** - No `useCallback`/`useMemo` unless proven needed
 4. **Tree shake** - Import only what's needed

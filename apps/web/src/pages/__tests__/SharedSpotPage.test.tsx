@@ -19,10 +19,7 @@ vi.mock('@/services/navigation/navigation.service', () => ({
   },
 }));
 
-// Mock SpotMap component
-vi.mock('@/components/map/SpotMap', () => ({
-  SpotMap: ({ testId }: { testId?: string }) => <div data-testid={testId || 'spot-map'}>Map</div>,
-}));
+// Note: SpotMap is mocked globally in src/test/setup.ts
 
 const mockSharedSpot = {
   id: 'spot-123',

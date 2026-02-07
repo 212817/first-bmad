@@ -1,12 +1,8 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
-import { Suspense, lazy } from 'react';
-
 import { SpotAddress } from './SpotAddress';
+import { SpotMap } from '@/components/map';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { SpotDetailCardProps } from './types';
-
-// Lazy load the map component to avoid blocking initial render
-const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
 
 /**
  * Format timestamp for display
@@ -39,24 +35,13 @@ export const SpotDetailCard = ({
       {/* Map or Placeholder */}
       <div className="overflow-hidden rounded-t-xl">
         {hasCoordinates ? (
-          <Suspense
-            fallback={
-              <div className="aspect-square bg-gray-200 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-2 text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-                  <span className="text-sm">Loading map...</span>
-                </div>
-              </div>
-            }
-          >
-            <SpotMap
-              lat={spot.lat!}
-              lng={spot.lng!}
-              editable={editable}
-              onPositionChange={onPositionChange}
-              heightClass="aspect-square"
-            />
-          </Suspense>
+          <SpotMap
+            lat={spot.lat!}
+            lng={spot.lng!}
+            editable={editable}
+            onPositionChange={onPositionChange}
+            heightClass="aspect-square"
+          />
         ) : (
           <div className="h-40 bg-gray-200 flex items-center justify-center">
             <div className="text-center text-gray-500">
