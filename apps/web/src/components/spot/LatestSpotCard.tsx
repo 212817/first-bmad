@@ -236,14 +236,21 @@ export const LatestSpotCard = ({
                 </svg>
               </button>
             )}
-            {spot.note && (
-              <p className="text-sm text-gray-500 truncate mt-1" data-testid="spot-note">
-                {spot.note}
-              </p>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Note section - full text, no truncation */}
+      {spot.note && (
+        <div className="px-4 pb-2" data-testid="spot-note-section">
+          <p
+            className="text-sm text-gray-600 text-left whitespace-pre-wrap break-words"
+            data-testid="spot-note"
+          >
+            <span className="text-gray-400">Note:</span> {spot.note}
+          </p>
+        </div>
+      )}
 
       {/* Action buttons: Navigate and Share */}
       <div className="px-4 pb-4 flex gap-2">

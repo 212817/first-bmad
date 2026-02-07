@@ -37,4 +37,5 @@ export interface TimeLeft {
   totalMinutes: number;
   hours: number;
   minutes: number;
+  seconds: number;
 }

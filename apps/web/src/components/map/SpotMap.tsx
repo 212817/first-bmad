@@ -253,10 +253,10 @@ export const SpotMap = ({
           }}
         />
 
-        {/* Overlay for hybrid view (labels on satellite) */}
-        {tileConfig.overlay && (
-          <TileLayer key={`overlay-${activeLayer}`} url={tileConfig.overlay} attribution="" />
-        )}
+        {/* Overlays for hybrid view (roads + labels on satellite) */}
+        {tileConfig.overlays?.map((overlayUrl, index) => (
+          <TileLayer key={`overlay-${activeLayer}-${index}`} url={overlayUrl} attribution="" />
+        ))}
 
         {/* Marker only shown in non-editable mode - low z-index to avoid overlapping UI */}
         {!editable && <Marker position={displayPosition} zIndexOffset={-1000} />}

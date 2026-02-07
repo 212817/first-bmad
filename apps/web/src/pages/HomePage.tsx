@@ -609,7 +609,7 @@ export const HomePage = () => {
                       </>
                     ) : (
                       <>
-                        <span>🚗</span>
+                        <span className="text-xl font-black">#</span>
                         Save spot
                       </>
                     )}

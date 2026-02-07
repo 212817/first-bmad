@@ -7,7 +7,7 @@ export interface TileLayerConfig {
   url: string;
   attribution: string;
   name: string;
-  overlay?: string; // Optional overlay URL for hybrid view
+  overlays?: string[]; // Optional overlay URLs for hybrid view (roads, labels)
 }
 
 /**
@@ -61,8 +61,10 @@ export const TILE_LAYERS: Record<MapViewType, TileLayerConfig> = {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri',
     name: 'Hybrid',
-    overlay:
+    overlays: [
+      'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
       'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    ],
   },
 };
 

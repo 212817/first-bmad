@@ -90,8 +90,8 @@ export const SpotDetailCard = ({
           {/* Car Tag Selector (inline) */}
           {tagSelector && (
             <div className="flex items-center gap-1" data-testid="spot-car-tag">
-              <span className="text-gray-400 text-xs" aria-hidden="true">
-                🚗
+              <span className="text-gray-500 text-base font-black" aria-hidden="true">
+                #
               </span>
               {tagSelector}
             </div>

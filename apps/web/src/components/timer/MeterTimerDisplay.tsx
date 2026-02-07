@@ -7,20 +7,30 @@ import type { MeterTimerDisplayProps, TimeLeft } from './types';
  */
 const calculateTimeLeft = (expiresAt: string): TimeLeft => {
   const diff = new Date(expiresAt).getTime() - Date.now();
-  const totalMinutes = Math.floor(diff / 60000);
+  const totalSeconds = Math.floor(diff / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
   const hours = Math.floor(Math.abs(totalMinutes) / 60);
   const minutes = Math.abs(totalMinutes) % 60;
-  return { totalMinutes, hours, minutes };
+  const seconds = Math.abs(totalSeconds) % 60;
+  return { totalMinutes, hours, minutes, seconds };
 };
 
 /**
- * Format time left for display
+ * Format time left for display (with seconds)
  */
-const formatTimeLeft = ({ hours, minutes }: { hours: number; minutes: number }): string => {
+const formatTimeLeft = ({
+  hours,
+  minutes,
+  seconds,
+}: {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}): string => {
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return `${hours}h ${minutes}m ${seconds}s`;
   }
-  return `${minutes}m`;
+  return `${minutes}m ${seconds}s`;
 };
 
 /**
@@ -52,10 +62,10 @@ export const MeterTimerDisplay = ({ expiresAt, size = 'md' }: MeterTimerDisplayP
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    // Update every minute to refresh the countdown
+    // Update every second to refresh the countdown
     const interval = setInterval(() => {
       setTick((t) => t + 1);
-    }, 60000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);

@@ -10,8 +10,10 @@ import type { CarTag } from '@/components/spot/carTag.types';
  * Default tags available when offline or for guest users
  */
 const DEFAULT_TAGS: CarTag[] = [
-  { id: 'default-my-car', name: 'My Car', color: '#3B82F6', isDefault: true },
-  { id: 'default-rental', name: 'Rental', color: '#10B981', isDefault: true },
+  { id: 'default-home', name: 'Home', color: '#3B82F6', isDefault: true },
+  { id: 'default-work', name: 'Work', color: '#10B981', isDefault: true },
+  { id: 'default-my-car', name: 'My Car', color: '#8B5CF6', isDefault: true },
+  { id: 'default-rental', name: 'Rental', color: '#F59E0B', isDefault: true },
   { id: 'default-other', name: 'Other', color: '#6B7280', isDefault: true },
 ];
 

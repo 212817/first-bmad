@@ -15,8 +15,8 @@ vi.mock('@/stores/guestStore', () => ({
 }));
 
 const mockTags = [
-  { id: 'tag-1', name: 'My Car', color: '#3B82F6', isDefault: true },
-  { id: 'tag-2', name: 'Rental', color: '#10B981', isDefault: true },
+  { id: 'tag-1', name: 'Home', color: '#3B82F6', isDefault: true },
+  { id: 'tag-2', name: 'Work', color: '#10B981', isDefault: true },
   { id: 'tag-3', name: 'Custom Tag', color: '#EF4444', isDefault: false },
 ];
 
@@ -61,7 +61,7 @@ describe('CarTagSelector', () => {
       render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} />);
 
       expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
-      expect(screen.getByText('My Car')).toBeInTheDocument();
+      expect(screen.getByText('Home')).toBeInTheDocument();
     });
 
     it('should open dropdown on click', async () => {

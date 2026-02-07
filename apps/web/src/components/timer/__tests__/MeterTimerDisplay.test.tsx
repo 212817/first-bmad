@@ -20,14 +20,14 @@ describe('MeterTimerDisplay', () => {
       const expiresAt = new Date(fixedNow + 90 * 60 * 1000).toISOString(); // 1h 30m
       render(<MeterTimerDisplay expiresAt={expiresAt} />);
 
-      expect(screen.getByTestId('timer-text')).toHaveTextContent('1h 30m');
+      expect(screen.getByTestId('timer-text')).toHaveTextContent('1h 30m 0s');
     });
 
     it('should display only minutes when < 1 hour remaining', () => {
       const expiresAt = new Date(fixedNow + 45 * 60 * 1000).toISOString(); // 45m
       render(<MeterTimerDisplay expiresAt={expiresAt} />);
 
-      expect(screen.getByTestId('timer-text')).toHaveTextContent('45m');
+      expect(screen.getByTestId('timer-text')).toHaveTextContent('45m 0s');
     });
 
     it('should display "Expired" when past due', () => {
@@ -103,25 +103,25 @@ describe('MeterTimerDisplay', () => {
   });
 
   describe('timer updates', () => {
-    it('should update display after one minute', () => {
+    it('should update display after one second', () => {
       const expiresAt = new Date(fixedNow + 45 * 60 * 1000).toISOString(); // 45m
       render(<MeterTimerDisplay expiresAt={expiresAt} />);
 
-      expect(screen.getByTestId('timer-text')).toHaveTextContent('45m');
+      expect(screen.getByTestId('timer-text')).toHaveTextContent('45m 0s');
 
-      // Advance time by 1 minute
+      // Advance time by 1 second
       act(() => {
-        vi.advanceTimersByTime(60000);
+        vi.advanceTimersByTime(1000);
       });
 
-      expect(screen.getByTestId('timer-text')).toHaveTextContent('44m');
+      expect(screen.getByTestId('timer-text')).toHaveTextContent('44m 59s');
     });
 
     it('should transition to expired state', () => {
       const expiresAt = new Date(fixedNow + 1 * 60 * 1000).toISOString(); // 1m
       render(<MeterTimerDisplay expiresAt={expiresAt} />);
 
-      expect(screen.getByTestId('timer-text')).toHaveTextContent('1m');
+      expect(screen.getByTestId('timer-text')).toHaveTextContent('1m 0s');
 
       // Advance time by 2 minutes
       act(() => {
@@ -138,7 +138,7 @@ describe('MeterTimerDisplay', () => {
       render(<MeterTimerDisplay expiresAt={expiresAt} />);
 
       const display = screen.getByTestId('meter-timer-display');
-      expect(display).toHaveAttribute('aria-label', '1h 30m remaining');
+      expect(display).toHaveAttribute('aria-label', '1h 30m 0s remaining');
     });
 
     it('should have aria-label for expired state', () => {

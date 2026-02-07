@@ -12,10 +12,10 @@ const PRESETS: TimerPreset[] = [
 ];
 
 /**
- * Format a date for display
+ * Format a date for display (24h format)
  */
 const formatDateTime = (date: Date): string => {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 };
 
 /**
