@@ -2,9 +2,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { SpotConfirmationPage } from '../SpotConfirmationPage';
-import { useSpotStore } from '@/stores/spotStore';
 import type { Spot } from '@/stores/spot.types';
+
+// Mock SpotDetailCard which uses lazy-loaded SpotMap (react-leaflet)
+// This avoids jsdom/leaflet memory issues
+vi.mock('@/components/spot/SpotDetailCard', () => ({
+  SpotDetailCard: ({ spot }: { spot: Spot }) => (
+    <div data-testid="spot-detail-card">
+      <div data-testid="spot-address">{spot.address || 'Address placeholder'}</div>
+      <div data-testid="spot-map">Mock Map</div>
+    </div>
+  ),
+}));
 
 // Mock CameraCapture component
 vi.mock('@/components/camera/CameraCapture', () => ({
@@ -79,6 +88,9 @@ vi.mock('@/stores/carTagStore', () => ({
     ),
   }),
 }));
+
+import { SpotConfirmationPage } from '../SpotConfirmationPage';
+import { useSpotStore } from '@/stores/spotStore';
 
 const mockSpot: Spot = {
   id: 'test-spot-123',
@@ -251,12 +263,8 @@ describe('SpotConfirmationPage', () => {
       expect(screen.getByTestId('note-input-textarea')).toBeInTheDocument();
     });
 
-    it('should show CarTagSelector always visible', () => {
-      renderWithRouter();
-
-      // CarTagSelector is now rendered inside SpotDetailCard
-      expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
-    });
+    // CarTagSelector is now rendered inside SpotDetailCard (which is mocked)
+    // So we cannot test it here - test moved to SpotDetailCard.test.tsx
 
     it('should log message when Timer action is clicked (disabled)', () => {
       const consoleSpy = vi.spyOn(console, 'log');
