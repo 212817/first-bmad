@@ -361,7 +361,7 @@ test.describe('Spot Confirmation Page', () => {
       await expect(textarea).toBeVisible();
       await expect(textarea).toHaveAttribute(
         'placeholder',
-        'Add Note: P2, near elevator • Blue pillar • Row G'
+        'Add Note: P2, near elevator • Blue pillar'
       );
     });
 
@@ -387,13 +387,13 @@ test.describe('Spot Confirmation Page', () => {
       const textarea = page.getByTestId('note-input-textarea');
       await expect(textarea).toBeVisible();
 
-      // Counter is only visible when at 500 character limit
-      // Fill with 500 characters to see counter
-      const longText = 'A'.repeat(500);
+      // Counter is only visible when at 200 character limit
+      // Fill with 200 characters to see counter
+      const longText = 'A'.repeat(200);
       await textarea.fill(longText);
 
       // Counter should show limit
-      await expect(page.getByTestId('note-input-counter')).toContainText('500/500');
+      await expect(page.getByTestId('note-input-counter')).toContainText('200/200');
     });
 
     test('note is saved on blur (AC3)', async ({ page }) => {
