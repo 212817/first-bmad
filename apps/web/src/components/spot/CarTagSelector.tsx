@@ -59,15 +59,12 @@ export const CarTagSelector = ({
   // Find the currently selected tag, fallback to preferred tag
   const currentTag = sortedTags.find((t) => t.id === selectedTagId) || preferredTag;
 
-  // Auto-select preferred tag if current selection is not set or is a non-preferred default
+  // Auto-select preferred tag only if no selection is set
   useEffect(() => {
     if (!isLoading && preferredTag) {
       const currentSelected = tags.find((t) => t.id === selectedTagId);
       if (!currentSelected) {
         // No selection - auto-select preferred tag
-        onSelect(preferredTag.id);
-      } else if (!preferredTag.isDefault && currentSelected.isDefault) {
-        // User has custom tags but a default is selected - switch to custom
         onSelect(preferredTag.id);
       }
     }

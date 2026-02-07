@@ -281,4 +281,58 @@ describe('CarTagSelector', () => {
       expect(screen.queryByTestId('car-tag-dropdown')).not.toBeInTheDocument();
     });
   });
+
+  describe('default tag selection with custom tags present', () => {
+    const tagsWithCustom = [
+      { id: 'default-1', name: 'Home', color: '#3B82F6', isDefault: true },
+      { id: 'default-2', name: 'Work', color: '#10B981', isDefault: true },
+      { id: 'custom-1', name: 'My Custom', color: '#EF4444', isDefault: false },
+    ];
+
+    beforeEach(() => {
+      vi.mocked(useCarTagStore).mockReturnValue({
+        tags: tagsWithCustom,
+        isLoading: false,
+        createTag: mockCreateTag,
+      } as ReturnType<typeof useCarTagStore>);
+    });
+
+    it('should allow selecting a default tag when custom tags exist', async () => {
+      // Start with custom tag selected
+      render(<CarTagSelector selectedTagId="custom-1" onSelect={mockOnSelect} />);
+
+      // Verify custom tag is displayed
+      expect(screen.getByText('My Custom')).toBeInTheDocument();
+
+      // Open dropdown and select a default tag
+      fireEvent.click(screen.getByTestId('car-tag-selector'));
+      fireEvent.click(screen.getByTestId('car-tag-option-default-1'));
+
+      // Should call onSelect with the default tag id
+      expect(mockOnSelect).toHaveBeenCalledWith('default-1');
+    });
+
+    it('should not auto-switch from default to custom tag when user explicitly selected default', async () => {
+      // User has explicitly selected a default tag
+      const { rerender } = render(
+        <CarTagSelector selectedTagId="default-1" onSelect={mockOnSelect} />
+      );
+
+      // Clear any auto-select calls from initial render
+      mockOnSelect.mockClear();
+
+      // Rerender to trigger useEffect again
+      rerender(<CarTagSelector selectedTagId="default-1" onSelect={mockOnSelect} />);
+
+      // Should NOT call onSelect to switch away from the user's selection
+      expect(mockOnSelect).not.toHaveBeenCalled();
+    });
+
+    it('should display the selected default tag correctly when custom tags exist', () => {
+      render(<CarTagSelector selectedTagId="default-2" onSelect={mockOnSelect} />);
+
+      // Should display "Work" as selected, not auto-switch to custom
+      expect(screen.getByText('Work')).toBeInTheDocument();
+    });
+  });
 });
