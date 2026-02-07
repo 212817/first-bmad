@@ -59,11 +59,11 @@ export const TILE_LAYERS: Record<MapViewType, TileLayerConfig> = {
   },
   hybrid: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri',
+    attribution: 'Tiles &copy; Esri, Labels &copy; CartoDB/OSM',
     name: 'Hybrid',
     overlays: [
-      'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-      'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      // CartoDB Voyager labels - most detailed OSM labels with POI
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
     ],
   },
 };

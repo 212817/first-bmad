@@ -255,7 +255,12 @@ export const SpotMap = ({
 
         {/* Overlays for hybrid view (roads + labels on satellite) */}
         {tileConfig.overlays?.map((overlayUrl, index) => (
-          <TileLayer key={`overlay-${activeLayer}-${index}`} url={overlayUrl} attribution="" />
+          <TileLayer
+            key={`overlay-${activeLayer}-${index}`}
+            url={overlayUrl}
+            attribution=""
+            pane="overlayPane"
+          />
         ))}
 
         {/* Marker only shown in non-editable mode - low z-index to avoid overlapping UI */}
