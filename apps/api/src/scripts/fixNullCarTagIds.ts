@@ -6,7 +6,7 @@ import { eq, isNull } from 'drizzle-orm';
 import { carTags, parkingSpots } from '@repo/shared/db';
 
 // Load .env from monorepo root
-config({ path: '../../.env' });
+config({ path: '../../.env', quiet: true });
 
 /**
  * Migration script to update existing spots with null carTagId

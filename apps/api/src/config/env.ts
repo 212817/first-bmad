@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Load .env from monorepo root (only in development, production uses injected env vars)
 if (process.env.NODE_ENV !== 'production') {
-  config({ path: '../../.env' });
+  config({ path: '../../.env', quiet: true });
 }
 
 // Check if we're in test mode

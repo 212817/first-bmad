@@ -5,7 +5,7 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { carTags } from '@repo/shared/db';
 
 // Load .env from monorepo root
-config({ path: '../../.env' });
+config({ path: '../../.env', quiet: true });
 
 const DEFAULT_TAGS = [
   { name: 'Home', color: '#3B82F6', isDefault: true },
