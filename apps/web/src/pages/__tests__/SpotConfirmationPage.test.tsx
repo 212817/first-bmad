@@ -88,7 +88,9 @@ vi.mock('@/hooks/useFilePicker/useFilePicker', () => ({
 // Mock ShareButton to prevent act() warnings from async state updates
 vi.mock('@/components/spot/ShareButton', () => ({
   ShareButton: ({ spotId }: { spotId: string }) => (
-    <button data-testid="share-button" data-spot-id={spotId}>Share</button>
+    <button data-testid="share-button" data-spot-id={spotId}>
+      Share
+    </button>
   ),
 }));
 
