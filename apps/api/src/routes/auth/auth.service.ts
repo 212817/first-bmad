@@ -36,9 +36,6 @@ export const authService = {
    * Exchange authorization code for tokens
    */
   async exchangeCodeForTokens(code: string, redirectUri: string): Promise<GoogleTokenResponse> {
-    console.log('Token exchange - redirectUri:', redirectUri);
-    console.log('Token exchange - client_id:', env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
-
     const response = await fetch(GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

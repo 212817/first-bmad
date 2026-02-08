@@ -47,6 +47,7 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] All required unit tests as per the story and `Operational Guidelines` Testing Strategy are implemented.
    - [ ] All required integration tests (if applicable) as per the story and `Operational Guidelines` Testing Strategy are implemented.
    - [ ] All tests (unit, integration, E2E if applicable) pass successfully.
+   - [ ] Test output is clean with no console warnings, errors, or debug output (use quiet mode for logging libraries, remove debug console.log statements).
    - [ ] Test coverage meets project standards (if defined).
 
 4. **Functionality & Verification:**
