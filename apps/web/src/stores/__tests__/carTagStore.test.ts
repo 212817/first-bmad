@@ -31,8 +31,10 @@ vi.stubGlobal('crypto', {
 });
 
 const DEFAULT_TAGS = [
-  { id: 'default-my-car', name: 'My Car', color: '#3B82F6', isDefault: true },
-  { id: 'default-rental', name: 'Rental', color: '#10B981', isDefault: true },
+  { id: 'default-home', name: 'Home', color: '#3B82F6', isDefault: true },
+  { id: 'default-work', name: 'Work', color: '#10B981', isDefault: true },
+  { id: 'default-my-car', name: 'My Car', color: '#8B5CF6', isDefault: true },
+  { id: 'default-rental', name: 'Rental', color: '#F59E0B', isDefault: true },
   { id: 'default-other', name: 'Other', color: '#6B7280', isDefault: true },
 ];
 
@@ -59,8 +61,8 @@ describe('carTagStore', () => {
     it('should have default tags on init', () => {
       const state = useCarTagStore.getState();
 
-      expect(state.tags).toHaveLength(3);
-      expect(state.tags[0]?.name).toBe('My Car');
+      expect(state.tags).toHaveLength(5);
+      expect(state.tags[0]?.name).toBe('Home');
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
     });
@@ -77,7 +79,7 @@ describe('carTagStore', () => {
       await useCarTagStore.getState().fetchTags();
 
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(3);
+      expect(state.tags).toHaveLength(5);
       expect(state.isHydrated).toBe(true);
     });
 
@@ -88,15 +90,15 @@ describe('carTagStore', () => {
       await useCarTagStore.getState().fetchTags();
 
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(4);
-      expect(state.tags[3]?.name).toBe('Work Car');
+      expect(state.tags).toHaveLength(6);
+      expect(state.tags[5]?.name).toBe('Work Car');
     });
   });
 
   describe('fetchTags (authenticated mode)', () => {
     it('should fetch tags from API', async () => {
       const apiTags = [
-        { id: 'api-1', name: 'My Car', color: '#3B82F6', isDefault: true },
+        { id: 'api-1', name: 'Home', color: '#3B82F6', isDefault: true },
         { id: 'api-2', name: 'Custom', color: '#FF0000', isDefault: false },
       ];
       vi.mocked(apiClient.get).mockResolvedValue({
@@ -118,8 +120,8 @@ describe('carTagStore', () => {
       await useCarTagStore.getState().fetchTags();
 
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(3);
-      expect(state.tags[0]?.name).toBe('My Car');
+      expect(state.tags).toHaveLength(5);
+      expect(state.tags[0]?.name).toBe('Home');
       expect(state.isLoading).toBe(false);
       expect(state.isHydrated).toBe(true);
     });
@@ -130,7 +132,7 @@ describe('carTagStore', () => {
       await useCarTagStore.getState().fetchTags();
 
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(3);
+      expect(state.tags).toHaveLength(5);
       expect(state.error).toBe('Failed to fetch tags');
     });
   });
@@ -149,7 +151,7 @@ describe('carTagStore', () => {
       expect(newTag.isDefault).toBe(false);
 
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(4);
+      expect(state.tags).toHaveLength(6); // 5 defaults + 1 new
       expect(indexedDbService.setItem).toHaveBeenCalled();
     });
   });
@@ -233,15 +235,15 @@ describe('carTagStore', () => {
 
       expect(result).toBe(true);
       const state = useCarTagStore.getState();
-      expect(state.tags).toHaveLength(3); // Only defaults left
+      expect(state.tags).toHaveLength(5); // Only defaults left
     });
   });
 
   describe('getTagById', () => {
     it('should return tag when found', () => {
-      const tag = useCarTagStore.getState().getTagById('default-my-car');
+      const tag = useCarTagStore.getState().getTagById('default-home');
 
-      expect(tag?.name).toBe('My Car');
+      expect(tag?.name).toBe('Home');
     });
 
     it('should return undefined when not found', () => {

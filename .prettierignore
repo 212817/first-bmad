@@ -1,8 +1,28 @@
+# Build outputs
 dist
-node_modules
 coverage
+playwright-report
+test-results
+
+# Dependencies
+node_modules
+pnpm-lock.yaml
+
+# Environment
 *.log
 .env
 .env.*
 !.env.example
-pnpm-lock.yaml
+
+# BMAD framework (not source code)
+_bmad
+.agent
+.bmad-core
+.github/agents
+.github/chatmodes
+
+# Documentation (markdown, not code)
+docs
+
+# Vercel serverless (separate deploy)
+api

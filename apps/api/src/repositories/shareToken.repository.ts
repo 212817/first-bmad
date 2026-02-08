@@ -45,6 +45,7 @@ const mapToSpot = (row: typeof parkingSpots.$inferSelect): ParkingSpot => ({
   note: row.note,
   floor: row.floor,
   spotIdentifier: row.spotIdentifier,
+  meterExpiresAt: row.meterExpiresAt,
   isActive: row.isActive,
   savedAt: toDate(row.savedAt),
   createdAt: toDate(row.createdAt),

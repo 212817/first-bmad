@@ -36,6 +36,7 @@ describe('SpotRepository', () => {
     note: null,
     floor: null,
     spotIdentifier: null,
+    meterExpiresAt: null,
     isActive: true,
     savedAt: new Date('2026-01-15T12:00:00Z'),
     createdAt: new Date('2026-01-15T12:00:00Z'),
@@ -357,6 +358,72 @@ describe('SpotRepository', () => {
 
       expect(result.savedAt).toBeInstanceOf(Date);
       expect(result.savedAt.getTime()).toBeGreaterThanOrEqual(now);
+    });
+  });
+
+  describe('meterExpiresAt mapping', () => {
+    it('should map meterExpiresAt to Date when present', async () => {
+      const meterExpiresAt = new Date('2026-01-15T14:00:00Z');
+      const spotWithMeter = {
+        ...mockSpotRow,
+        meterExpiresAt,
+      };
+
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([spotWithMeter]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as any);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      const result = await spotRepository.findById('spot-123');
+
+      expect(result).not.toBeNull();
+      expect(result?.meterExpiresAt).toBeInstanceOf(Date);
+      expect(result?.meterExpiresAt?.toISOString()).toBe('2026-01-15T14:00:00.000Z');
+    });
+
+    it('should map meterExpiresAt from string to Date', async () => {
+      const spotWithMeterString = {
+        ...mockSpotRow,
+        meterExpiresAt: '2026-01-15T14:00:00Z',
+      };
+
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([spotWithMeterString]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as any);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      const result = await spotRepository.findById('spot-123');
+
+      expect(result).not.toBeNull();
+      expect(result?.meterExpiresAt).toBeInstanceOf(Date);
+      expect(result?.meterExpiresAt?.toISOString()).toBe('2026-01-15T14:00:00.000Z');
+    });
+
+    it('should return null meterExpiresAt when not set', async () => {
+      const mockFrom = vi.fn().mockReturnThis();
+      const mockWhere = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue([mockSpotRow]);
+
+      vi.mocked(db.select).mockReturnValue({
+        from: mockFrom,
+      } as any);
+      mockFrom.mockReturnValue({ where: mockWhere });
+      mockWhere.mockReturnValue({ limit: mockLimit });
+
+      const result = await spotRepository.findById('spot-123');
+
+      expect(result).not.toBeNull();
+      expect(result?.meterExpiresAt).toBeNull();
     });
   });
 });

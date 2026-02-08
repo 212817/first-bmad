@@ -1,18 +1,16 @@
 // apps/web/src/components/spot/SpotDetailCard.tsx
-import { Suspense, lazy } from 'react';
-
 import { SpotAddress } from './SpotAddress';
+import { SpotMap } from '@/components/map';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { SpotDetailCardProps } from './types';
-
-// Lazy load the map component to avoid blocking initial render
-const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
 
 /**
  * Format timestamp for display
  */
-const formatTimestamp = (isoString: string): string => {
+const formatTimestamp = (isoString: string | null | undefined): string => {
+  if (!isoString) return 'Unknown';
   const date = new Date(isoString);
+  if (isNaN(date.getTime())) return 'Unknown';
   return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -39,24 +37,13 @@ export const SpotDetailCard = ({
       {/* Map or Placeholder */}
       <div className="overflow-hidden rounded-t-xl">
         {hasCoordinates ? (
-          <Suspense
-            fallback={
-              <div className="aspect-square bg-gray-200 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-2 text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-                  <span className="text-sm">Loading map...</span>
-                </div>
-              </div>
-            }
-          >
-            <SpotMap
-              lat={spot.lat!}
-              lng={spot.lng!}
-              editable={editable}
-              onPositionChange={onPositionChange}
-              heightClass="aspect-square"
-            />
-          </Suspense>
+          <SpotMap
+            lat={spot.lat!}
+            lng={spot.lng!}
+            editable={editable}
+            onPositionChange={onPositionChange}
+            heightClass="aspect-square"
+          />
         ) : (
           <div className="h-40 bg-gray-200 flex items-center justify-center">
             <div className="text-center text-gray-500">
@@ -90,8 +77,8 @@ export const SpotDetailCard = ({
           {/* Car Tag Selector (inline) */}
           {tagSelector && (
             <div className="flex items-center gap-1" data-testid="spot-car-tag">
-              <span className="text-gray-400 text-xs" aria-hidden="true">
-                🚗
+              <span className="text-gray-500 text-base font-black" aria-hidden="true">
+                #
               </span>
               {tagSelector}
             </div>

@@ -1,17 +1,10 @@
 // apps/web/src/components/spot/__tests__/SpotDetailCard.test.tsx
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SpotDetailCard } from '../SpotDetailCard';
 import type { Spot } from '@/stores/spot.types';
 
-// Mock the map component to avoid leaflet issues in tests
-vi.mock('@/components/map', () => ({
-  SpotMap: ({ lat, lng, testId }: { lat: number; lng: number; testId?: string }) => (
-    <div data-testid={testId || 'spot-map'} data-lat={lat} data-lng={lng}>
-      Mock Map
-    </div>
-  ),
-}));
+// Note: SpotMap is mocked globally in src/test/setup.ts
 
 const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   id: 'test-spot-123',
@@ -24,6 +17,7 @@ const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   note: null,
   floor: null,
   spotIdentifier: null,
+  meterExpiresAt: null,
   isActive: true,
   savedAt: new Date().toISOString(),
   ...overrides,

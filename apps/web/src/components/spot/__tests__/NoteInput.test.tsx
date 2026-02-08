@@ -26,10 +26,7 @@ describe('NoteInput', () => {
       render(<NoteInput {...defaultProps} />);
 
       const textarea = screen.getByTestId('note-input-textarea');
-      expect(textarea).toHaveAttribute(
-        'placeholder',
-        'Add Note: P2, near elevator • Blue pillar • Row G'
-      );
+      expect(textarea).toHaveAttribute('placeholder', 'Add Note: P2, near elevator • Blue pillar');
     });
 
     it('should not show character counter when not at limit', () => {
@@ -95,26 +92,26 @@ describe('NoteInput', () => {
   });
 
   describe('character limit', () => {
-    it('should enforce max 500 characters', () => {
+    it('should enforce max 200 characters', () => {
       const onChange = vi.fn();
-      const longText = 'a'.repeat(600);
+      const longText = 'a'.repeat(300);
       render(<NoteInput {...defaultProps} onChange={onChange} />);
 
       const textarea = screen.getByTestId('note-input-textarea');
       fireEvent.change(textarea, { target: { value: longText } });
 
-      expect(onChange).toHaveBeenCalledWith('a'.repeat(500));
+      expect(onChange).toHaveBeenCalledWith('a'.repeat(200));
     });
 
     it('should not show counter when not at limit', () => {
-      const nearLimitText = 'a'.repeat(455);
+      const nearLimitText = 'a'.repeat(150);
       render(<NoteInput {...defaultProps} value={nearLimitText} />);
 
       expect(screen.queryByTestId('note-input-counter')).not.toBeInTheDocument();
     });
 
-    it('should show error color when at limit (500)', () => {
-      const atLimitText = 'a'.repeat(500);
+    it('should show error color when at limit (200)', () => {
+      const atLimitText = 'a'.repeat(200);
       render(<NoteInput {...defaultProps} value={atLimitText} />);
 
       const counter = screen.getByTestId('note-input-counter');

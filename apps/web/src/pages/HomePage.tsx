@@ -1,9 +1,7 @@
-import { useEffect, useState, useRef, Suspense, lazy } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
-
-// Lazy load the map component
-const SpotMap = lazy(() => import('@/components/map').then((m) => ({ default: m.SpotMap })));
+import { SpotMap } from '@/components/map';
 import { useGuestStore } from '@/stores/guestStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSpotStore } from '@/stores/spotStore';
@@ -331,25 +329,14 @@ export const HomePage = () => {
                   </div>
                 </div>
               ) : currentLocation ? (
-                <Suspense
-                  fallback={
-                    <div className="h-48 bg-gray-200 flex items-center justify-center">
-                      <div className="flex flex-col items-center gap-2 text-gray-500">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-                        <span className="text-sm">Loading map...</span>
-                      </div>
-                    </div>
-                  }
-                >
-                  <SpotMap
-                    lat={adjustedLocation?.lat ?? currentLocation.lat}
-                    lng={adjustedLocation?.lng ?? currentLocation.lng}
-                    editable={true}
-                    onPositionChange={handleMapPositionChange}
-                    heightClass="aspect-square"
-                    testId="home-spot-map"
-                  />
-                </Suspense>
+                <SpotMap
+                  lat={adjustedLocation?.lat ?? currentLocation.lat}
+                  lng={adjustedLocation?.lng ?? currentLocation.lng}
+                  editable={true}
+                  onPositionChange={handleMapPositionChange}
+                  heightClass="aspect-square"
+                  testId="home-spot-map"
+                />
               ) : null}
 
               {/* Address display */}
@@ -609,7 +596,7 @@ export const HomePage = () => {
                       </>
                     ) : (
                       <>
-                        <span>🚗</span>
+                        <span className="text-xl font-black">#</span>
                         Save spot
                       </>
                     )}

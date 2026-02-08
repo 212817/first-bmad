@@ -85,6 +85,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
             note: null,
             floor: null,
             spotIdentifier: null,
+            meterExpiresAt: null,
             isActive: true,
             savedAt: new Date().toISOString(),
           };
@@ -101,6 +102,7 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
             note: null,
             floor: null,
             spotIdentifier: null,
+            meterExpiresAt: null,
             isActive: true,
             savedAt: new Date().toISOString(),
           };
@@ -263,13 +265,38 @@ export const useSpotStore = create<SpotState & SpotActions>((set, get) => ({
         updatedSpot = response.data.data;
       }
 
-      set({ currentSpot: updatedSpot, isSaving: false });
+      // Update currentSpot with the updated spot
+      // Also update latestSpot if the updated spot is the current latest
+      const currentLatest = get().latestSpot;
+      const shouldUpdateLatest = currentLatest && currentLatest.id === id;
+
+      set({
+        currentSpot: updatedSpot,
+        latestSpot: shouldUpdateLatest ? updatedSpot : currentLatest,
+        isSaving: false,
+      });
       return updatedSpot;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update spot';
       set({ error: message, isSaving: false });
       throw error;
     }
+  },
+
+  /**
+   * Set meter timer for a spot
+   * Convenience method that calls updateSpot with meterExpiresAt
+   */
+  setMeterTimer: async (spotId: string, expiresAt: string): Promise<Spot> => {
+    return get().updateSpot(spotId, { meterExpiresAt: expiresAt });
+  },
+
+  /**
+   * Clear meter timer for a spot
+   * Convenience method that calls updateSpot with null meterExpiresAt
+   */
+  clearMeterTimer: async (spotId: string): Promise<Spot> => {
+    return get().updateSpot(spotId, { meterExpiresAt: null });
   },
 
   /**

@@ -8,8 +8,10 @@ import { carTags } from '@repo/shared/db';
 config({ path: '../../.env' });
 
 const DEFAULT_TAGS = [
-  { name: 'My Car', color: '#3B82F6', isDefault: true },
-  { name: 'Rental', color: '#10B981', isDefault: true },
+  { name: 'Home', color: '#3B82F6', isDefault: true },
+  { name: 'Work', color: '#10B981', isDefault: true },
+  { name: 'My Car', color: '#8B5CF6', isDefault: true },
+  { name: 'Rental', color: '#F59E0B', isDefault: true },
   { name: 'Other', color: '#6B7280', isDefault: true },
 ];
 

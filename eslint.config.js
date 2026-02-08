@@ -5,7 +5,25 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['**/dist', '**/node_modules', '**/coverage', '**/*.config.js', '**/*.config.ts'] },
+  {
+    ignores: [
+      '**/dist',
+      '**/node_modules',
+      '**/coverage',
+      '**/*.config.js',
+      '**/*.config.ts',
+      // Non-code folders
+      '_bmad/**',
+      '.agent/**',
+      '.bmad-core/**',
+      '.github/agents/**',
+      '.github/chatmodes/**',
+      'docs/**',
+      'api/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

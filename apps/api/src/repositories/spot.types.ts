@@ -28,6 +28,7 @@ export interface UpdateSpotInput {
   note?: string | null;
   floor?: string | null;
   spotIdentifier?: string | null;
+  meterExpiresAt?: Date | null;
   isActive?: boolean;
 }
 

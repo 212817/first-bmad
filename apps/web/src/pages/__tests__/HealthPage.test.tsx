@@ -76,6 +76,8 @@ describe('HealthPage', () => {
 
   describe('error state', () => {
     it('should show error message when health check fails', async () => {
+      // Suppress console.error for expected rejection
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(apiClient.checkHealth).mockRejectedValue(new Error('Network error'));
 
       renderHealthPage();
@@ -83,6 +85,8 @@ describe('HealthPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Could not connect to API')).toBeInTheDocument();
       });
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -104,7 +108,15 @@ describe('HealthPage', () => {
       // Click refresh
       fireEvent.click(screen.getByText('Refresh'));
 
-      expect(apiClient.checkHealth).toHaveBeenCalledTimes(2);
+      // Wait for the refetch to complete
+      await waitFor(() => {
+        expect(apiClient.checkHealth).toHaveBeenCalledTimes(2);
+      });
+
+      // Wait for loading/success state to settle
+      await waitFor(() => {
+        expect(screen.getAllByText('ok')).toHaveLength(2);
+      });
     });
   });
 

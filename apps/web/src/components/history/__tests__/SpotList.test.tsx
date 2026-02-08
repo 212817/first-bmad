@@ -44,6 +44,7 @@ const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   note: null,
   floor: null,
   spotIdentifier: null,
+  meterExpiresAt: null,
   isActive: false,
   savedAt: new Date().toISOString(),
   ...overrides,

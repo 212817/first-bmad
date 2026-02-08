@@ -17,7 +17,9 @@ test.describe('Save Spot', () => {
     });
   });
 
-  test('home page displays "Save my location" button and address input (AC1)', async ({ page }) => {
+  test('home page displays "Save my location" button and address input option (AC1)', async ({
+    page,
+  }) => {
     // Enter guest mode first
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /continue as guest/i }).click();
@@ -29,7 +31,11 @@ test.describe('Save Spot', () => {
     await expect(saveButton).toBeVisible();
     await expect(saveButton).toContainText('Save my location');
 
-    // Should also see address input form
+    // Address form is hidden by default - need to click "Enter address manually" button first
+    await expect(page.getByRole('button', { name: /enter address manually/i })).toBeVisible();
+    await page.getByRole('button', { name: /enter address manually/i }).click();
+
+    // Now address input form should be visible
     await expect(page.getByTestId('address-input')).toBeVisible();
     await expect(page.getByTestId('save-address-button')).toBeVisible();
   });
@@ -127,7 +133,7 @@ test.describe('Save Spot', () => {
     expect(new Date(spot.savedAt).toISOString()).toBe(spot.savedAt);
   });
 
-  test('location permission denied shows modal with manual entry option (AC2, AC5)', async ({
+  test('location permission denied shows error message with manual entry option (AC2, AC5)', async ({
     page,
     context,
   }) => {
@@ -159,12 +165,20 @@ test.describe('Save Spot', () => {
     // Click save button - since permission will fail, should show error
     await page.getByTestId('save-spot-button').click();
 
-    // Should show the "Location Access Blocked" modal (permission denied state)
-    await expect(page.getByRole('heading', { name: 'Location Access Blocked' })).toBeVisible({
+    // Should show error message about location permission denied
+    await expect(page.getByText(/location permission denied/i)).toBeVisible({
       timeout: 5000,
     });
 
+    // If a modal is shown, dismiss it first
+    const dismissButton = page.getByRole('button', { name: 'Dismiss' }).first();
+    if (await dismissButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await dismissButton.click();
+    }
+
     // User can still use the address input form as alternative
+    // Click the button to expand address form
+    await page.getByTestId('show-address-form-button').click();
     await expect(page.getByTestId('address-input')).toBeVisible();
   });
 
@@ -174,6 +188,9 @@ test.describe('Save Spot', () => {
     await page.getByRole('button', { name: /continue as guest/i }).click();
 
     await expect(page).toHaveURL('/');
+
+    // Expand address form first
+    await page.getByRole('button', { name: /enter address manually/i }).click();
 
     // Fill address input
     await page.getByTestId('address-input').fill('123 Main Street, New York, NY');

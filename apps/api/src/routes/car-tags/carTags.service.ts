@@ -8,8 +8,10 @@ import type { CreateCarTagRequest, UpdateCarTagRequest, CarTagResponse } from '.
  * Default system tags that should exist for all users
  */
 const SYSTEM_DEFAULT_TAGS = [
-  { name: 'My Car', color: '#3B82F6' },
-  { name: 'Rental', color: '#10B981' },
+  { name: 'Home', color: '#3B82F6' },
+  { name: 'Work', color: '#10B981' },
+  { name: 'My Car', color: '#8B5CF6' },
+  { name: 'Rental', color: '#F59E0B' },
   { name: 'Other', color: '#6B7280' },
 ];
 

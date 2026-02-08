@@ -15,6 +15,7 @@ const createMockSpot = (overrides: Partial<Spot> = {}): Spot => ({
   note: null,
   floor: null,
   spotIdentifier: null,
+  meterExpiresAt: null,
   isActive: true,
   savedAt: new Date().toISOString(),
   ...overrides,
@@ -43,13 +44,13 @@ describe('SpotActions', () => {
       expect(screen.getByTestId('action-button-gallery')).toBeInTheDocument();
     });
 
-    it('should render Timer action button as disabled', () => {
+    it('should render Timer action button as enabled', () => {
       const spot = createMockSpot();
       render(<SpotActions spot={spot} />);
 
       const timerButton = screen.getByTestId('action-button-timer');
       expect(timerButton).toBeInTheDocument();
-      expect(timerButton).toBeDisabled();
+      expect(timerButton).not.toBeDisabled();
     });
   });
 
@@ -73,6 +74,27 @@ describe('SpotActions', () => {
       expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
       expect(screen.queryByTestId('action-button-photo-✓')).not.toBeInTheDocument();
     });
+
+    it('should show Timer ✓ button as active when meterExpiresAt is set', () => {
+      const futureDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      const spot = createMockSpot({ meterExpiresAt: futureDate });
+      render(<SpotActions spot={spot} />);
+
+      // Timer button keeps stable testId regardless of label
+      const timerButton = screen.getByTestId('action-button-timer');
+      expect(timerButton).toBeInTheDocument();
+      expect(timerButton).toHaveTextContent('Timer ✓');
+    });
+
+    it('should show Timer button without checkmark when no timer set', () => {
+      const spot = createMockSpot({ meterExpiresAt: null });
+      render(<SpotActions spot={spot} />);
+
+      const timerButton = screen.getByTestId('action-button-timer');
+      expect(timerButton).toBeInTheDocument();
+      expect(timerButton).toHaveTextContent('Timer');
+      expect(timerButton).not.toHaveTextContent('✓');
+    });
   });
 
   describe('click handlers', () => {
@@ -94,14 +116,14 @@ describe('SpotActions', () => {
       expect(onGalleryClick).toHaveBeenCalledTimes(1);
     });
 
-    it('should not call onTimerClick when Timer button is clicked (disabled)', () => {
+    it('should call onTimerClick when Timer button is clicked', () => {
       const onTimerClick = vi.fn();
       const spot = createMockSpot();
       render(<SpotActions spot={spot} onTimerClick={onTimerClick} />);
 
       const timerButton = screen.getByTestId('action-button-timer');
       fireEvent.click(timerButton);
-      expect(onTimerClick).not.toHaveBeenCalled();
+      expect(onTimerClick).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -15,6 +15,7 @@ export interface Spot {
   note: string | null;
   floor: string | null;
   spotIdentifier: string | null;
+  meterExpiresAt: string | null;
   isActive: boolean;
   savedAt: string;
 }
@@ -63,6 +64,7 @@ export interface UpdateSpotInput {
   note?: string | null;
   floor?: string | null;
   spotIdentifier?: string | null;
+  meterExpiresAt?: string | null;
 }
 
 /**
@@ -141,4 +143,7 @@ export interface SpotActions {
   createShareLink: (spotId: string) => Promise<ShareLinkResponse>;
   // Current spot management
   setCurrentSpot: (spot: Spot | null) => void;
+  // Meter timer actions
+  setMeterTimer: (spotId: string, expiresAt: string) => Promise<Spot>;
+  clearMeterTimer: (spotId: string) => Promise<Spot>;
 }

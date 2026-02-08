@@ -1,0 +1,1 @@
+ALTER TABLE "parking_spots" ADD COLUMN "meter_expires_at" timestamp with time zone;

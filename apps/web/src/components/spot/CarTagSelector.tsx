@@ -35,25 +35,36 @@ export const CarTagSelector = ({
   const { tags, isLoading, createTag } = useCarTagStore();
   const isGuest = useGuestStore((state) => state.isGuest);
 
-  // Sort tags: custom tags first, then default tags
+  // Sort tags: custom tags first, then "My Car", then other defaults
   const sortedTags = [...tags].sort((a, b) => {
-    if (a.isDefault === b.isDefault) return 0;
-    return a.isDefault ? 1 : -1; // Custom (isDefault: false) first
+    // Custom tags first
+    if (!a.isDefault && b.isDefault) return -1;
+    if (a.isDefault && !b.isDefault) return 1;
+    // Among defaults, "My Car" comes first
+    if (a.isDefault && b.isDefault) {
+      if (a.name === 'My Car') return -1;
+      if (b.name === 'My Car') return 1;
+    }
+    return 0;
   });
 
-  // Get preferred default tag (first custom tag, or first default)
-  const preferredTag = sortedTags[0];
+  // Get preferred default tag: first custom tag, or "My Car", or first available
+  const getPreferredTag = () => {
+    const customTags = sortedTags.filter((t) => !t.isDefault);
+    if (customTags.length > 0) return customTags[0];
+    return sortedTags.find((t) => t.name === 'My Car') || sortedTags[0];
+  };
+  const preferredTag = getPreferredTag();
 
   // Find the currently selected tag, fallback to preferred tag
   const currentTag = sortedTags.find((t) => t.id === selectedTagId) || preferredTag;
 
-  // Auto-select preferred tag if current selection is a default tag but custom tags exist
+  // Auto-select preferred tag only if no selection is set
   useEffect(() => {
-    if (!isLoading && preferredTag && !preferredTag.isDefault) {
-      // User has custom tags - check if we should auto-select
+    if (!isLoading && preferredTag) {
       const currentSelected = tags.find((t) => t.id === selectedTagId);
-      if (!currentSelected || currentSelected.isDefault) {
-        // Current selection is default or not found - auto-select first custom tag
+      if (!currentSelected) {
+        // No selection - auto-select preferred tag
         onSelect(preferredTag.id);
       }
     }
@@ -151,7 +162,7 @@ export const CarTagSelector = ({
       >
         <span
           className="w-3 h-3 rounded-full shrink-0"
-          style={{ backgroundColor: currentTag?.color || '#3B82F6' }}
+          style={{ backgroundColor: currentTag?.color || '#8B5CF6' }}
           aria-hidden="true"
         />
         <span className="text-sm font-medium text-gray-700">{currentTag?.name || 'My Car'}</span>

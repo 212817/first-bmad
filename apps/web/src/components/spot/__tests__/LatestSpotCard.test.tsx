@@ -16,6 +16,7 @@ describe('LatestSpotCard', () => {
     note: 'Level P2',
     floor: null,
     spotIdentifier: null,
+    meterExpiresAt: null,
     isActive: true,
     savedAt: '2026-02-03T10:00:00Z',
   };
@@ -139,6 +140,22 @@ describe('LatestSpotCard', () => {
 
       expect(screen.getByTestId('latest-spot-card-loading')).toBeInTheDocument();
       expect(screen.queryByTestId('latest-spot-card')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('meter timer display', () => {
+    it('should display meter timer when meterExpiresAt is set', () => {
+      const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+      const spotWithTimer = { ...mockSpot, meterExpiresAt: futureTime };
+      render(<LatestSpotCard spot={spotWithTimer} onNavigate={mockOnNavigate} />);
+
+      expect(screen.getByTestId('meter-timer-display')).toBeInTheDocument();
+    });
+
+    it('should not display meter timer when meterExpiresAt is null', () => {
+      render(<LatestSpotCard spot={mockSpot} onNavigate={mockOnNavigate} />);
+
+      expect(screen.queryByTestId('meter-timer-display')).not.toBeInTheDocument();
     });
   });
 });

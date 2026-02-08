@@ -119,11 +119,10 @@ test.describe('Spot Confirmation Page', () => {
     await expect(page.getByTestId('action-button-gallery')).toBeVisible();
     await expect(page.getByTestId('action-button-timer')).toBeVisible();
 
-    // Timer should be disabled
-    await expect(page.getByTestId('action-button-timer')).toBeDisabled();
+    // Timer should be enabled (Story 4.3 implemented timer functionality)
+    await expect(page.getByTestId('action-button-timer')).toBeEnabled();
 
     // Car tag selector should be visible (always shown, not a button)
-    await expect(page.getByTestId('car-tag-section')).toBeVisible();
     await expect(page.getByTestId('car-tag-selector')).toBeVisible();
   });
 
@@ -362,11 +361,11 @@ test.describe('Spot Confirmation Page', () => {
       await expect(textarea).toBeVisible();
       await expect(textarea).toHaveAttribute(
         'placeholder',
-        'Add Note: P2, near elevator • Blue pillar • Row G'
+        'Add Note: P2, near elevator • Blue pillar'
       );
     });
 
-    test('note input shows character counter (AC2)', async ({ page }) => {
+    test('note input shows character counter at limit (AC2)', async ({ page }) => {
       // Enter guest mode
       await page.goto('/login', { waitUntil: 'domcontentloaded' });
       await page.getByRole('button', { name: /continue as guest/i }).click();
@@ -384,15 +383,17 @@ test.describe('Spot Confirmation Page', () => {
       // Wait for confirmation page
       await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
 
-      // Character counter should show 0/500
-      await expect(page.getByTestId('note-input-counter')).toContainText('0/500');
-
-      // Type some text
+      // Note input textarea should be visible
       const textarea = page.getByTestId('note-input-textarea');
-      await textarea.fill('Near the elevator');
+      await expect(textarea).toBeVisible();
 
-      // Counter should update
-      await expect(page.getByTestId('note-input-counter')).toContainText('17/500');
+      // Counter is only visible when at 200 character limit
+      // Fill with 200 characters to see counter
+      const longText = 'A'.repeat(200);
+      await textarea.fill(longText);
+
+      // Counter should show limit
+      await expect(page.getByTestId('note-input-counter')).toContainText('200/200');
     });
 
     test('note is saved on blur (AC3)', async ({ page }) => {
@@ -425,6 +426,173 @@ test.describe('Spot Confirmation Page', () => {
 
       // Verify note value persists in textarea
       await expect(textarea).toHaveValue('Level P2, Row B');
+    });
+  });
+
+  test.describe('Meter Timer (Story 4.3)', () => {
+    test('Timer button opens timer input section', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Timer input should not be visible initially
+      await expect(page.getByTestId('meter-timer-input')).not.toBeVisible();
+
+      // Click timer button
+      await page.getByTestId('action-button-timer').click();
+
+      // Timer input should now be visible
+      await expect(page.getByTestId('meter-timer-input')).toBeVisible();
+
+      // Should show preset buttons
+      await expect(page.getByRole('button', { name: '30 min' })).toBeVisible();
+      await expect(page.getByRole('button', { name: '1 hour' })).toBeVisible();
+      await expect(page.getByRole('button', { name: '2 hours' })).toBeVisible();
+    });
+
+    test('Preset buttons set meter timer', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Click timer button
+      await page.getByTestId('action-button-timer').click();
+      await expect(page.getByTestId('meter-timer-input')).toBeVisible();
+
+      // Click 30 min preset
+      await page.getByRole('button', { name: '30 min' }).click();
+
+      // Timer status should show the set time
+      await expect(page.getByTestId('timer-status')).toBeVisible();
+      await expect(page.getByTestId('timer-status')).toContainText(/Timer set for/);
+
+      // Timer button should show checkmark indicating active timer
+      await expect(page.getByTestId('action-button-timer')).toContainText('✓');
+    });
+
+    test('Custom input sets meter timer', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Click timer button
+      await page.getByTestId('action-button-timer').click();
+      await expect(page.getByTestId('meter-timer-input')).toBeVisible();
+
+      // Enter custom minutes
+      await page.getByTestId('custom-minutes-input').fill('45');
+      await page.getByRole('button', { name: 'Set' }).click();
+
+      // Timer status should show the set time
+      await expect(page.getByTestId('timer-status')).toBeVisible();
+      await expect(page.getByTestId('timer-status')).toContainText(/Timer set for/);
+    });
+
+    test('Clear button removes meter timer', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Click timer button
+      await page.getByTestId('action-button-timer').click();
+      await expect(page.getByTestId('meter-timer-input')).toBeVisible();
+
+      // Set a timer first
+      await page.getByRole('button', { name: '1 hour' }).click();
+      await expect(page.getByTestId('timer-status')).toBeVisible();
+
+      // Click clear button
+      await page.getByRole('button', { name: 'Clear' }).click();
+
+      // Timer status should be gone
+      await expect(page.getByTestId('timer-status')).not.toBeVisible();
+
+      // Timer button should not show checkmark
+      await expect(page.getByTestId('action-button-timer')).not.toContainText('✓');
+    });
+
+    test('Timer display shows on home screen after setting', async ({ page }) => {
+      // Enter guest mode
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: /continue as guest/i }).click();
+      await expect(page).toHaveURL('/');
+
+      // Click save button
+      await page.getByTestId('save-spot-button').click();
+
+      // If permission prompt is shown, click "Enable Location"
+      const enableButton = page.getByRole('button', { name: /enable location/i });
+      if (await enableButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await enableButton.click();
+      }
+
+      // Wait for confirmation page
+      await expect(page.getByTestId('spot-confirmation-page')).toBeVisible({ timeout: 15000 });
+
+      // Click timer button and set 1 hour
+      await page.getByTestId('action-button-timer').click();
+      await page.getByRole('button', { name: '1 hour' }).click();
+      await expect(page.getByTestId('timer-status')).toBeVisible();
+
+      // Click Done to return home
+      await page.getByTestId('done-button').click();
+      await expect(page).toHaveURL('/');
+
+      // Timer display should be visible on latest spot card
+      await expect(page.getByTestId('meter-timer-display')).toBeVisible();
+      await expect(page.getByTestId('meter-timer-display')).toContainText(/\d+m|\d+h/);
     });
   });
 });

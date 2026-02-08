@@ -100,6 +100,7 @@ describe('Spots API', () => {
     note: null,
     floor: null,
     spotIdentifier: null,
+    meterExpiresAt: null,
     isActive: true,
     savedAt: new Date('2026-01-15T12:00:00Z'),
     createdAt: new Date('2026-01-15T12:00:00Z'),
@@ -384,6 +385,73 @@ describe('Spots API', () => {
       expect(response.status).toBe(200);
       expect(response.body.data.carTagId).toBe(carTagId);
       expect(mockSpotRepository.update).toHaveBeenCalledWith('spot-123', { carTagId });
+    });
+
+    it('should update spot meterExpiresAt with valid future date', async () => {
+      const futureDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+      const meterExpiresAt = futureDate.toISOString();
+      mockSpotRepository.findById.mockResolvedValueOnce(mockSpot);
+      mockSpotRepository.update.mockResolvedValue({
+        ...mockSpot,
+        meterExpiresAt: futureDate,
+      });
+
+      const response = await request(app)
+        .patch('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ meterExpiresAt });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.meterExpiresAt).toBe(futureDate.toISOString());
+    });
+
+    it('should clear meterExpiresAt with null', async () => {
+      const spotWithMeter = {
+        ...mockSpot,
+        meterExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      };
+      mockSpotRepository.findById.mockResolvedValueOnce(spotWithMeter);
+      mockSpotRepository.update.mockResolvedValue({
+        ...mockSpot,
+        meterExpiresAt: null,
+      });
+
+      const response = await request(app)
+        .patch('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ meterExpiresAt: null });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.meterExpiresAt).toBeNull();
+    });
+
+    it('should return 400 for meterExpiresAt in the past', async () => {
+      const pastDate = new Date(Date.now() - 60 * 1000); // 1 minute ago
+      mockSpotRepository.findById.mockResolvedValueOnce(mockSpot);
+
+      const response = await request(app)
+        .patch('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ meterExpiresAt: pastDate.toISOString() });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.fields.meterExpiresAt).toBe('Meter expiry must be in the future');
+    });
+
+    it('should return 400 for invalid meterExpiresAt format', async () => {
+      mockSpotRepository.findById.mockResolvedValueOnce(mockSpot);
+
+      const response = await request(app)
+        .patch('/v1/spots/spot-123')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ meterExpiresAt: 'not-a-date' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.fields.meterExpiresAt).toBe('Invalid date format');
     });
   });
 

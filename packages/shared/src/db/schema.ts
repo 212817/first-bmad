@@ -55,6 +55,7 @@ export const parkingSpots = pgTable(
     note: text('note'),
     floor: varchar('floor', { length: 50 }),
     spotIdentifier: varchar('spot_identifier', { length: 100 }),
+    meterExpiresAt: timestamp('meter_expires_at', { withTimezone: true }),
     isActive: boolean('is_active').notNull().default(true),
     savedAt: timestamp('saved_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

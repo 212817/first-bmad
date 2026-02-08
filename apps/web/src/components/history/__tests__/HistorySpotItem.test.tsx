@@ -19,6 +19,7 @@ describe('HistorySpotItem', () => {
     note: null,
     floor: null,
     spotIdentifier: null,
+    meterExpiresAt: null,
     isActive: false,
     savedAt: new Date().toISOString(),
   };
