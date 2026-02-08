@@ -14,9 +14,14 @@ const YEAR = 365 * DAY;
  * Format a date/timestamp to a relative time string
  * Examples: "just now", "5 minutes ago", "2 hours ago", "3 days ago"
  */
-export const formatRelativeTime = (date: Date | string): string => {
+export const formatRelativeTime = (date: Date | string | null | undefined): string => {
+  if (!date) return 'Unknown';
+
   const now = new Date();
   const target = typeof date === 'string' ? new Date(date) : date;
+
+  if (isNaN(target.getTime())) return 'Unknown';
+
   const diff = now.getTime() - target.getTime();
 
   if (diff < MINUTE) {
@@ -66,8 +71,12 @@ export const formatCoordinates = (lat: number, lng: number): string => {
  * Format a date/timestamp to human-readable date and time
  * Example: "Jan 15, 2026 at 15:45"
  */
-export const formatDateTime = (date: Date | string): string => {
+export const formatDateTime = (date: Date | string | null | undefined): string => {
+  if (!date) return 'Unknown';
+
   const target = typeof date === 'string' ? new Date(date) : date;
+
+  if (isNaN(target.getTime())) return 'Unknown';
 
   return (
     target.toLocaleDateString(undefined, {

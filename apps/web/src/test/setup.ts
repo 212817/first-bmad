@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { vi, beforeAll, afterEach, afterAll } from 'vitest';
+import { server } from './mocks/server';
+
+// ============================================================================
+// MSW Server Setup - Mock all HTTP requests in tests
+// ============================================================================
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 // ============================================================================
 // GLOBAL MOCKS - Leaflet/Map components crash jsdom, must be mocked globally

@@ -7,8 +7,10 @@ import type { SpotDetailCardProps } from './types';
 /**
  * Format timestamp for display
  */
-const formatTimestamp = (isoString: string): string => {
+const formatTimestamp = (isoString: string | null | undefined): string => {
+  if (!isoString) return 'Unknown';
   const date = new Date(isoString);
+  if (isNaN(date.getTime())) return 'Unknown';
   return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',

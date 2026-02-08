@@ -1,5 +1,5 @@
 // apps/web/src/pages/__tests__/SpotConfirmationPage.test.tsx
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -34,6 +34,54 @@ vi.mock('@/stores/carTagStore', () => ({
     isLoading: false,
     fetchTags: vi.fn(),
     tagsHydrated: true,
+    isHydrated: true,
+  })),
+}));
+
+// Mock guestStore
+const mockGuestStoreState = { isGuest: false };
+vi.mock('@/stores/guestStore', () => ({
+  useGuestStore: Object.assign(
+    vi.fn(() => mockGuestStoreState),
+    { getState: () => mockGuestStoreState }
+  ),
+}));
+
+// Mock useReverseGeocode to prevent API calls
+vi.mock('@/hooks/useReverseGeocode/useReverseGeocode', () => ({
+  useReverseGeocode: vi.fn(() => ({
+    address: '123 Test St',
+    isLoading: false,
+    error: null,
+  })),
+}));
+
+// Mock useNavigation to prevent external navigation
+vi.mock('@/hooks/useNavigation/useNavigation', () => ({
+  useNavigation: vi.fn(() => ({
+    openPicker: vi.fn(),
+    closePicker: vi.fn(),
+    isPickerOpen: false,
+    pendingSpot: null,
+    navigateToSpot: vi.fn(),
+  })),
+}));
+
+// Mock usePhotoUpload to prevent upload attempts
+vi.mock('@/hooks/usePhotoUpload/usePhotoUpload', () => ({
+  usePhotoUpload: vi.fn(() => ({
+    uploadPhoto: vi.fn().mockResolvedValue('https://example.com/photo.jpg'),
+    status: 'idle' as const,
+    progress: 0,
+    error: null,
+    reset: vi.fn(),
+  })),
+}));
+
+// Mock useFilePicker
+vi.mock('@/hooks/useFilePicker/useFilePicker', () => ({
+  useFilePicker: vi.fn(() => ({
+    pickImage: vi.fn(),
   })),
 }));
 
@@ -73,130 +121,178 @@ describe('SpotConfirmationPage', () => {
       isLoading: false,
       isSaving: false,
       error: null,
+      getSpotById: vi.fn().mockResolvedValue(mockSpot),
+      setCurrentSpot: vi.fn(),
+      updateSpot: vi.fn().mockResolvedValue(undefined),
     });
     vi.clearAllMocks();
   });
 
-  it('should render the confirmation page', () => {
-    renderWithRouter();
-    expect(screen.getByTestId('spot-confirmation-page')).toBeInTheDocument();
+  afterEach(() => {
+    useSpotStore.setState({
+      currentSpot: mockSpot,
+      isLoading: false,
+      isSaving: false,
+      error: null,
+    });
   });
 
-  it('should render SpotDetailCard', () => {
+  it('should render the confirmation page', async () => {
     renderWithRouter();
-    expect(screen.getByTestId('spot-detail-card')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('spot-confirmation-page')).toBeInTheDocument();
+    });
   });
 
-  it('should render SpotActions', () => {
+  it('should render SpotDetailCard', async () => {
     renderWithRouter();
-    expect(screen.getByTestId('spot-actions')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('spot-detail-card')).toBeInTheDocument();
+    });
   });
 
-  it('should render buttons', () => {
+  it('should render SpotActions', async () => {
     renderWithRouter();
-    expect(screen.getByTestId('navigate-button')).toBeInTheDocument();
-    expect(screen.getByTestId('done-button')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('spot-actions')).toBeInTheDocument();
+    });
   });
 
-  it('should render the spot address', () => {
+  it('should render buttons', async () => {
     renderWithRouter();
-    // Address includes "Near" prefix
-    expect(screen.getByText(/123 Test St/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('navigate-button')).toBeInTheDocument();
+      expect(screen.getByTestId('done-button')).toBeInTheDocument();
+    });
   });
 
-  it('should render loading state when isLoading', () => {
+  it('should render the spot address', async () => {
+    renderWithRouter();
+    await waitFor(() => {
+      expect(screen.getByText(/123 Test St/)).toBeInTheDocument();
+    });
+  });
+
+  it('should render loading state when isLoading', async () => {
     useSpotStore.setState({ currentSpot: null, isLoading: true });
     renderWithRouter();
-    // Loading spinner doesn't have role="status", check for spinner class
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    });
   });
 
-  it('should render message when spot not found', () => {
+  it('should render message when spot not found', async () => {
     useSpotStore.setState({ currentSpot: null, isLoading: false });
     renderWithRouter();
-    // When no spot, shows loading spinner (useEffect will try to load)
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    });
   });
 
-  it('should render camera action button', () => {
+  it('should render camera action button', async () => {
     renderWithRouter();
-    // Camera button in SpotActions
-    expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
+    });
   });
 
   it('should open camera when camera action is clicked', async () => {
     const user = userEvent.setup();
     renderWithRouter();
 
+    await waitFor(() => {
+      expect(screen.getByTestId('action-button-camera')).toBeInTheDocument();
+    });
+
     const cameraButton = screen.getByTestId('action-button-camera');
     await user.click(cameraButton);
 
-    expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('camera-capture')).toBeInTheDocument();
+    });
   });
 
-  it('should display spot photo in SpotDetailCard when photoUrl exists', () => {
+  it('should display spot photo in SpotDetailCard when photoUrl exists', async () => {
     useSpotStore.setState({
       currentSpot: { ...mockSpot, photoUrl: 'https://example.com/photo.jpg' },
     });
     renderWithRouter();
 
-    // Photo is shown in SpotDetailCard, not as separate element
-    const img = document.querySelector('img');
-    expect(img).toBeInTheDocument();
+    await waitFor(() => {
+      const img = document.querySelector('img');
+      expect(img).toBeInTheDocument();
+    });
   });
 
-  it('should render car tag selector', () => {
+  it('should render car tag selector', async () => {
     renderWithRouter();
-    expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
+    });
   });
 
-  it('should render note section', () => {
+  it('should render note section', async () => {
     renderWithRouter();
-    expect(screen.getByTestId('note-section')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('note-section')).toBeInTheDocument();
+    });
   });
 
-  it('should show existing note when spot has note', () => {
+  it('should show existing note when spot has note', async () => {
     useSpotStore.setState({
       currentSpot: { ...mockSpot, note: 'Test note' },
     });
     renderWithRouter();
-    expect(screen.getByText('Test note')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Test note')).toBeInTheDocument();
+    });
   });
 
   it('should handle navigate button click', async () => {
     const user = userEvent.setup();
     renderWithRouter();
 
+    await waitFor(() => {
+      expect(screen.getByTestId('navigate-button')).toBeInTheDocument();
+    });
+
     const navigateBtn = screen.getByTestId('navigate-button');
     await user.click(navigateBtn);
-    // Navigation opens external map app - no assertion needed, just verify no crash
   });
 
   it('should handle done button click and navigate home', async () => {
     const user = userEvent.setup();
     renderWithRouter();
 
+    await waitFor(() => {
+      expect(screen.getByTestId('done-button')).toBeInTheDocument();
+    });
+
     const doneBtn = screen.getByTestId('done-button');
     await user.click(doneBtn);
-    // Done navigates to home
   });
 
-  it('should show timer button highlighted when meterExpiresAt is set', () => {
+  it('should show timer button highlighted when meterExpiresAt is set', async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     useSpotStore.setState({
       currentSpot: { ...mockSpot, meterExpiresAt: futureDate },
     });
     renderWithRouter();
 
-    // Timer button shows "Timer ✓" when active
-    const timerButton = screen.getByTestId('action-button-timer');
-    expect(timerButton).toBeInTheDocument();
-    expect(timerButton.textContent).toContain('Timer');
+    await waitFor(() => {
+      const timerButton = screen.getByTestId('action-button-timer');
+      expect(timerButton).toBeInTheDocument();
+      expect(timerButton.textContent).toContain('Timer');
+    });
   });
 
   it('should update note when edited', async () => {
     const user = userEvent.setup();
     renderWithRouter();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('note-section')).toBeInTheDocument();
+    });
 
     const noteSection = screen.getByTestId('note-section');
     const editButton = noteSection.querySelector('[data-testid="edit-note-button"]');
@@ -220,13 +316,16 @@ describe('SpotConfirmationPage', () => {
     const user = userEvent.setup();
     renderWithRouter();
 
+    await waitFor(() => {
+      expect(screen.getByTestId('car-tag-selector')).toBeInTheDocument();
+    });
+
     const tagSelector = screen.getByTestId('car-tag-selector');
     const tagButtons = tagSelector.querySelectorAll('button');
     const firstButton = tagButtons[0];
 
     if (firstButton) {
       await user.click(firstButton);
-      // Tag selection updates store
     }
   });
 });
