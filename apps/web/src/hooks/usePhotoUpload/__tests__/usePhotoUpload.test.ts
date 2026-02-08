@@ -451,7 +451,9 @@ describe('usePhotoUpload', () => {
         firstKey = result1.key;
       });
 
-      result.current.reset();
+      await act(async () => {
+        result.current.reset();
+      });
 
       await act(async () => {
         const result2 = await result.current.uploadPhoto(inputBlob);

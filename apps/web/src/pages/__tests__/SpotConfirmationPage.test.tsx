@@ -1,6 +1,6 @@
 // apps/web/src/pages/__tests__/SpotConfirmationPage.test.tsx
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import type { Spot } from '@/stores/spot.types';
@@ -85,6 +85,13 @@ vi.mock('@/hooks/useFilePicker/useFilePicker', () => ({
   })),
 }));
 
+// Mock ShareButton to prevent act() warnings from async state updates
+vi.mock('@/components/spot/ShareButton', () => ({
+  ShareButton: ({ spotId }: { spotId: string }) => (
+    <button data-testid="share-button" data-spot-id={spotId}>Share</button>
+  ),
+}));
+
 import { SpotConfirmationPage } from '../SpotConfirmationPage';
 import { useSpotStore } from '@/stores/spotStore';
 
@@ -109,6 +116,7 @@ const renderWithRouter = () => {
     <MemoryRouter initialEntries={['/spot/test-spot-123/confirm']}>
       <Routes>
         <Route path="/spot/:spotId/confirm" element={<SpotConfirmationPage />} />
+        <Route path="/" element={<div data-testid="home-page">Home</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -116,6 +124,8 @@ const renderWithRouter = () => {
 
 describe('SpotConfirmationPage', () => {
   beforeEach(() => {
+    // Use fake timers with shouldAdvanceTime to let waitFor work while controlling timers
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     useSpotStore.setState({
       currentSpot: mockSpot,
       isLoading: false,
@@ -128,7 +138,14 @@ describe('SpotConfirmationPage', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Advance timers BEFORE cleanup to let pending setTimeout callbacks complete
+    // This prevents "not wrapped in act(...)" warnings
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    cleanup();
+    vi.useRealTimers();
     useSpotStore.setState({
       currentSpot: mockSpot,
       isLoading: false,
@@ -197,7 +214,7 @@ describe('SpotConfirmationPage', () => {
   });
 
   it('should open camera when camera action is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithRouter();
 
     await waitFor(() => {
@@ -249,7 +266,7 @@ describe('SpotConfirmationPage', () => {
   });
 
   it('should handle navigate button click', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithRouter();
 
     await waitFor(() => {
@@ -261,7 +278,7 @@ describe('SpotConfirmationPage', () => {
   });
 
   it('should handle done button click and navigate home', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithRouter();
 
     await waitFor(() => {
@@ -287,7 +304,7 @@ describe('SpotConfirmationPage', () => {
   });
 
   it('should update note when edited', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithRouter();
 
     await waitFor(() => {
@@ -313,7 +330,7 @@ describe('SpotConfirmationPage', () => {
   });
 
   it('should assign car tag when selected', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithRouter();
 
     await waitFor(() => {

@@ -190,6 +190,8 @@ describe('ManualEntryPage', () => {
     });
 
     it('should save address only when geocoding fails with error', async () => {
+      // Suppress expected console.error for geocoding failure
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const mockSpot = { id: 'error-spot-123' };
       mockSaveSpot.mockResolvedValue(mockSpot);
       vi.mocked(geocodingApi.geocodingApi.geocodeAddress).mockRejectedValue(
@@ -211,6 +213,8 @@ describe('ManualEntryPage', () => {
           address: '123 Error Test',
         });
       });
+
+      consoleSpy.mockRestore();
     });
   });
 

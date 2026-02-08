@@ -103,6 +103,8 @@ describe('useReverseGeocode', () => {
 
   describe('error handling', () => {
     it('should set error when fetch fails', async () => {
+      // Suppress expected console.warn output for this test
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       vi.mocked(geocodingApi.reverseGeocode).mockRejectedValue(new Error('API error'));
 
       const { result } = renderHook(() => useReverseGeocode(40.7128, -74.006, null, { delay: 10 }));
@@ -112,9 +114,12 @@ describe('useReverseGeocode', () => {
       });
 
       expect(result.current.isLoading).toBe(false);
+      consoleSpy.mockRestore();
     });
 
     it('should handle non-Error exceptions', async () => {
+      // Suppress expected console.warn output for this test
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       vi.mocked(geocodingApi.reverseGeocode).mockRejectedValue('string error');
 
       const { result } = renderHook(() => useReverseGeocode(40.7128, -74.006, null, { delay: 10 }));
@@ -122,6 +127,7 @@ describe('useReverseGeocode', () => {
       await waitFor(() => {
         expect(result.current.error).toBe('Failed to fetch address');
       });
+      consoleSpy.mockRestore();
     });
   });
 
