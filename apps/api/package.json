@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.985.0",
-    "@aws-sdk/s3-request-presigner": "^3.980.0",
+    "@aws-sdk/s3-request-presigner": "^3.985.0",
     "@neondatabase/serverless": "^1.0.2",
     "@repo/shared": "workspace:*",
     "cookie-parser": "^1.4.7",
