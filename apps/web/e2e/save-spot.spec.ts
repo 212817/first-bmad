@@ -170,15 +170,9 @@ test.describe('Save Spot', () => {
       timeout: 5000,
     });
 
-    // If a modal is shown, dismiss it first
-    const dismissButton = page.getByRole('button', { name: 'Dismiss' }).first();
-    if (await dismissButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await dismissButton.click();
-    }
-
     // User can still use the address input form as alternative
-    // Click the button to expand address form
-    await page.getByTestId('show-address-form-button').click();
+    // Click "Enter address manually" in the modal which closes it and shows address input
+    await page.getByRole('button', { name: /enter address manually/i }).click();
     await expect(page.getByTestId('address-input')).toBeVisible();
   });
 
