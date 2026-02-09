@@ -23,7 +23,12 @@ vi.mock('react-leaflet', () => ({
     <div data-testid="map-marker" data-lat={position[0]} data-lng={position[1]} />
   ),
   Circle: ({ center, radius }: { center: [number, number]; radius: number }) => (
-    <div data-testid="accuracy-circle" data-lat={center[0]} data-lng={center[1]} data-radius={radius} />
+    <div
+      data-testid="accuracy-circle"
+      data-lat={center[0]}
+      data-lng={center[1]}
+      data-radius={radius}
+    />
   ),
   useMap: () => ({
     setView: vi.fn(),

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
 import { SpotMap } from '@/components/map';
@@ -9,14 +9,26 @@ import { useCarTagStore } from '@/stores/carTagStore';
 import { useGeolocation } from '@/hooks/useGeolocation/useGeolocation';
 import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
-import { SignInPrompt } from '@/components/prompts/SignInPrompt';
-import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
-import { MapPickerModal } from '@/components/navigation';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { Header } from '@/components/layout/Header';
-import { LatestSpotCard } from '@/components/spot/LatestSpotCard';
 import { geocodingApi } from '@/services/api/geocodingApi';
+
+// Lazy load components that are not critical for initial paint
+const SignInPrompt = lazy(() =>
+  import('@/components/prompts/SignInPrompt').then((m) => ({ default: m.SignInPrompt }))
+);
+const LocationPermissionPrompt = lazy(() =>
+  import('@/components/prompts/LocationPermissionPrompt').then((m) => ({
+    default: m.LocationPermissionPrompt,
+  }))
+);
+const MapPickerModal = lazy(() =>
+  import('@/components/navigation').then((m) => ({ default: m.MapPickerModal }))
+);
+const LatestSpotCard = lazy(() =>
+  import('@/components/spot/LatestSpotCard').then((m) => ({ default: m.LatestSpotCard }))
+);
 
 // localStorage key for caching last position (for faster return visits)
 const LAST_POSITION_KEY = 'parkspot:lastPosition';
@@ -394,17 +406,23 @@ export const HomePage = () => {
       {authMode === 'guest' && <GuestModeBanner />}
 
       {/* Sign-In Prompt for Guest Users */}
-      {showPrompt && <SignInPrompt onSignIn={handleSignInFromPrompt} onDismiss={dismiss} />}
+      {showPrompt && (
+        <Suspense fallback={null}>
+          <SignInPrompt onSignIn={handleSignInFromPrompt} onDismiss={dismiss} />
+        </Suspense>
+      )}
 
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
-        <LocationPermissionPrompt
-          onEnableLocation={handleEnableLocation}
-          onEnterManually={handleEnterManually}
-          onDismiss={() => setShowLocationPrompt(false)}
-          isLoading={isBusy}
-          permissionDenied={permissionState === 'denied'}
-        />
+        <Suspense fallback={null}>
+          <LocationPermissionPrompt
+            onEnableLocation={handleEnableLocation}
+            onEnterManually={handleEnterManually}
+            onDismiss={() => setShowLocationPrompt(false)}
+            isLoading={isBusy}
+            permissionDenied={permissionState === 'denied'}
+          />
+        </Suspense>
       )}
 
       <main className="flex-1 flex flex-col items-center p-4 pt-3 pb-24 text-center">
@@ -736,13 +754,22 @@ export const HomePage = () => {
             <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">
               Last parked spot
             </h2>
-            <LatestSpotCard
-              spot={latestSpot}
-              carTagName={getTagInfo().name}
-              carTagColor={getTagInfo().color}
-              onNavigate={handleNavigateToSpot}
-              isLoading={isLoadingLatest}
-            />
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-xl shadow-md p-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                </div>
+              }
+            >
+              <LatestSpotCard
+                spot={latestSpot}
+                carTagName={getTagInfo().name}
+                carTagColor={getTagInfo().color}
+                onNavigate={handleNavigateToSpot}
+                isLoading={isLoadingLatest}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -766,11 +793,13 @@ export const HomePage = () => {
       </main>
 
       {/* Map Picker Modal */}
-      <MapPickerModal
-        isOpen={isPickerOpen}
-        onClose={closePicker}
-        onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
-      />
+      <Suspense fallback={null}>
+        <MapPickerModal
+          isOpen={isPickerOpen}
+          onClose={closePicker}
+          onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
+        />
+      </Suspense>
     </div>
   );
 };
