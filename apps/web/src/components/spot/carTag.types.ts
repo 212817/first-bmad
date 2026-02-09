@@ -17,6 +17,8 @@ export interface CarTagSelectorProps {
   selectedTagId: string | null;
   onSelect: (tagId: string) => void;
   disabled?: boolean;
+  /** Shows spinner instead of chevron and disables dropdown */
+  isUpdating?: boolean;
 }
 
 /**

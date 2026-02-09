@@ -43,6 +43,8 @@ export const SpotConfirmationPage = () => {
   const [noteValue, setNoteValue] = useState(currentSpot?.note ?? '');
   const [pendingRetryBlob, setPendingRetryBlob] = useState<Blob | null>(null);
   const [isProcessingGallery, setIsProcessingGallery] = useState(false);
+  const [isUpdatingTag, setIsUpdatingTag] = useState(false);
+  const [tagUpdateError, setTagUpdateError] = useState<string | null>(null);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const { pickImage } = useFilePicker();
   const {
@@ -265,19 +267,43 @@ export const SpotConfirmationPage = () => {
   }, [currentSpot, noteValue, updateSpot]);
 
   /**
-   * Handle tag selection - update spot with new car tag
+   * Handle tag selection - optimistic update with rollback on error
    */
   const handleTagSelect = useCallback(
     async (tagId: string) => {
       if (!currentSpot) return;
 
+      const previousTagId = currentSpot.carTagId;
+
+      // Optimistically update UI immediately
+      setCurrentSpot({
+        ...currentSpot,
+        carTagId: tagId,
+      });
+      setIsUpdatingTag(true);
+      setTagUpdateError(null);
+
       try {
         await updateSpot(currentSpot.id, { carTagId: tagId });
       } catch (error) {
         console.error('Failed to update car tag:', error);
+
+        // Revert to previous tag on error
+        setCurrentSpot({
+          ...currentSpot,
+          carTagId: previousTagId,
+        });
+
+        // Show error toast
+        setTagUpdateError('Failed to update tag. Please try again.');
+
+        // Auto-hide error after 3 seconds
+        setTimeout(() => setTagUpdateError(null), 3000);
+      } finally {
+        setIsUpdatingTag(false);
       }
     },
-    [currentSpot, updateSpot]
+    [currentSpot, updateSpot, setCurrentSpot]
   );
 
   /**
@@ -347,6 +373,39 @@ export const SpotConfirmationPage = () => {
       {/* Camera Capture Modal */}
       {showCamera && <CameraCapture onCapture={handlePhotoCapture} onClose={handleCameraClose} />}
 
+      {/* Tag Update Error Toast */}
+      {tagUpdateError && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in"
+          role="alert"
+          data-testid="tag-update-error"
+        >
+          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span className="text-sm font-medium">{tagUpdateError}</span>
+          <button
+            onClick={() => setTagUpdateError(null)}
+            className="ml-2 p-1 hover:bg-red-700 rounded transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Close button - top right */}
       <button
         onClick={handleDone}
@@ -397,6 +456,7 @@ export const SpotConfirmationPage = () => {
                   selectedTagId={currentSpot.carTagId}
                   onSelect={handleTagSelect}
                   disabled={isSaving}
+                  isUpdating={isUpdatingTag}
                 />
               }
             />
