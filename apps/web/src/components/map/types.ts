@@ -31,6 +31,10 @@ export interface SpotMapProps {
   heightClass?: string;
   /** Test ID for testing */
   testId?: string;
+  /** Location accuracy in meters - shows accuracy circle on map */
+  accuracy?: number | null;
+  /** Whether a more precise location request is in progress */
+  isRefining?: boolean;
 }
 
 /**

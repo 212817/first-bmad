@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth/useAuth';
 import { SpotMap } from '@/components/map';
@@ -9,14 +9,72 @@ import { useCarTagStore } from '@/stores/carTagStore';
 import { useGeolocation } from '@/hooks/useGeolocation/useGeolocation';
 import { useNavigation } from '@/hooks/useNavigation/useNavigation';
 import { GuestModeBanner } from '@/components/ui/GuestModeBanner';
-import { SignInPrompt } from '@/components/prompts/SignInPrompt';
-import { LocationPermissionPrompt } from '@/components/prompts/LocationPermissionPrompt';
-import { MapPickerModal } from '@/components/navigation';
 import { useSignInPrompt } from '@/hooks/useSignInPrompt/useSignInPrompt';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode/useReverseGeocode';
 import { Header } from '@/components/layout/Header';
-import { LatestSpotCard } from '@/components/spot/LatestSpotCard';
 import { geocodingApi } from '@/services/api/geocodingApi';
+
+// Lazy load components that are not critical for initial paint
+const SignInPrompt = lazy(() =>
+  import('@/components/prompts/SignInPrompt').then((m) => ({ default: m.SignInPrompt }))
+);
+const LocationPermissionPrompt = lazy(() =>
+  import('@/components/prompts/LocationPermissionPrompt').then((m) => ({
+    default: m.LocationPermissionPrompt,
+  }))
+);
+const MapPickerModal = lazy(() =>
+  import('@/components/navigation').then((m) => ({ default: m.MapPickerModal }))
+);
+const LatestSpotCard = lazy(() =>
+  import('@/components/spot/LatestSpotCard').then((m) => ({ default: m.LatestSpotCard }))
+);
+
+// localStorage key for caching last position (for faster return visits)
+const LAST_POSITION_KEY = 'parkspot:lastPosition';
+
+interface CachedPosition {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  timestamp: number;
+}
+
+// Max age for cached position: 24 hours
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+/**
+ * Load cached position from localStorage
+ */
+const loadCachedPosition = (): CachedPosition | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(LAST_POSITION_KEY);
+    if (!stored) return null;
+    const cached = JSON.parse(stored) as CachedPosition;
+    // Check if cache is still valid
+    if (Date.now() - cached.timestamp > CACHE_MAX_AGE) {
+      localStorage.removeItem(LAST_POSITION_KEY);
+      return null;
+    }
+    return cached;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Save position to localStorage for faster future loads
+ */
+const saveCachedPosition = (lat: number, lng: number, accuracy: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const data: CachedPosition = { lat, lng, accuracy, timestamp: Date.now() };
+    localStorage.setItem(LAST_POSITION_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors
+  }
+};
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -48,12 +106,28 @@ export const HomePage = () => {
   const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  // Initialize with cached position for instant display
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(
+    () => {
+      const cached = loadCachedPosition();
+      return cached ? { lat: cached.lat, lng: cached.lng } : null;
+    }
+  );
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(() => {
+    const cached = loadCachedPosition();
+    return cached ? cached.accuracy : null;
+  });
+  // Track if we're fetching a more precise location
+  const [isRefiningLocation, setIsRefiningLocation] = useState(false);
   const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  // Start with loading=true only if no cached position
+  // This prevents flash of "Save my location" button before map loads
+  const [isLoadingLocation, setIsLoadingLocation] = useState(() => {
+    const cached = loadCachedPosition();
+    return !cached; // Only loading if no cache
+  });
   const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
@@ -71,25 +145,44 @@ export const HomePage = () => {
   );
 
   // Fetch current location on mount for map display (for authenticated/guest users)
-  // Auto-fetch location to show map immediately
+  // If we have cached position, show it immediately while fetching fresh position
   useEffect(() => {
     // Only attempt once and only if user is authenticated or guest
-    if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
-
-    // Auto-fetch location on page load to show map
-    if (!currentLocation) {
-      setMapLoadAttempted(true);
-      setIsLoadingLocation(true);
-      getCurrentPosition()
-        .then((pos) => {
-          setCurrentLocation({ lat: pos.lat, lng: pos.lng });
-          setLocationAccuracy(pos.accuracy);
-        })
-        .catch(() => {
-          // Silently fail - user can still use the button
-        })
-        .finally(() => setIsLoadingLocation(false));
+    if (mapLoadAttempted) {
+      return;
     }
+
+    // Not authenticated and not guest - don't fetch, clear loading state
+    if (!isAuthenticated && !isGuest) {
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    setMapLoadAttempted(true);
+
+    // If we have cached position, show it immediately but mark as refining
+    const hasCachedPosition = currentLocation !== null;
+    if (hasCachedPosition) {
+      setIsRefiningLocation(true);
+    } else {
+      setIsLoadingLocation(true);
+    }
+
+    // Fetch fresh position
+    getCurrentPosition()
+      .then((pos) => {
+        setCurrentLocation({ lat: pos.lat, lng: pos.lng });
+        setLocationAccuracy(pos.accuracy);
+        // Save to cache for next visit
+        saveCachedPosition(pos.lat, pos.lng, pos.accuracy);
+      })
+      .catch(() => {
+        // Silently fail - user can still use the button or cached position
+      })
+      .finally(() => {
+        setIsLoadingLocation(false);
+        setIsRefiningLocation(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isGuest]);
 
@@ -226,10 +319,22 @@ export const HomePage = () => {
   };
 
   /**
-   * Handle map position change when user drags
+   * Handle map position change
+   * - accuracy > 0: GPS location from "locate me" button - update current location
+   * - accuracy === 0: manual drag - set adjusted location
    */
-  const handleMapPositionChange = (lat: number, lng: number) => {
-    setAdjustedLocation({ lat, lng });
+  const handleMapPositionChange = (lat: number, lng: number, accuracy: number) => {
+    if (accuracy > 0) {
+      // GPS location - update current location and show accuracy circle
+      setCurrentLocation({ lat, lng });
+      setLocationAccuracy(accuracy);
+      setAdjustedLocation(null);
+      // Save to cache for next visit
+      saveCachedPosition(lat, lng, accuracy);
+    } else {
+      // Manual drag - set adjusted location (hides accuracy circle)
+      setAdjustedLocation({ lat, lng });
+    }
   };
 
   /**
@@ -301,17 +406,23 @@ export const HomePage = () => {
       {authMode === 'guest' && <GuestModeBanner />}
 
       {/* Sign-In Prompt for Guest Users */}
-      {showPrompt && <SignInPrompt onSignIn={handleSignInFromPrompt} onDismiss={dismiss} />}
+      {showPrompt && (
+        <Suspense fallback={null}>
+          <SignInPrompt onSignIn={handleSignInFromPrompt} onDismiss={dismiss} />
+        </Suspense>
+      )}
 
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
-        <LocationPermissionPrompt
-          onEnableLocation={handleEnableLocation}
-          onEnterManually={handleEnterManually}
-          onDismiss={() => setShowLocationPrompt(false)}
-          isLoading={isBusy}
-          permissionDenied={permissionState === 'denied'}
-        />
+        <Suspense fallback={null}>
+          <LocationPermissionPrompt
+            onEnableLocation={handleEnableLocation}
+            onEnterManually={handleEnterManually}
+            onDismiss={() => setShowLocationPrompt(false)}
+            isLoading={isBusy}
+            permissionDenied={permissionState === 'denied'}
+          />
+        </Suspense>
       )}
 
       <main className="flex-1 flex flex-col items-center p-4 pt-3 pb-24 text-center">
@@ -338,6 +449,8 @@ export const HomePage = () => {
                   onPositionChange={handleMapPositionChange}
                   heightClass="aspect-square"
                   testId="home-spot-map"
+                  accuracy={adjustedLocation ? null : locationAccuracy}
+                  isRefining={isRefiningLocation}
                 />
               ) : null}
 
@@ -641,13 +754,22 @@ export const HomePage = () => {
             <h2 className="text-left text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">
               Last parked spot
             </h2>
-            <LatestSpotCard
-              spot={latestSpot}
-              carTagName={getTagInfo().name}
-              carTagColor={getTagInfo().color}
-              onNavigate={handleNavigateToSpot}
-              isLoading={isLoadingLatest}
-            />
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-xl shadow-md p-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                </div>
+              }
+            >
+              <LatestSpotCard
+                spot={latestSpot}
+                carTagName={getTagInfo().name}
+                carTagColor={getTagInfo().color}
+                onNavigate={handleNavigateToSpot}
+                isLoading={isLoadingLatest}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -671,11 +793,13 @@ export const HomePage = () => {
       </main>
 
       {/* Map Picker Modal */}
-      <MapPickerModal
-        isOpen={isPickerOpen}
-        onClose={closePicker}
-        onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
-      />
+      <Suspense fallback={null}>
+        <MapPickerModal
+          isOpen={isPickerOpen}
+          onClose={closePicker}
+          onSelect={(provider) => pendingSpot && navigateToSpot(pendingSpot, provider)}
+        />
+      </Suspense>
     </div>
   );
 };
