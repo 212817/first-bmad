@@ -307,10 +307,22 @@ export const HomePage = () => {
   };
 
   /**
-   * Handle map position change when user drags
+   * Handle map position change
+   * - accuracy > 0: GPS location from "locate me" button - update current location
+   * - accuracy === 0: manual drag - set adjusted location
    */
-  const handleMapPositionChange = (lat: number, lng: number) => {
-    setAdjustedLocation({ lat, lng });
+  const handleMapPositionChange = (lat: number, lng: number, accuracy: number) => {
+    if (accuracy > 0) {
+      // GPS location - update current location and show accuracy circle
+      setCurrentLocation({ lat, lng });
+      setLocationAccuracy(accuracy);
+      setAdjustedLocation(null);
+      // Save to cache for next visit
+      saveCachedPosition(lat, lng, accuracy);
+    } else {
+      // Manual drag - set adjusted location (hides accuracy circle)
+      setAdjustedLocation({ lat, lng });
+    }
   };
 
   /**

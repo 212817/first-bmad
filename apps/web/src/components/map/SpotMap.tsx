@@ -93,7 +93,11 @@ const MapUpdater = ({
 /**
  * Locate me button component - gets user's current location
  */
-const LocateControl = ({ onLocate }: { onLocate: (lat: number, lng: number) => void }) => {
+const LocateControl = ({
+  onLocate,
+}: {
+  onLocate: (lat: number, lng: number, accuracy: number) => void;
+}) => {
   const map = useMap();
   const [isLocating, setIsLocating] = useState(false);
 
@@ -103,9 +107,9 @@ const LocateControl = ({ onLocate }: { onLocate: (lat: number, lng: number) => v
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
         map.setView([latitude, longitude], DEFAULT_ZOOM);
-        onLocate(latitude, longitude);
+        onLocate(latitude, longitude, accuracy);
         setIsLocating(false);
       },
       () => {
@@ -269,8 +273,9 @@ export const SpotMap = ({
         {!editable && <Marker position={displayPosition} zIndexOffset={-1000} />}
 
         {/* Accuracy circle - light blue transparent circle */}
+        {/* Hide when user has adjusted position (dragged map) */}
         {/* Use shadowPane to avoid invert filter on overlayPane */}
-        {accuracy && accuracy > 50 && (
+        {accuracy && accuracy > 50 && !adjustedPosition && (
           <Circle
             center={displayPosition}
             radius={accuracy}
@@ -287,8 +292,10 @@ export const SpotMap = ({
         {/* Locate me button - only show when editable (must be inside MapContainer for useMap) */}
         {editable && (
           <LocateControl
-            onLocate={(lat, lng) => {
-              setAdjustedPosition([lat, lng]);
+            onLocate={(lat, lng, acc) => {
+              // Reset adjusted position and pass GPS location with accuracy
+              setAdjustedPosition(null);
+              onPositionChange?.(lat, lng, acc);
             }}
           />
         )}
