@@ -25,6 +25,7 @@ export const SharedSpotPage = () => {
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const [isMapZoomed, setIsMapZoomed] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
   const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
 
   // Fetch shared spot data on mount
@@ -97,10 +98,30 @@ export const SharedSpotPage = () => {
     const coords = `${spot.lat.toFixed(6)}, ${spot.lng.toFixed(6)}`;
     try {
       await navigator.clipboard.writeText(coords);
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
       setCopiedCoords(true);
-      setTimeout(() => setCopiedCoords(false), 2000);
+      setTimeout(() => setCopiedCoords(false), 1500);
     } catch {
       console.error('Failed to copy coordinates');
+    }
+  }, [spot]);
+
+  /**
+   * Copy address to clipboard
+   */
+  const handleCopyAddress = useCallback(async () => {
+    if (!spot?.address) return;
+    try {
+      await navigator.clipboard.writeText(spot.address);
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 1500);
+    } catch {
+      console.error('Failed to copy address');
     }
   }, [spot]);
 
@@ -298,26 +319,40 @@ export const SharedSpotPage = () => {
         <div className="p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24 space-y-4">
           {/* Address */}
           {spot.address && (
-            <p className="text-gray-700 font-medium" data-testid="shared-spot-address">
-              {spot.address}
-            </p>
+            <button
+              onClick={handleCopyAddress}
+              className="relative text-gray-700 font-medium text-left hover:text-indigo-600 transition-colors"
+              data-testid="shared-spot-address"
+              title="Tap to copy address"
+            >
+              <span className={copiedAddress ? 'invisible' : ''}>
+                {spot.address}
+              </span>
+              {copiedAddress && (
+                <span className="absolute inset-0 flex items-center text-green-600 font-medium">
+                  Copied
+                </span>
+              )}
+            </button>
           )}
 
           {/* Coordinates with tap to copy - always show if available */}
           {spot.lat != null && spot.lng != null && (
             <button
               onClick={handleCopyCoordinates}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              className="relative flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
               data-testid="shared-spot-coordinates"
             >
-              <span>
+              <span className={copiedCoords ? 'invisible' : ''}>
                 {spot.lat.toFixed(6)}°N, {spot.lng.toFixed(6)}°E
               </span>
-              <span
-                className={`transition-colors ${copiedCoords ? 'text-green-600' : 'text-gray-400'}`}
-              >
-                {copiedCoords ? 'Copied!' : 'Tap to copy'}
-              </span>
+              {copiedCoords ? (
+                <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+                  Copied
+                </span>
+              ) : (
+                <span className="text-gray-400">Tap to copy</span>
+              )}
             </button>
           )}
 

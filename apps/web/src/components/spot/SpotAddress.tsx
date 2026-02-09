@@ -1,4 +1,5 @@
 // apps/web/src/components/spot/SpotAddress.tsx
+import { useState } from 'react';
 import type { SpotAddressProps } from './types';
 
 /**
@@ -20,6 +21,30 @@ const formatCoordinates = (lat: number, lng: number): string => {
  * 3. "Location not available" (if neither)
  */
 export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddressProps) => {
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
+
+  const handleCopyAddress = () => {
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 1500);
+  };
+
+  const handleCopyCoordinates = () => {
+    if (lat === null || lng === null) return;
+    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    navigator.clipboard.writeText(coords);
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    setCopiedCoords(true);
+    setTimeout(() => setCopiedCoords(false), 1500);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -40,16 +65,49 @@ export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddres
           <span className="text-gray-400" aria-hidden="true">
             📍
           </span>
-          <p className="text-base font-medium text-gray-900">Near {address}</p>
+          <button
+            type="button"
+            onClick={handleCopyAddress}
+            className="relative text-base font-medium text-gray-900 text-left hover:text-indigo-600 transition-colors"
+            title="Tap to copy address"
+          >
+            <span className={copiedAddress ? 'invisible' : ''}>
+              Near {address}
+            </span>
+            {copiedAddress && (
+              <span className="absolute inset-0 flex items-center text-green-600 text-base font-medium">
+                Copied
+              </span>
+            )}
+          </button>
         </div>
         {/* Show coordinates as secondary info */}
         {lat !== null && lng !== null && (
-          <p
-            className="text-xs text-gray-500 ml-7 font-mono"
+          <button
+            type="button"
+            onClick={handleCopyCoordinates}
+            className="relative text-sm text-gray-500 ml-7 font-mono text-left hover:text-indigo-600 transition-colors flex items-center gap-1"
             data-testid="spot-coordinates-secondary"
+            title="Tap to copy coordinates"
           >
-            {formatCoordinates(lat, lng)}
-          </p>
+            <span className={copiedCoords ? 'invisible' : ''}>
+              {formatCoordinates(lat, lng)}
+            </span>
+            {copiedCoords ? (
+              <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+                Copied
+              </span>
+            ) : (
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            )}
+          </button>
         )}
       </div>
     );
@@ -62,9 +120,30 @@ export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddres
         <span className="text-gray-400" aria-hidden="true">
           📍
         </span>
-        <div>
-          <p className="text-sm font-mono text-gray-700">{formatCoordinates(lat, lng)}</p>
-        </div>
+        <button
+          type="button"
+          onClick={handleCopyCoordinates}
+          className="relative text-sm font-mono text-gray-700 text-left hover:text-indigo-600 transition-colors flex items-center gap-1"
+          title="Tap to copy coordinates"
+        >
+          <span className={copiedCoords ? 'invisible' : ''}>
+            {formatCoordinates(lat, lng)}
+          </span>
+          {copiedCoords ? (
+            <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+              Copied
+            </span>
+          ) : (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+          )}
+        </button>
       </div>
     );
   }
