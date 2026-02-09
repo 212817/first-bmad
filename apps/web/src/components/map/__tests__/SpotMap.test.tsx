@@ -22,6 +22,9 @@ vi.mock('react-leaflet', () => ({
   Marker: ({ position }: { position: [number, number] }) => (
     <div data-testid="map-marker" data-lat={position[0]} data-lng={position[1]} />
   ),
+  Circle: ({ center, radius }: { center: [number, number]; radius: number }) => (
+    <div data-testid="accuracy-circle" data-lat={center[0]} data-lng={center[1]} data-radius={radius} />
+  ),
   useMap: () => ({
     setView: vi.fn(),
     getZoom: () => 17,
@@ -223,6 +226,32 @@ describe('SpotMap', () => {
       const marker = screen.getByTestId('map-marker');
       expect(marker).toHaveAttribute('data-lat', '49');
       expect(marker).toHaveAttribute('data-lng', '25');
+    });
+  });
+
+  describe('accuracy circle', () => {
+    it('does not show circle when accuracy is null', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} accuracy={null} />);
+      expect(screen.queryByTestId('accuracy-circle')).not.toBeInTheDocument();
+    });
+
+    it('does not show circle when accuracy is low (under 50m)', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} accuracy={30} />);
+      expect(screen.queryByTestId('accuracy-circle')).not.toBeInTheDocument();
+    });
+
+    it('shows circle when accuracy is above 50m', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} accuracy={500} />);
+      const circle = screen.getByTestId('accuracy-circle');
+      expect(circle).toBeInTheDocument();
+      expect(circle).toHaveAttribute('data-radius', '500');
+    });
+
+    it('shows circle at correct position', () => {
+      render(<SpotMap lat={48.9102} lng={24.7085} accuracy={1000} />);
+      const circle = screen.getByTestId('accuracy-circle');
+      expect(circle).toHaveAttribute('data-lat', '48.9102');
+      expect(circle).toHaveAttribute('data-lng', '24.7085');
     });
   });
 });

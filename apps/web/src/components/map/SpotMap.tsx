@@ -1,6 +1,6 @@
 // apps/web/src/components/map/SpotMap.tsx
 import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
 import { LayerSwitcher } from './LayerSwitcher';
@@ -166,6 +166,8 @@ export const SpotMap = ({
   onPositionChange,
   heightClass = 'h-48',
   testId = 'spot-map',
+  accuracy = null,
+  isRefining = false,
 }: SpotMapProps) => {
   // Track adjusted position only when user pans the map
   const [adjustedPosition, setAdjustedPosition] = useState<[number, number] | null>(null);
@@ -265,6 +267,22 @@ export const SpotMap = ({
 
         {/* Marker only shown in non-editable mode - low z-index to avoid overlapping UI */}
         {!editable && <Marker position={displayPosition} zIndexOffset={-1000} />}
+
+        {/* Accuracy circle - light blue transparent circle */}
+        {/* Use shadowPane to avoid invert filter on overlayPane */}
+        {accuracy && accuracy > 50 && (
+          <Circle
+            center={displayPosition}
+            radius={accuracy}
+            pane="shadowPane"
+            pathOptions={{
+              color: '#4285F4',
+              weight: 2,
+              fillColor: '#4285F4',
+              fillOpacity: 0.15,
+            }}
+          />
+        )}
 
         {/* Locate me button - only show when editable (must be inside MapContainer for useMap) */}
         {editable && (

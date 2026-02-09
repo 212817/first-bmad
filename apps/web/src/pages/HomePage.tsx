@@ -18,6 +18,52 @@ import { Header } from '@/components/layout/Header';
 import { LatestSpotCard } from '@/components/spot/LatestSpotCard';
 import { geocodingApi } from '@/services/api/geocodingApi';
 
+// localStorage key for caching last position (for faster return visits)
+const LAST_POSITION_KEY = 'parkspot:lastPosition';
+
+interface CachedPosition {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  timestamp: number;
+}
+
+// Max age for cached position: 24 hours
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+/**
+ * Load cached position from localStorage
+ */
+const loadCachedPosition = (): CachedPosition | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(LAST_POSITION_KEY);
+    if (!stored) return null;
+    const cached = JSON.parse(stored) as CachedPosition;
+    // Check if cache is still valid
+    if (Date.now() - cached.timestamp > CACHE_MAX_AGE) {
+      localStorage.removeItem(LAST_POSITION_KEY);
+      return null;
+    }
+    return cached;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Save position to localStorage for faster future loads
+ */
+const saveCachedPosition = (lat: number, lng: number, accuracy: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const data: CachedPosition = { lat, lng, accuracy, timestamp: Date.now() };
+    localStorage.setItem(LAST_POSITION_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export const HomePage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, refreshUser } = useAuth();
@@ -48,12 +94,28 @@ export const HomePage = () => {
   const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  // Initialize with cached position for instant display
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(
+    () => {
+      const cached = loadCachedPosition();
+      return cached ? { lat: cached.lat, lng: cached.lng } : null;
+    }
+  );
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(() => {
+    const cached = loadCachedPosition();
+    return cached ? cached.accuracy : null;
+  });
+  // Track if we're fetching a more precise location
+  const [isRefiningLocation, setIsRefiningLocation] = useState(false);
   const [adjustedLocation, setAdjustedLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  // Start with loading=true only if no cached position
+  // This prevents flash of "Save my location" button before map loads
+  const [isLoadingLocation, setIsLoadingLocation] = useState(() => {
+    const cached = loadCachedPosition();
+    return !cached; // Only loading if no cache
+  });
   const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
@@ -71,25 +133,44 @@ export const HomePage = () => {
   );
 
   // Fetch current location on mount for map display (for authenticated/guest users)
-  // Auto-fetch location to show map immediately
+  // If we have cached position, show it immediately while fetching fresh position
   useEffect(() => {
     // Only attempt once and only if user is authenticated or guest
-    if (mapLoadAttempted || (!isAuthenticated && !isGuest)) return;
-
-    // Auto-fetch location on page load to show map
-    if (!currentLocation) {
-      setMapLoadAttempted(true);
-      setIsLoadingLocation(true);
-      getCurrentPosition()
-        .then((pos) => {
-          setCurrentLocation({ lat: pos.lat, lng: pos.lng });
-          setLocationAccuracy(pos.accuracy);
-        })
-        .catch(() => {
-          // Silently fail - user can still use the button
-        })
-        .finally(() => setIsLoadingLocation(false));
+    if (mapLoadAttempted) {
+      return;
     }
+
+    // Not authenticated and not guest - don't fetch, clear loading state
+    if (!isAuthenticated && !isGuest) {
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    setMapLoadAttempted(true);
+
+    // If we have cached position, show it immediately but mark as refining
+    const hasCachedPosition = currentLocation !== null;
+    if (hasCachedPosition) {
+      setIsRefiningLocation(true);
+    } else {
+      setIsLoadingLocation(true);
+    }
+
+    // Fetch fresh position
+    getCurrentPosition()
+      .then((pos) => {
+        setCurrentLocation({ lat: pos.lat, lng: pos.lng });
+        setLocationAccuracy(pos.accuracy);
+        // Save to cache for next visit
+        saveCachedPosition(pos.lat, pos.lng, pos.accuracy);
+      })
+      .catch(() => {
+        // Silently fail - user can still use the button or cached position
+      })
+      .finally(() => {
+        setIsLoadingLocation(false);
+        setIsRefiningLocation(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isGuest]);
 
@@ -338,6 +419,8 @@ export const HomePage = () => {
                   onPositionChange={handleMapPositionChange}
                   heightClass="aspect-square"
                   testId="home-spot-map"
+                  accuracy={adjustedLocation ? null : locationAccuracy}
+                  isRefining={isRefiningLocation}
                 />
               ) : null}
 
