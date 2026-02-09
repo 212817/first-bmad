@@ -71,9 +71,7 @@ export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddres
             className="relative text-base font-medium text-gray-900 text-left hover:text-indigo-600 transition-colors"
             title="Tap to copy address"
           >
-            <span className={copiedAddress ? 'invisible' : ''}>
-              Near {address}
-            </span>
+            <span className={copiedAddress ? 'invisible' : ''}>Near {address}</span>
             {copiedAddress && (
               <span className="absolute inset-0 flex items-center text-green-600 text-base font-medium">
                 Copied
@@ -90,9 +88,7 @@ export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddres
             data-testid="spot-coordinates-secondary"
             title="Tap to copy coordinates"
           >
-            <span className={copiedCoords ? 'invisible' : ''}>
-              {formatCoordinates(lat, lng)}
-            </span>
+            <span className={copiedCoords ? 'invisible' : ''}>{formatCoordinates(lat, lng)}</span>
             {copiedCoords ? (
               <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
                 Copied
@@ -126,9 +122,7 @@ export const SpotAddress = ({ lat, lng, address, isLoading = false }: SpotAddres
           className="relative text-sm font-mono text-gray-700 text-left hover:text-indigo-600 transition-colors flex items-center gap-1"
           title="Tap to copy coordinates"
         >
-          <span className={copiedCoords ? 'invisible' : ''}>
-            {formatCoordinates(lat, lng)}
-          </span>
+          <span className={copiedCoords ? 'invisible' : ''}>{formatCoordinates(lat, lng)}</span>
           {copiedCoords ? (
             <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
               Copied

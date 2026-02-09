@@ -117,7 +117,12 @@ export const ShareButton = ({
             <div className="flex items-start gap-3">
               {/* Error icon */}
               <div className="shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="w-5 h-5 text-red-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

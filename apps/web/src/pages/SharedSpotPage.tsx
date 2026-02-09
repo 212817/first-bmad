@@ -325,9 +325,7 @@ export const SharedSpotPage = () => {
               data-testid="shared-spot-address"
               title="Tap to copy address"
             >
-              <span className={copiedAddress ? 'invisible' : ''}>
-                {spot.address}
-              </span>
+              <span className={copiedAddress ? 'invisible' : ''}>{spot.address}</span>
               {copiedAddress && (
                 <span className="absolute inset-0 flex items-center text-green-600 font-medium">
                   Copied

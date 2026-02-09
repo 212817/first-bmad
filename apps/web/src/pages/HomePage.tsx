@@ -365,9 +365,7 @@ export const HomePage = () => {
                         data-testid="home-current-address"
                         title="Tap to copy address"
                       >
-                        <span className={copiedAddress ? 'invisible' : ''}>
-                          {currentAddress}
-                        </span>
+                        <span className={copiedAddress ? 'invisible' : ''}>{currentAddress}</span>
                         {copiedAddress && (
                           <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
                             Copied
