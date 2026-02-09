@@ -171,7 +171,7 @@ export const SpotMap = ({
   heightClass = 'h-48',
   testId = 'spot-map',
   accuracy = null,
-  isRefining = false,
+  isRefining: _isRefining = false,
 }: SpotMapProps) => {
   // Track adjusted position only when user pans the map
   const [adjustedPosition, setAdjustedPosition] = useState<[number, number] | null>(null);
