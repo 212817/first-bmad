@@ -123,7 +123,9 @@ describe('ShareButton', () => {
     fireEvent.click(screen.getByTestId('share-button'));
 
     await waitFor(() => {
-      expect(screen.getByText('Error')).toBeInTheDocument();
+      expect(screen.getByTestId('share-error-modal')).toBeInTheDocument();
+      expect(screen.getByText('Share Error')).toBeInTheDocument();
+      expect(screen.getByText('Network error')).toBeInTheDocument();
     });
   });
 

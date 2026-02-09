@@ -335,4 +335,40 @@ describe('CarTagSelector', () => {
       expect(screen.getByText('Work')).toBeInTheDocument();
     });
   });
+
+  describe('isUpdating prop', () => {
+    it('should show spinner when isUpdating is true', () => {
+      render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} isUpdating={true} />);
+
+      expect(screen.getByTestId('car-tag-spinner')).toBeInTheDocument();
+    });
+
+    it('should not show spinner when isUpdating is false', () => {
+      render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} isUpdating={false} />);
+
+      expect(screen.queryByTestId('car-tag-spinner')).not.toBeInTheDocument();
+    });
+
+    it('should disable button when isUpdating is true', () => {
+      render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} isUpdating={true} />);
+
+      const button = screen.getByTestId('car-tag-selector');
+      expect(button).toBeDisabled();
+    });
+
+    it('should have aria-busy attribute when isUpdating is true', () => {
+      render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} isUpdating={true} />);
+
+      const button = screen.getByTestId('car-tag-selector');
+      expect(button).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('should not open dropdown when isUpdating is true', () => {
+      render(<CarTagSelector selectedTagId="tag-1" onSelect={mockOnSelect} isUpdating={true} />);
+
+      fireEvent.click(screen.getByTestId('car-tag-selector'));
+
+      expect(screen.queryByTestId('car-tag-dropdown')).not.toBeInTheDocument();
+    });
+  });
 });

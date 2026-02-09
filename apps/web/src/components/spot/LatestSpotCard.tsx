@@ -29,6 +29,39 @@ export const LatestSpotCard = ({
 }: LatestSpotCardProps) => {
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const [isMapZoomed, setIsMapZoomed] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  /**
+   * Copy coordinates to clipboard with haptic feedback
+   */
+  const handleCopyCoordinates = () => {
+    if (!spot?.lat || !spot?.lng) return;
+    const coords = `${spot.lat.toFixed(6)}, ${spot.lng.toFixed(6)}`;
+    navigator.clipboard.writeText(coords);
+    // Haptic feedback (short vibration)
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    // Show "Copied" feedback
+    setCopiedCoords(true);
+    setTimeout(() => setCopiedCoords(false), 1500);
+  };
+
+  /**
+   * Copy address to clipboard with haptic feedback
+   */
+  const handleCopyAddress = () => {
+    if (!spot?.address) return;
+    navigator.clipboard.writeText(spot.address);
+    // Haptic feedback (short vibration)
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    // Show "Copied" feedback
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 1500);
+  };
 
   // Loading state
   if (isLoading) {
@@ -208,32 +241,50 @@ export const LatestSpotCard = ({
             📍
           </span>
           <div className="flex-1 text-left min-w-0">
-            {/* Address or fallback */}
-            <p className="text-sm font-medium text-gray-800 truncate" data-testid="spot-location">
-              {spot.address ?? 'Address unavailable'}
-            </p>
+            {/* Address or fallback - tappable to copy */}
+            <button
+              type="button"
+              onClick={handleCopyAddress}
+              disabled={!spot.address}
+              className="relative text-sm font-medium text-gray-800 line-clamp-2 text-left hover:text-indigo-600 transition-colors disabled:hover:text-gray-800 disabled:cursor-default w-full"
+              data-testid="spot-location"
+              title={spot.address ? 'Tap to copy address' : undefined}
+            >
+              <span className={copiedAddress ? 'invisible' : ''}>
+                {spot.address ?? 'Address unavailable'}
+              </span>
+              {copiedAddress && (
+                <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium bg-white">
+                  Copied
+                </span>
+              )}
+            </button>
             {/* Coordinates - always show with copy button */}
             {spot.lat !== null && spot.lng !== null && (
               <button
                 type="button"
-                onClick={() => {
-                  const coords = `${spot.lat!.toFixed(6)}, ${spot.lng!.toFixed(6)}`;
-                  navigator.clipboard.writeText(coords);
-                }}
-                className="text-xs text-gray-500 hover:text-indigo-600 mt-0.5 flex items-center gap-1 transition-colors"
+                onClick={handleCopyCoordinates}
+                className="relative text-sm text-gray-500 hover:text-indigo-600 mt-0.5 flex items-center gap-1 transition-colors"
                 title="Tap to copy coordinates"
+                data-testid="copy-coordinates-button"
               >
-                <span>
+                <span className={copiedCoords ? 'invisible' : ''}>
                   {spot.lat.toFixed(4)}°N, {spot.lng.toFixed(4)}°E
                 </span>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
+                {copiedCoords ? (
+                  <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+                    Copied
+                  </span>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                )}
               </button>
             )}
           </div>

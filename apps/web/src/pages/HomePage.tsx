@@ -56,6 +56,8 @@ export const HomePage = () => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [mapLoadAttempted, setMapLoadAttempted] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Reverse geocode the current/adjusted location to get address
@@ -349,12 +351,27 @@ export const HomePage = () => {
                     {isAddressLoading ? (
                       <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
                     ) : currentAddress ? (
-                      <p
-                        className="text-sm font-medium text-gray-800"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(currentAddress);
+                          if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                          }
+                          setCopiedAddress(true);
+                          setTimeout(() => setCopiedAddress(false), 1500);
+                        }}
+                        className="relative text-sm font-medium text-gray-800 text-left hover:text-indigo-600 transition-colors"
                         data-testid="home-current-address"
+                        title="Tap to copy address"
                       >
-                        {currentAddress}
-                      </p>
+                        <span className={copiedAddress ? 'invisible' : ''}>{currentAddress}</span>
+                        {copiedAddress && (
+                          <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+                            Copied
+                          </span>
+                        )}
+                      </button>
                     ) : (
                       <p className="text-sm text-gray-500">Address unavailable</p>
                     )}
@@ -365,26 +382,37 @@ export const HomePage = () => {
                         onClick={() => {
                           const coords = `${displayLat.toFixed(6)}, ${displayLng.toFixed(6)}`;
                           navigator.clipboard.writeText(coords);
+                          if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                          }
+                          setCopiedCoords(true);
+                          setTimeout(() => setCopiedCoords(false), 1500);
                         }}
-                        className="text-xs text-gray-500 hover:text-indigo-600 mt-1 flex items-center gap-1 transition-colors"
+                        className="relative text-sm text-gray-500 hover:text-indigo-600 mt-1 flex items-center gap-1 transition-colors"
                         title="Tap to copy coordinates"
                       >
-                        <span>
+                        <span className={copiedCoords ? 'invisible' : ''}>
                           {displayLat.toFixed(4)}°N, {displayLng.toFixed(4)}°E
                         </span>
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
+                        {copiedCoords ? (
+                          <span className="absolute inset-0 flex items-center text-green-600 text-sm font-medium">
+                            Copied
+                          </span>
+                        ) : (
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        )}
                       </button>
                     )}
                     {adjustedLocation && (
